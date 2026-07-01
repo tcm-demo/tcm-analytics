@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>产品需求文档 — 商品列表管理</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; background:#F1F2F5; color:#1D2440; line-height:1.7; font-size:14px; }
+  .prd-wrap { max-width:860px; margin:0 auto; padding:32px 24px 80px; }
+
+  /* 封面 */
+  .prd-cover { background:#fff; border-radius:12px; padding:48px; margin-bottom:24px; border:1px solid #e8e8e8; text-align:center; }
+  .prd-cover h1 { font-size:28px; font-weight:700; color:#005CF5; margin-bottom:8px; }
+  .prd-cover .subtitle { font-size:14px; color:#999; margin-bottom:20px; }
+  .prd-cover .meta { display:flex; justify-content:center; gap:32px; font-size:13px; color:#666; flex-wrap:wrap; }
+  .prd-cover .meta span { background:#f5f7fa; padding:6px 16px; border-radius:20px; }
+
+  /* 章节 */
+  .section { background:#fff; border-radius:10px; padding:28px 32px; margin-bottom:16px; border:1px solid #eceef2; }
+  .section h2 { font-size:18px; font-weight:600; color:#1D2440; margin-bottom:16px; padding-bottom:10px; border-bottom:2px solid #005CF5; display:flex; align-items:center; gap:8px; }
+  .section h2 .num { display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:6px; background:#005CF5; color:#fff; font-size:13px; font-weight:600; flex-shrink:0; }
+  .section h3 { font-size:15px; font-weight:600; color:#333; margin:20px 0 10px; }
+  .section h4 { font-size:13px; font-weight:600; color:#555; margin:14px 0 6px; }
+  .section p { margin-bottom:10px; color:#444; }
+  .section ul, .section ol { margin:8px 0 14px 20px; color:#444; }
+  .section li { margin-bottom:6px; }
+
+  /* 表格 */
+  table { width:100%; border-collapse:collapse; margin:12px 0; font-size:13px; }
+  th { background:#f5f7fa; font-weight:600; text-align:left; padding:9px 14px; border:1px solid #e8e8e8; }
+  td { padding:8px 14px; border:1px solid #e8e8e8; color:#444; }
+  tr:nth-child(even) td { background:#fafbfc; }
+
+  /* 标签 */
+  .tag { display:inline-block; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:600; }
+  .tag-p0 { background:#fde8e8; color:#c62828; }
+  .tag-p1 { background:#fff3e0; color:#e65100; }
+  .tag-p2 { background:#e8f5e9; color:#1b5e20; }
+  .tag-story { background:#e3f2fd; color:#0d47a1; }
+
+  /* 用户故事卡片 */
+  .story-card { background:#f8faff; border-left:3px solid #005CF5; padding:12px 16px; margin:10px 0; border-radius:0 6px 6px 0; }
+  .story-card .actor { font-weight:600; color:#005CF5; font-size:13px; }
+  .story-card .want { color:#444; }
+  .story-card .benefit { color:#888; font-size:12px; margin-top:2px; }
+
+  /* 高亮 */
+  .highlight-box { background:#fef8e7; border:1px solid #f5e6b8; border-radius:6px; padding:14px 18px; margin:12px 0; font-size:13px; }
+
+  /* 指标卡片 */
+  .metric-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:12px 0; }
+  .metric-card { background:#f8faff; border:1px solid #e0e6f5; border-radius:8px; padding:16px; }
+  .metric-card .label { font-size:12px; color:#888; margin-bottom:4px; }
+  .metric-card .value { font-size:20px; font-weight:700; color:#005CF5; }
+  .metric-card .target { font-size:11px; color:#999; margin-top:2px; }
+  @media (max-width:640px) { .metric-row { grid-template-columns:1fr; } }
+
+  .status-badge { display:inline-block; padding:2px 10px; border-radius:10px; font-size:11px; font-weight:600; }
+  .status-done { background:#e8f5e9; color:#1b5e20; }
+  .status-wip { background:#fff3e0; color:#e65100; }
+</style>
+</head>
+<body>
+<div class="prd-wrap">
+
+<!-- ======== 封面 ======== -->
+<div class="prd-cover">
+  <h1>产品需求文档：商品列表管理</h1>
+  <div class="subtitle">Product Requirements Document — Goods List Management</div>
+  <div class="meta">
+    <span>📅 版本 v1.3</span>
+    <span>📌 状态 <b class="status-badge status-wip">迭代中</b></span>
+    <span>👤 产品：产品通</span>
+    <span>📆 日期 2026-06-30</span>
+  </div>
+</div>
+
+<!-- ======== 1. 问题陈述 ======== -->
+<div class="section">
+  <h2><span class="num">1</span> 问题陈述</h2>
+
+  <h3>用户痛点</h3>
+  <p>生鲜零售门店运营中，店长和收银员每天需要频繁与商品数据打交道。当前系统缺少一个集中化的商品管理入口，导致以下问题：</p>
+  <ul>
+    <li><b>商品分散，缺少全局视图</b>：商品散落在不同门店和分类下，店长无法从一个页面总览全部在售商品，不清楚哪些商品缺货、哪些已下架。</li>
+    <li><b>筛选维度不足</b>：仅有简单的搜索框，无法按「门店」「上下架状态」「售卖类型」「商品分类」等维度组合筛选，查找特定商品效率低。</li>
+    <li><b>新增/编辑流程割裂</b>：新增商品需要在多个页面跳转（先录入基本信息，再去另一页配图/调价），操作链路长且容易遗漏。</li>
+    <li><b>批量操作缺失</b>：季末或促销结束后需要批量下架商品时，只能逐个操作，耗时且容易出错。</li>
+    <li><b>与商品分类体系未打通</b>：分类管理页面维护了分类后，商品列表无法直接联动筛选，需要手动搜索分类名。</li>
+  </ul>
+
+  <h3>不解决的代价</h3>
+  <ul>
+    <li><b>运营效率低下</b>：店长每日商品维护耗时 30 分钟以上，纯手工操作。</li>
+    <li><b>数据一致性风险</b>：不同门店独立管理商品，导致同一 SKU 在不同门店的规格、价格不一致。</li>
+    <li><b>分销/促销响应慢</b>：批量上下架无法快速执行，影响季节性商品的上新和下架节奏。</li>
+  </ul>
+</div>
+
+<!-- ======== 2. 目标 ======== -->
+<div class="section">
+  <h2><span class="num">2</span> 目标 (Goals)</h2>
+
+  <table>
+    <tr><th>#</th><th>目标</th><th>类型</th><th>衡量方式</th></tr>
+    <tr>
+      <td>G1</td>
+      <td>店长可在 10 秒内通过多维度筛选定位到目标商品</td>
+      <td>操作效率</td>
+      <td>从打开页面到找到目标商品的平均耗时</td>
+    </tr>
+    <tr>
+      <td>G2</td>
+      <td>新增一个商品（含规格、价格、分类）的填表时间不超过 2 分钟</td>
+      <td>用户体验</td>
+      <td>新增弹窗的填表耗时 + 必填校验通过率</td>
+    </tr>
+    <tr>
+      <td>G3</td>
+      <td>批量上下架 N 件商品的操作可在 5 秒内完成</td>
+      <td>操作效率</td>
+      <td>勾选 → 点击「下架」的交互次数 ≤ 3 次</td>
+    </tr>
+    <tr>
+      <td>G4</td>
+      <td>商品分类侧边栏与分类管理页面保持同步，筛选联动即时生效</td>
+      <td>功能完整性</td>
+      <td>分类增删改后，商品列表侧边栏自动更新无需刷新</td>
+    </tr>
+    <tr>
+      <td>G5</td>
+      <td>门店人员可见本店商品，企业管理员可查看全局数据</td>
+      <td>权限正确性</td>
+      <td>不同角色登录后看到的数据范围符合权限模型</td>
+    </tr>
+  </table>
+</div>
+
+<!-- ======== 3. 非目标 ======== -->
+<div class="section">
+  <h2><span class="num">3</span> 非目标 (Non-Goals)</h2>
+
+  <table>
+    <tr><th>#</th><th>不做的事项</th><th>原因</th></tr>
+    <tr>
+      <td>N1</td>
+      <td><b>商品信息的批量导入/导出</b>（Excel/CSV）</td>
+      <td>当前商品量级（每家门店数十到数百 SKU）手工维护足够；导入导出需额外处理数据清洗和校验，ROI 不高</td>
+    </tr>
+    <tr>
+      <td>N2</td>
+      <td><b>商品历史价格曲线和改价日志</b></td>
+      <td>已有独立的「改价日志」页面，不在商品列表页面重复实现</td>
+    </tr>
+    <tr>
+      <td>N3</td>
+      <td><b>商品库存管理</b></td>
+      <td>库存属于独立的供应链模块，涉及采购、入库、盘点等流程，与商品列表的"基础信息管理"定位不同</td>
+    </tr>
+    <tr>
+      <td>N4</td>
+      <td><b>标签体系的完整 CRUD</b></td>
+      <td>当前标签在商品编辑时从预设列表选择；标签增删改的管理功能为独立模块，不在本页实现</td>
+    </tr>
+    <tr>
+      <td>N5</td>
+      <td><b>会员价的规则引擎</b>（如「会员价 = 售价 × 95%」自动计算）</td>
+      <td>会员价策略涉及营销规则引擎，复杂度高，当前仅作展示</td>
+    </tr>
+  </table>
+</div>
+
+<!-- ======== 4. 用户故事 ======== -->
+<div class="section">
+  <h2><span class="num">4</span> 用户故事 (User Stories)</h2>
+
+  <h3>4.1 企业管理员</h3>
+
+  <div class="story-card">
+    <div class="actor">US1 — 作为企业管理员</div>
+    <div class="want">我希望在一个统一页面查看所有门店的所有商品（表格形式，含商品名称、编码、规格、价格、分类、状态），</div>
+    <div class="benefit">以便掌握全公司商品概览，及时发现异常（如某商品多店均下架）并调整策略。</div>
+  </div>
+
+  <div class="story-card">
+    <div class="actor">US2 — 作为企业管理员</div>
+    <div class="want">我希望通过左侧分类侧边栏按分类快速筛选商品，侧边栏同步展示每个分类下的商品数量，</div>
+    <div class="benefit">以便快速了解各大类商品的 SKU 分布，并一键查看某个分类下的全部商品。</div>
+  </div>
+
+  <div class="story-card">
+    <div class="actor">US3 — 作为企业管理员</div>
+    <div class="want">我希望通过门店、售卖类型（售卖品/非售品）、上下架状态、关键词等多个维度组合筛选商品，</div>
+    <div class="benefit">以便在促销结束后快速定位需要下架的特定商品，或在换季时统一调整季节性商品的上下架状态。</div>
+  </div>
+
+  <div class="story-card">
+    <div class="actor">US4 — 作为企业管理员</div>
+    <div class="want">我希望在商品列表中勾选多条商品后，一键执行批量「上架」「下架」「启用」「禁用」操作，</div>
+    <div class="benefit">以便在季节性调货或促销结束时批量处理商品，避免逐条操作的重复劳动。</div>
+  </div>
+
+  <div class="story-card">
+    <div class="actor">US5 — 作为企业管理员</div>
+    <div class="want">我希望通过弹窗新增商品时，能从系统商品库搜索选择已有商品（带出商品名和规格），也能新增标品（含 69 码条码和品牌），</div>
+    <div class="benefit">以便快速录入新商品，复用系统已有的商品数据减少重复录入。</div>
+  </div>
+
+  <div class="story-card">
+    <div class="actor">US6 — 作为企业管理员</div>
+    <div class="want">我希望点击表格中的某行商品时弹出编辑弹窗，可以修改商品的分类、价格、门店、上下架状态等信息，</div>
+    <div class="benefit">以便快速纠错或调整单个商品的属性，无需切换到其他页面。</div>
+  </div>
+
+  <h3>4.2 门店人员</h3>
+
+  <div class="story-card" style="border-left-color:#3EB27E;">
+    <div class="actor" style="color:#3EB27E;">US7 — 作为门店收银员/店长</div>
+    <div class="want">我希望打开商品列表时默认看到本门店的商品，并且能按分类快速筛选，</div>
+    <div class="benefit">以便在结账时快速查找顾客询问的商品信息（如价格、规格）。</div>
+  </div>
+
+  <div class="story-card" style="border-left-color:#3EB27E;">
+    <div class="actor" style="color:#3EB27E;">US8 — 作为门店店长</div>
+    <div class="want">我希望能在商品列表中调整本店商品的上下架状态和售卖类型，</div>
+    <div class="benefit">以便根据实际库存情况和销售策略灵活控制商品的可售状态。</div>
+  </div>
+
+  <h3>4.3 边界用例</h3>
+
+  <div class="story-card" style="border-left-color:#f5a623;">
+    <div class="actor" style="color:#f5a623;">⚠️ 边界用例 — 无数据状态</div>
+    <div class="want">当筛选条件匹配不到任何商品时，表格区域显示「暂无数据」提示而非空白页面，</div>
+    <div class="benefit">以便我知道筛选条件没有匹配结果，而非系统故障。</div>
+  </div>
+
+  <div class="story-card" style="border-left-color:#f5a623;">
+    <div class="actor" style="color:#f5a623;">⚠️ 边界用例 — 分页边界</div>
+    <div class="want">当商品总数不足一页时，分页组件不显示页码（仅显示总数）；当超过一页时提供上下页和页码跳转，</div>
+    <div class="benefit">以便在大量商品时高效翻页，少量商品时界面不冗余。</div>
+  </div>
+
+  <div class="story-card" style="border-left-color:#f5a623;">
+    <div class="actor" style="color:#f5a623;">⚠️ 边界用例 — 批量操作无选中</div>
+    <div class="want">当我点击「上架」「下架」等批量按钮但没有勾选任何商品时，系统提示「请至少选择一条商品」，</div>
+    <div class="benefit">以避免我误以为操作已执行。</div>
+  </div>
+
+  <div class="story-card" style="border-left-color:#f5a623;">
+    <div class="actor" style="color:#f5a623;">⚠️ 边界用例 — 删除分类后的商品归属</div>
+    <div class="want">当企业管理员在分类管理页面删除一个分类后，该分类下的商品自动归入「未分类」而非消失，</div>
+    <div class="benefit">以确保商品数据不丢失，且店长在商品列表中仍能找到这些商品。</div>
+  </div>
+</div>
+
+<!-- ======== 5. 需求明细 ======== -->
+<div class="section">
+  <h2><span class="num">5</span> 需求明细 (Requirements)</h2>
+
+  <h3>5.1 页面布局</h3>
+  <p>商品列表页面采用<b>左右分栏</b>布局：</p>
+  <ul>
+    <li><b>左侧分类侧边栏</b>（固定宽度 200px）：展示全部分类树，每项显示分类名 + 颜色圆点 + 商品数量徽标。点击某个分类触发商品列表筛选；点击「全部」取消分类筛选。侧边栏顶部标题「商品分类」。</li>
+    <li><b>右侧主内容区</b>（弹性宽度）：包含筛选栏、操作按钮栏、数据表格、分页栏。</li>
+  </ul>
+
+  <h3>5.2 筛选栏</h3>
+  <table>
+    <tr><th>筛选项</th><th>控件类型</th><th>默认值</th><th>说明</th></tr>
+    <tr>
+      <td>门店</td>
+      <td>下拉选择 (select)</td>
+      <td>全部门店</td>
+      <td>门店列表动态获取；默认显示全部，企业管理员可切换查看特定门店商品</td>
+    </tr>
+    <tr>
+      <td>售卖类型</td>
+      <td>单选按钮组 (radio group)</td>
+      <td>全部</td>
+      <td>可选值：全部 / 售卖品 / 非售品</td>
+    </tr>
+    <tr>
+      <td>上下架状态</td>
+      <td>单选按钮组 (radio group)</td>
+      <td>全部</td>
+      <td>可选值：全部 / 上架 / 下架。与售卖类型为 AND 关系</td>
+    </tr>
+    <tr>
+      <td>关键词搜索</td>
+      <td>输入框 (text input)</td>
+      <td>空</td>
+      <td>支持按商品名称、商品编码模糊匹配；按 Enter 触发搜索</td>
+    </tr>
+    <tr>
+      <td>操作按钮</td>
+      <td>重置 + 查询</td>
+      <td>—</td>
+      <td>「重置」恢复所有筛选条件为默认值；「查询」执行筛选并刷新表格</td>
+    </tr>
+  </table>
+
+  <h3>5.3 操作按钮栏</h3>
+  <table>
+    <tr><th>按钮</th><th>类型</th><th>优先级</th><th>行为</th></tr>
+    <tr>
+      <td>新增商品</td>
+      <td>主要按钮</td>
+      <td><span class="tag tag-p0">P0</span></td>
+      <td>打开「新增普通商品」弹窗（搜索系统商品 → 填写销售名称、分类、规格/单位、售价、原价、保质期、门店等）</td>
+    </tr>
+    <tr>
+      <td>新增标品</td>
+      <td>主要按钮</td>
+      <td><span class="tag tag-p0">P0</span></td>
+      <td>打开「新增标品」弹窗（输入 69 码条码 + 标品名称(只读) + 销售品名(可编辑) + 分类 + 品牌 + 规格/单位 + 售价 + 原价 + 非售商品开关 + 门店选择）</td>
+    </tr>
+    <tr>
+      <td>上架</td>
+      <td>次要按钮</td>
+      <td><span class="tag tag-p0">P0</span></td>
+      <td>批量将选中商品的 enable 状态设为 0（上架）。无选中时提示</td>
+    </tr>
+    <tr>
+      <td>下架</td>
+      <td>次要按钮</td>
+      <td><span class="tag tag-p0">P0</span></td>
+      <td>批量将选中商品的 enable 状态设为 1（下架）。无选中时提示</td>
+    </tr>
+    <tr>
+      <td>启用</td>
+      <td>次要按钮</td>
+      <td><span class="tag tag-p0">P0</span></td>
+      <td>批量将选中商品的 status 设为 0（启用）。无选中时提示</td>
+    </tr>
+    <tr>
+      <td>禁用</td>
+      <td>次要按钮</td>
+      <td><span class="tag tag-p0">P0</span></td>
+      <td>批量将选中商品的 status 设为 1（禁用）。无选中时提示</td>
+    </tr>
+  </table>
+
+  <h3>5.4 数据表格</h3>
+
+  <h4>5.4.1 表格列定义</h4>
+  <table>
+    <tr><th>列名</th><th>宽度</th><th>数据字段</th><th>说明</th></tr>
+    <tr><td>选择框</td><td>40px</td><td>goodsId</td><td>全选框 + 行级 checkbox，用于批量操作</td></tr>
+    <tr><td>序号</td><td>50px</td><td>—</td><td>当前页内序号（分页后从 1 重新计算）</td></tr>
+    <tr><td>商品名称</td><td>240px</td><td>salesName || goodsName</td><td>蓝色可点击样式；优先显示销售品名，无则显示系统商品名</td></tr>
+    <tr><td>品牌</td><td>100px</td><td>goodsBrand</td><td>品牌名，无数据显示「-」</td></tr>
+    <tr><td>商品编码</td><td>120px</td><td>goodsCode</td><td>条码编号，标品为 69 码</td></tr>
+    <tr><td>商品规格</td><td>100px</td><td>goodsSpec</td><td>规格/单位组合值</td></tr>
+    <tr><td>销售价格</td><td>100px</td><td>goodsPrice</td><td>¥ 格式，保留两位小数</td></tr>
+    <tr><td>会员价</td><td>80px</td><td>memberPrice</td><td>预留字段，暂无数据时显示灰色「-」<span style="color:#c0c4cc;font-size:11px">(预留)</span></td></tr>
+    <tr><td>原价</td><td>80px</td><td>goodsListPrice</td><td>¥ 格式，保留两位小数</td></tr>
+    <tr><td>商品分类</td><td>100px</td><td>categoryId</td><td>显示分类中文名；未分类显示灰色「-」</td></tr>
+    <tr><td>标签</td><td>80px</td><td>goodsTag</td><td>预留字段，目前暂无实际数据 <span style="color:#c0c4cc;font-size:11px">(预留)</span></td></tr>
+    <tr><td>商品状态</td><td>80px</td><td>status</td><td>启用(绿色标签) / 禁用(红色标签)</td></tr>
+    <tr><td>上下架</td><td>90px</td><td>enable</td><td>上架(绿色标签) / 下架(红色标签)</td></tr>
+    <tr><td>非售品</td><td>80px</td><td>isSellable</td><td>非售品时显示橙色「是」，否则不显示</td></tr>
+    <tr><td>所属门店</td><td>150px</td><td>shopName</td><td>门店中文名</td></tr>
+  </table>
+
+  <h4>5.4.2 表格交互</h4>
+  <ul>
+    <li><b>行高亮</b>：点击行高亮（浅蓝色背景），同一时间仅一行高亮。</li>
+    <li><b>行点击编辑</b>：点击高亮行弹出编辑弹窗，可直接修改该商品的属性。</li>
+    <li><b>全选</b>：表头 checkbox 勾选/取消全选当前页所有行（仅当前页，不跨页）。</li>
+    <li><b>空状态</b>：无数据时表格显示一行「暂无数据」占位，colspan=15。</li>
+  </ul>
+
+  <h3>5.5 分页栏</h3>
+  <ul>
+    <li><b>位置</b>：表格卡片底部，右对齐。</li>
+    <li><b>元素</b>：「共 N 条」统计 + 上一页 + 页码按钮（最多展示 7 个） + 下一页 + 「X 页」。</li>
+    <li><b>默认每页</b>：10 条。</li>
+    <li><b>边界行为</b>：首页时「上一页」disabled；末页时「下一页」disabled。</li>
+    <li><b>翻页后</b>：表格滚动到顶部，全选和高亮状态重置。</li>
+  </ul>
+
+  <h3>5.6 新增/编辑弹窗（普通商品）</h3>
+  <p>弹窗标题区分「新增商品」和「编辑商品」。采用 2 列网格布局（<code>gl-form-grid</code>）。表单字段：</p>
+  <table>
+    <tr><th>行</th><th>字段</th><th>控件</th><th>必填</th><th>说明</th></tr>
+    <tr>
+      <td>—</td><td>商品图片</td><td>图片上传区域 (96×96)</td><td>否</td><td>点击上传，支持预览</td>
+    </tr>
+    <tr>
+      <td rowspan="2" style="vertical-align:middle">Row 1</td>
+      <td>系统商品</td><td>搜索选择器 (SS)</td><td>是</td><td>从系统商品库 (<code>GL_SYSTEM_GOODS</code>) 搜索选择，支持模糊匹配；选中后自动同步销售品名</td>
+    </tr>
+    <tr>
+      <td>（grid 补位）</td><td>—</td><td>—</td><td>占 50% 列宽，visibility:hidden 保持网格对齐</td>
+    </tr>
+    <tr>
+      <td>Row 2</td><td>销售品名<br>商品分类</td><td>文本输入框 (各 50%)<br>通用选择器 (SS)</td><td>否<br>否</td><td>系统商品选择后自动填充，可手动修改；不填默认为系统商品名<br>从分类列表选择，placeholder「请选择分类」</td>
+    </tr>
+    <tr>
+      <td>Row 3</td><td>规格/单位<br>品牌</td><td>规格输入 + 单位选择器 (各 50%)<br>文本输入框</td><td>是<br>否</td><td>规格文本 + 分隔符「/」+ 单位紧凑选择器（<code>glBuildUnitSelect</code>）<br>品牌自由文本，无数据留空</td>
+    </tr>
+    <tr>
+      <td>Row 4</td><td>售价<br>原价</td><td>数值输入框 (各 50%)</td><td>是<br>否</td><td>¥ 格式，支持两位小数</td>
+    </tr>
+    <tr>
+      <td>Row 5</td><td>门店</td><td>通用选择器 (SS, 50%)</td><td>是</td><td>从门店列表选择，placeholder「请选择门店」</td>
+    </tr>
+  </table>
+
+  <div class="highlight-box">
+    <b>普通商品关键约束：</b>
+    <ul>
+      <li>普通商品<b>不含</b>：保质期、贮藏方式、非售商品开关（这些为标品专属字段）。</li>
+      <li>系统商品必须从系统库选择（<code>GL_SYSTEM_GOODS</code>），保存时校验选中商品名是否在库中，防止自由输入。</li>
+      <li>通过 <code>PRODUCT_DEFS</code> 字典维护每个系统商品的合理规格和默认分类，避免「猪肉配 mL」这类不合逻辑的组合。</li>
+      <li>编辑态下系统商品设为 <code>readOnly</code> + 隐藏清除按钮，不可修改和删除；新增态正常可搜索。</li>
+    </ul>
+  </div>
+
+  <h3>5.7 新增/编辑弹窗（标品）</h3>
+  <p>标品弹窗为 4 列网格布局（<code>gl-form-grid-4</code>），标签宽度统一 84px（<code>gl-form-label-s</code>）。<b>条码字段编辑态 readonly 且清除按钮隐藏；标品名称始终只读。</b>表单布局：</p>
+  <table>
+    <tr><th>行</th><th>列 1 (span2, 1/2)</th><th>列 2 (span2, 1/2)</th><th>列 3 (1/4)</th><th>列 4 (1/4)</th></tr>
+    <tr><td>Row 1</td><td colspan="2">条码* — 文本输入框（编辑态 readonly，清除按钮隐藏）</td><td colspan="2">标品名称 — 只读文本输入框（readonly 灰底）</td></tr>
+    <tr><td>Row 2</td><td colspan="2">销售品名* — 纯文本输入框（不支持搜索下拉）</td><td>商品分类 — 通用选择器</td><td>品牌 — 文本输入框</td></tr>
+    <tr><td>Row 3</td><td colspan="2">规格/单位* — 规格输入 + 单位紧凑选择器</td><td>保质期 — 输入框 + 天/月/年下拉</td><td>贮藏 — 文本输入框</td></tr>
+    <tr><td>Row 4</td><td>售价* — 数值输入框</td><td>原价 — 数值输入框</td><td>非售商品 — radio（是/否）</td><td>门店 — 通用选择器</td></tr>
+  </table>
+
+  <div class="highlight-box">
+    <b>标品特有逻辑：</b>
+    <ul>
+      <li><b>非售商品</b>：选「是」时，售价和原价设为 <code>readOnly</code>（保留用户输入值，灰底不可编辑），效果与标品名称一致。选「否」时售价为必填。</li>
+      <li><b>销售品名</b>：纯文本输入框，不支持搜索下拉。由条码查询后自动带入，或用户完全手动输入。保存时取销售品名值作为 <code>salesName</code>。</li>
+      <li><b>条码</b>：新增态可自由输入（支持扫码设备），编辑态 readonly + 清除按钮隐藏，不可修改。</li>
+      <li><b>标品名称</b>：始终只读 (readonly)，不可编辑，由条码查询或其他数据源自动填充。</li>
+      <li><b>保质期格式化</b>：保存时与规格合并为 <code>spec/unit | 保质期+单位</code> 格式存储到 <code>goodsSpec</code> 字段（如 "500g/袋 | 180天"）。</li>
+      <li><b>规格兼容解析</b>：打开编辑弹窗时从 <code>goodsSpec</code> 反向解析出规格、单位和保质期。</li>
+    </ul>
+  </div>
+
+  <h3>5.8 分类侧边栏联动</h3>
+  <ul>
+    <li><b>数据源</b>：侧边栏分类列表与分类管理页面共享同一数据源（<code>GOODS_CATEGORIES</code>），按 <code>sort</code> 值升序排列，过滤掉 <code>hidden: true</code> 的「未分类」。</li>
+    <li><b>商品计数</b>：每个分类旁显示该分类下的商品总数（实时计算，遍历 <code>GL_MOCK_DATA</code> 按 <code>categoryId</code> 匹配）。</li>
+    <li><b>分类筛选</b>：点击分类 → 设置 <code>GL_FILTER_CATEGORY</code> → 触发 <code>glRenderTable()</code> → 表格仅显示该分类商品；侧边栏高亮当前选中分类（浅蓝背景 + 蓝色文字）。</li>
+    <li><b>「全部商品」</b>：始终在侧边栏顶部，显示总商品数；点击后清空分类筛选恢复全部视图。</li>
+    <li><b>外部跳转</b>：分类管理页面点击分类卡片 → 调用 <code>gcGoToGoodsList(catId)</code> → 切换到商品列表页面 → 设置 <code>GL_FILTER_CATEGORY = catId</code> → 侧边栏自动高亮对应分类 → 表格筛选为该分类。</li>
+    <li><b>筛选条件保留</b>：<code>GL_FILTER_*</code> 为全局变量，页面切换时不重置；从分类管理跳转后自动设置分类筛选并刷新。</li>
+    <li><b>颜色同步</b>：侧边栏分类颜色圆点与分类管理页面一致，颜色与分类 ID 绑定（通过 <code>getCategoryColor(catId)</code> 获取）。</li>
+    <li><b>隐藏分类不显示</b>：标记为 <code>hidden: true</code> 的分类（如「未分类」）不在侧边栏出现。</li>
+  </ul>
+
+  <h3>5.9 角色权限控制</h3>
+  <table>
+    <tr><th>操作</th><th>企业角色</th><th>门店角色</th><th>说明</th></tr>
+    <tr><td>查看商品列表</td><td style="color:#1b5e20">✅ 所有门店</td><td style="color:#1b5e20">✅ 仅本门店</td><td>门店角色默认只能看到所属门店的商品</td></tr>
+    <tr><td>按分类筛选</td><td style="color:#1b5e20">✅ 允许</td><td style="color:#1b5e20">✅ 允许</td><td>两角色均可使用分类侧边栏筛选</td></tr>
+    <tr><td>新增商品</td><td style="color:#1b5e20">✅ 允许</td><td style="color:#1b5e20">✅ 允许</td><td>门店人员新增商品时门店自动设为本店（不可更改）</td></tr>
+    <tr><td>新增标品</td><td style="color:#1b5e20">✅ 允许</td><td style="color:#1b5e20">✅ 允许</td><td>同上</td></tr>
+    <tr><td>编辑商品</td><td style="color:#1b5e20">✅ 允许</td><td style="color:#1b5e20">✅ 允许</td><td>门店人员仅可编辑本门店商品</td></tr>
+    <tr><td>批量上下架</td><td style="color:#1b5e20">✅ 允许</td><td style="color:#e65100">⚠️ 本店</td><td>门店人员仅可操作本门店商品</td></tr>
+    <tr><td>批量启用/禁用</td><td style="color:#1b5e20">✅ 允许</td><td style="color:#e65100">⚠️ 本店</td><td>同上</td></tr>
+  </table>
+
+  <div class="highlight-box">
+    <b>实现要点：</b>
+    <ul>
+      <li>通过 <code>CURRENT_USER_ROLE</code> 判断角色（<code>'enterprise'</code> | <code>'store'</code>）。</li>
+      <li>门店角色登录时，商品列表自动筛选为本门店数据（侧边栏计数也仅统计本门店）。</li>
+      <li>企业角色登录时，默认显示全部门店数据（近期交互改为倒序排列——最新上架的商品优先展示）。</li>
+      <li>后续接入后端 API 时，写操作接口需在服务端再次校验权限。</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ======== 5.10 数据模型与状态管理 ======== -->
+<div class="section">
+  <h2><span class="num">5.10</span> 数据模型与状态管理</h2>
+
+  <h3>核心全局变量</h3>
+  <table>
+    <tr><th>变量</th><th>类型</th><th>说明</th></tr>
+    <tr><td><code>GL_MOCK_DATA</code></td><td>Array</td><td>商品列表数据源（内存数组）。初始化时生成 50 条模拟数据，按 <code>PRODUCT_DEFS</code> 绑定合理的规格和分类</td></tr>
+    <tr><td><code>GL_SYSTEM_GOODS</code></td><td>Array</td><td>系统商品库（30 条），用于新增普通商品时的搜索选择</td></tr>
+    <tr><td><code>PRODUCT_DEFS</code></td><td>Object</td><td>商品定义字典，key=商品名，value={specs, category}。绑定每个系统商品的合理规格列表和默认分类，避免不合逻辑的组合</td></tr>
+    <tr><td><code>GL_PAGE</code></td><td>number</td><td>当前页码，默认 1</td></tr>
+    <tr><td><code>GL_PAGE_SIZE</code></td><td>number</td><td>每页条数，固定 10</td></tr>
+    <tr><td><code>GL_SELECTED_ID</code></td><td>string|null</td><td>当前高亮行 goodsId，用于行选择和编辑跳转</td></tr>
+    <tr><td><code>GL_FILTER_CATEGORY</code></td><td>string</td><td>分类筛选：''=全部，否则为 categoryId</td></tr>
+    <tr><td><code>GL_FILTER_ENABLE</code></td><td>string</td><td>上下架筛选：''=全部，'0'=上架，'1'=下架</td></tr>
+    <tr><td><code>GL_FILTER_SHOP</code></td><td>string</td><td>门店筛选：''=全部</td></tr>
+    <tr><td><code>GL_FILTER_KEYWORD</code></td><td>string</td><td>关键词搜索</td></tr>
+    <tr><td><code>GL_FILTER_SALE_TYPE</code></td><td>string</td><td>售卖类型筛选：''=全部，'sell'=售卖品，'nosell'=非售品</td></tr>
+    <tr><td><code>GL_ADD_MODE</code> / <code>GL_EDIT_DATA</code></td><td>string / object|null</td><td>普通商品弹窗模式（'add'/'edit'）和当前编辑对象</td></tr>
+    <tr><td><code>GL_STD_ADD_MODE</code> / <code>GL_STD_EDIT_DATA</code></td><td>string / object|null</td><td>标品弹窗模式（'add'/'edit'）和当前编辑对象</td></tr>
+  </table>
+
+  <h3>Mock 数据字段</h3>
+  <table>
+    <tr><th>字段</th><th>类型</th><th>说明</th></tr>
+    <tr><td><code>goodsId</code></td><td>string</td><td>主键，格式：普通商品 "g-N"，标品 "g-std-timestamp"</td></tr>
+    <tr><td><code>goodsName</code></td><td>string</td><td>系统商品名</td></tr>
+    <tr><td><code>salesName</code></td><td>string</td><td>销售品名（可为空，为空时显示 goodsName）</td></tr>
+    <tr><td><code>goodsCode</code></td><td>string</td><td>商品编码：标品 = 69 开头 EAN-13，普通商品 = "SP" + 年份 + 序号</td></tr>
+    <tr><td><code>goodsUnitId</code></td><td>string</td><td>单位（斤/千克/克/袋/瓶/盒/个/包/升/毫升）</td></tr>
+    <tr><td><code>goodsSpec</code></td><td>string</td><td>规格字符串（如 "500g/袋"，标品还可能含 " | 180天"）</td></tr>
+    <tr><td><code>goodsPrice</code></td><td>number</td><td>售价</td></tr>
+    <tr><td><code>goodsListPrice</code></td><td>number</td><td>原价（≈ 售价 × 1.15）</td></tr>
+    <tr><td><code>memberPrice</code></td><td>number|null</td><td>会员价（预留，当前为 null）</td></tr>
+    <tr><td><code>status</code></td><td>string</td><td>商品状态：'0'=启用，'1'=禁用</td></tr>
+    <tr><td><code>enable</code></td><td>number</td><td>上下架：0=上架，1=下架</td></tr>
+    <tr><td><code>isSellable</code></td><td>number</td><td>非售品标识：0=是（非售），1=否（可售）</td></tr>
+    <tr><td><code>categoryId</code></td><td>string</td><td>所属分类 ID（c1~c8）</td></tr>
+    <tr><td><code>goodsBrand</code></td><td>string</td><td>品牌（标品才有值，普通商品为空）</td></tr>
+    <tr><td><code>goodsTag</code></td><td>string</td><td>标签（预留，非售品可能填充赠品/试吃品等）</td></tr>
+    <tr><td><code>shopName</code></td><td>string</td><td>所属门店</td></tr>
+    <tr><td><code>picUrl</code></td><td>string</td><td>商品图片 URL</td></tr>
+    <tr><td><code>storage</code></td><td>string</td><td>贮藏条件（仅标品）</td></tr>
+    <tr><td><code>shelfLife</code></td><td>string</td><td>保质期数值（仅标品）</td></tr>
+    <tr><td><code>shelfLifeType</code></td><td>string</td><td>保质期单位：day/month/year（仅标品）</td></tr>
+  </table>
+
+  <h3>行编辑路由规则</h3>
+  <p>点击表格行时自动判断弹窗类型：</p>
+  <ul>
+    <li>若 <code>goodsBrand</code> 有值 <b>或</b> <code>goodsCode</code> 以 69 开头 → 标品弹窗（<code>glOpenStandardModal(data)</code>）</li>
+    <li>否则 → 普通商品弹窗（<code>glOpenAddModal(data)</code>）</li>
+  </ul>
+
+  <h3>筛选条件重置</h3>
+  <p>「重置」按钮恢复所有筛选条件为默认值：分类=''、上下架=''、门店=''、售卖类型=''、关键词=''、页码=1、高亮=null。同时恢复侧边栏高亮为「全部」并刷新分类计数。</p>
+</div>
+
+<!-- ======== 6. 成功指标 ======== -->
+<div class="section">
+  <h2><span class="num">6</span> 成功指标 (Success Metrics)</h2>
+
+  <h3>6.1 用户体验指标</h3>
+  <div class="metric-row">
+    <div class="metric-card">
+      <div class="label">商品筛选耗时</div>
+      <div class="value">&lt; 10s</div>
+      <div class="target">从打开页面到定位目标商品（含分类筛选 + 关键词）</div>
+    </div>
+    <div class="metric-card">
+      <div class="label">新增商品耗时</div>
+      <div class="value">&lt; 2min</div>
+      <div class="target">从点击「新增商品」到确认保存</div>
+    </div>
+    <div class="metric-card">
+      <div class="label">批量操作耗时</div>
+      <div class="value">&lt; 5s</div>
+      <div class="target">勾选 N 件商品 → 点击「下架」的交互时间</div>
+    </div>
+    <div class="metric-card">
+      <div class="label">分类跳转精准度</div>
+      <div class="value">100%</div>
+      <div class="target">从分类管理页面跳转后，自动筛选为对应分类，无需二次操作</div>
+    </div>
+  </div>
+
+  <h3>6.2 业务指标</h3>
+  <ul>
+    <li><b>商品维护效率提升</b>：店长每日商品维护时间从 30 分钟降低到 15 分钟以内（批量操作 + 多维度筛选）。</li>
+    <li><b>商品数据准确率</b>：通过系统商品库引用和必填校验，减少手动录入错误（如条码重复、规格不规范）。</li>
+    <li><b>上下架响应速度</b>：促销季末批量下架操作从 10 分钟（逐条）降至 30 秒以内。</li>
+  </ul>
+</div>
+
+<!-- ======== 7. 待确认问题 ======== -->
+<div class="section">
+  <h2><span class="num">7</span> 待确认问题 (Open Questions)</h2>
+
+  <table>
+    <tr><th>#</th><th>问题</th><th>责任人</th><th>是否阻塞</th><th>备注</th></tr>
+    <tr>
+      <td><del>Q1</del></td>
+      <td><del>商品数据是否需要持久化存储（后端 API）？目前仅前端内存保存</del><br><b>✅ 已确认：不需要，目前已有接口</b></td>
+      <td>工程</td>
+      <td>否</td>
+      <td>已有后端 API，数据模型和接口就绪</td>
+    </tr>
+    <tr>
+      <td>Q2</td>
+      <td>是否支持按「默认排序」切换？如按价格升序、按上架时间倒序</td>
+      <td>产品</td>
+      <td>否</td>
+      <td>当前固定按 Mock 数据顺序展示；未来可考虑添加排序切换</td>
+    </tr>
+    <tr>
+      <td>Q3</td>
+      <td>新增标品时，条码（69 码）是否需要接入真实条码查询 API 自动补全商品名？</td>
+      <td>产品 + 工程</td>
+      <td>否</td>
+      <td>当前仅提供系统商品库搜索选择；未来可接入 GS1 等条码 API 自动带出商品信息</td>
+    </tr>
+    <tr>
+      <td>Q4</td>
+      <td>每页显示 10 条是否足够？是否需要提供每页条数切换（10/20/50）？</td>
+      <td>产品</td>
+      <td>否</td>
+      <td>当前商品量级（每家门店数十到数百 SKU）10 条/页足够；随数据量增长可评估</td>
+    </tr>
+    <tr>
+      <td>Q5</td>
+      <td>会员价字段当前为「预留」，何时正式启用？</td>
+      <td>产品 + 业务</td>
+      <td>否</td>
+      <td>需与营销团队确认会员价策略和规则引擎需求后再排期</td>
+    </tr>
+    <tr>
+      <td>Q6</td>
+      <td>标签字段当前为「预留」，标签体系何时上线？</td>
+      <td>产品</td>
+      <td>否</td>
+      <td>标签的 CRUD 管理为独立模块，独立排期</td>
+    </tr>
+  </table>
+</div>
+
+<!-- ======== 8. API 接口定义 ======== -->
+<div class="section">
+  <h2><span class="num">8</span> API 接口定义</h2>
+
+  <div class="highlight-box">
+    <b>说明：</b>所有接口统一使用 <b>POST</b> 协议，通过路径区分业务操作。本页面涉及的商品 CRUD、批量状态更新等接口需要在已有商品接口基础上进行调整后独立定义，本章仅列出本页面依赖的<b>分类侧边栏相关接口</b>。完整接口定义详见 <a href="prd-goods-category.html" style="color:#005CF5;">商品分类管理 PRD 第 8 章</a>。
+  </div>
+
+  <h3>8.1 接口概览</h3>
+  <table>
+    <tr><th>#</th><th>路径</th><th>权限</th><th>说明</th></tr>
+    <tr>
+      <td>1</td>
+      <td><code>/api/v1/categories</code></td>
+      <td>企业 / 门店</td>
+      <td>查询分类列表（侧边栏数据源，按 sort 升序，含商品数量）</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td><code>/api/v1/categories/{id}</code></td>
+      <td>企业 / 门店</td>
+      <td>查询单个分类详情（含商品数量）</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td><code>/api/v1/categories/{id}/products/count</code></td>
+      <td>企业 / 门店</td>
+      <td>查询分类下商品数量（侧边栏徽标数据）</td>
+    </tr>
+  </table>
+
+  <h3>8.2 待定义接口</h3>
+  <p>以下接口需在已有商品接口基础上进行调整后补充定义（不在本文档中展开）：</p>
+
+  <table>
+    <tr><th>#</th><th>接口</th><th>调整说明</th></tr>
+    <tr>
+      <td>A1</td>
+      <td>商品列表查询</td>
+      <td>需支持多维度筛选（门店、分类、售卖类型、上下架、关键词）+ 分页</td>
+    </tr>
+    <tr>
+      <td>A2</td>
+      <td>商品详情查询</td>
+      <td>单个商品完整信息（含分类名、门店名、标品/普通商品标识）</td>
+    </tr>
+    <tr>
+      <td>A3</td>
+      <td>新增/编辑商品（普通商品）</td>
+      <td>从系统商品库选择或完全新建，含图片上传</td>
+    </tr>
+    <tr>
+      <td>A4</td>
+      <td>新增/编辑标品</td>
+      <td>含 69 码条码、品牌、标品名称只读等特有字段</td>
+    </tr>
+    <tr>
+      <td>A5</td>
+      <td>批量状态更新</td>
+      <td>支持 enable（上下架）、status（启用/禁用）字段的批量更新</td>
+    </tr>
+    <tr>
+      <td>A6</td>
+      <td>系统商品库搜索</td>
+      <td>用于新增普通商品时的联想搜索下拉，支持模糊匹配</td>
+    </tr>
+  </table>
+</div>
+
+<!-- ======== 9. 版本记录 ======== -->
+<div class="section">
+  <h2><span class="num">9</span> 版本记录</h2>
+  <table class="version-table">
+    <tr><th>版本</th><th>日期</th><th>作者</th><th>变更内容</th></tr>
+    <tr>
+      <td>v1.3</td>
+      <td>2026-06-30</td>
+      <td>产品通</td>
+      <td>明确所有接口统一使用 POST 协议</td>
+    </tr>
+    <tr>
+      <td>v1.2</td>
+      <td>2026-06-30</td>
+      <td>产品通</td>
+      <td>
+        API 章节调整：去掉 HTTP 方法列；A5 批量状态更新去掉 PATCH 引用
+      </td>
+    </tr>
+    <tr>
+      <td>v1.1</td>
+      <td>2026-06-30</td>
+      <td>产品通</td>
+      <td>
+        根据当前实现更新：<br>
+        • 修正普通商品弹窗字段（移除不存在的保质期/贮藏/非售商品，补充品牌位置和 2 列网格布局）<br>
+        • 修正标品弹窗描述（贮藏方式→贮藏，补充编辑态条码只读/保质期格式化/规格兼容解析逻辑）<br>
+        • 新增 5.10 数据模型与状态管理（全局变量、Mock 数据字段、行编辑路由规则、筛选重置）<br>
+        • 完善分类侧边栏联动（外部跳转、筛选条件保留、隐藏分类过滤）<br>
+        • 修正 Non-goals 会员价描述（仅作展示，非手动录入）
+      </td>
+    </tr>
+    <tr>
+      <td>v1.0</td>
+      <td>2026-06-30</td>
+      <td>产品通</td>
+      <td>
+        初始版本：<br>
+        • 定义页面左右分栏布局（分类侧边栏 + 数据表格）<br>
+        • 定义多维度筛选（门店/售卖类型/上下架/关键词）<br>
+        • 定义数据表格列（15 列，含会员价和标签预留字段）<br>
+        • 定义新增/编辑弹窗（普通商品 + 标品）<br>
+        • 定义批量操作（上架/下架/启用/禁用）<br>
+        • 定义分类侧边栏联动规则<br>
+        • 定义角色权限控制（企业 vs 门店）<br>
+        • 定义 API 接口规划
+      </td>
+    </tr>
+  </table>
+</div>
+
+</div>
+</body>
+</html>

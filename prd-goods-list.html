@@ -69,7 +69,7 @@
   <h1>产品需求文档：商品列表管理</h1>
   <div class="subtitle">Product Requirements Document — Goods List Management</div>
   <div class="meta">
-    <span>📅 版本 v1.3</span>
+    <span>📅 版本 v1.4</span>
     <span>📌 状态 <b class="status-badge status-wip">迭代中</b></span>
     <span>👤 产品：产品通</span>
     <span>📆 日期 2026-06-30</span>
@@ -84,7 +84,7 @@
   <p>生鲜零售门店运营中，店长和收银员每天需要频繁与商品数据打交道。当前系统缺少一个集中化的商品管理入口，导致以下问题：</p>
   <ul>
     <li><b>商品分散，缺少全局视图</b>：商品散落在不同门店和分类下，店长无法从一个页面总览全部在售商品，不清楚哪些商品缺货、哪些已下架。</li>
-    <li><b>筛选维度不足</b>：仅有简单的搜索框，无法按「门店」「上下架状态」「售卖类型」「商品分类」等维度组合筛选，查找特定商品效率低。</li>
+    <li><b>筛选维度不足</b>：仅有简单的搜索框，无法按「门店」「上下架状态」「启用/禁用状态」「售卖类型」「商品分类」等维度组合筛选，查找特定商品效率低。</li>
     <li><b>新增/编辑流程割裂</b>：新增商品需要在多个页面跳转（先录入基本信息，再去另一页配图/调价），操作链路长且容易遗漏。</li>
     <li><b>批量操作缺失</b>：季末或促销结束后需要批量下架商品时，只能逐个操作，耗时且容易出错。</li>
     <li><b>与商品分类体系未打通</b>：分类管理页面维护了分类后，商品列表无法直接联动筛选，需要手动搜索分类名。</li>
@@ -191,7 +191,7 @@
 
   <div class="story-card">
     <div class="actor">US3 — 作为企业管理员</div>
-    <div class="want">我希望通过门店、售卖类型（售卖品/非售品）、上下架状态、关键词等多个维度组合筛选商品，</div>
+    <div class="want">我希望通过门店、售卖类型（售卖品/非售品）、上下架状态、启用/禁用状态、关键词等多个维度组合筛选商品，</div>
     <div class="benefit">以便在促销结束后快速定位需要下架的特定商品，或在换季时统一调整季节性商品的上下架状态。</div>
   </div>
 
@@ -282,9 +282,15 @@
     </tr>
     <tr>
       <td>上下架状态</td>
-      <td>单选按钮组 (radio group)</td>
+      <td>分段按钮组 (radio group)</td>
       <td>全部</td>
       <td>可选值：全部 / 上架 / 下架。与售卖类型为 AND 关系</td>
+    </tr>
+    <tr>
+      <td>启用/禁用</td>
+      <td>分段按钮组 (radio group)</td>
+      <td>全部</td>
+      <td>可选值：全部 / 启用 / 禁用。控制商品的 status 字段（'0'=启用，'1'=禁用），与上下架（enable 字段）为独立维度，并列展示在上下架筛选后面</td>
     </tr>
     <tr>
       <td>关键词搜索</td>
@@ -490,6 +496,7 @@
     <tr><td><code>GL_SELECTED_ID</code></td><td>string|null</td><td>当前高亮行 goodsId，用于行选择和编辑跳转</td></tr>
     <tr><td><code>GL_FILTER_CATEGORY</code></td><td>string</td><td>分类筛选：''=全部，否则为 categoryId</td></tr>
     <tr><td><code>GL_FILTER_ENABLE</code></td><td>string</td><td>上下架筛选：''=全部，'0'=上架，'1'=下架</td></tr>
+    <tr><td><code>GL_FILTER_STATUS</code></td><td>string</td><td>启用/禁用筛选：''=全部，'0'=启用，'1'=禁用</td></tr>
     <tr><td><code>GL_FILTER_SHOP</code></td><td>string</td><td>门店筛选：''=全部</td></tr>
     <tr><td><code>GL_FILTER_KEYWORD</code></td><td>string</td><td>关键词搜索</td></tr>
     <tr><td><code>GL_FILTER_SALE_TYPE</code></td><td>string</td><td>售卖类型筛选：''=全部，'sell'=售卖品，'nosell'=非售品</td></tr>
@@ -530,7 +537,7 @@
   </ul>
 
   <h3>筛选条件重置</h3>
-  <p>「重置」按钮恢复所有筛选条件为默认值：分类=''、上下架=''、门店=''、售卖类型=''、关键词=''、页码=1、高亮=null。同时恢复侧边栏高亮为「全部」并刷新分类计数。</p>
+  <p>「重置」按钮恢复所有筛选条件为默认值：分类=''、上下架=''、启用/禁用=''、门店=''、售卖类型=''、关键词=''、页码=1、高亮=null。同时恢复侧边栏高亮为「全部」并刷新分类计数。</p>
 </div>
 
 <!-- ======== 6. 成功指标 ======== -->
@@ -694,6 +701,17 @@
   <h2><span class="num">9</span> 版本记录</h2>
   <table class="version-table">
     <tr><th>版本</th><th>日期</th><th>作者</th><th>变更内容</th></tr>
+    <tr>
+      <td>v1.4</td>
+      <td>2026-07-01</td>
+      <td>产品通</td>
+      <td>
+        筛选栏新增「启用/禁用」分段筛选（位于上下架后面，全部/启用/禁用三选项）：<br>
+        • 新增全局变量 <code>GL_FILTER_STATUS</code><br>
+        • 分段控件样式对齐 Vue Element Plus 风格（独立边框 + 负 margin 无缝拼接，激活态蓝边）<br>
+        • 修正上下架状态控件类型描述：单选按钮组 → 分段按钮组
+      </td>
+    </tr>
     <tr>
       <td>v1.3</td>
       <td>2026-06-30</td>

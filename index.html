@@ -4051,8 +4051,13 @@ function initStoreForm() {
               '<label style="display:flex;align-items:center;cursor:pointer"><input type="checkbox" id="sfInventorySwitch" '+(d&&d.inventorySwitch===1?'checked':'')+' style="margin-right:8px">开启</label>' +
             '</div>' +
           '</div>' +
-        '</div>' +
+          '</div>' +
 
+      '</div>' +
+      // ===== 底部操作栏（居中）=====
+      '<div class="gf-footer">' +
+        '<button class="ic-btn" onclick="smCloseForm()">取消</button>' +
+        '<button class="ic-btn ic-btn-pri" onclick="smSaveForm()">保存</button>' +
       '</div>' +
     '</div>';
 

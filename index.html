@@ -2501,6 +2501,11 @@ Chart.register({
       <div id="storeManageContent" style="display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden;background:#F1F2F5"></div>
     </div>
 
+    <!-- ===== STORE FORM PAGE ===== -->
+    <div class="page page-fill" id="page-store-form">
+      <div id="storeFormContent" style="display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden;background:#fff"></div>
+    </div>
+
   </div><!-- /content -->
 </div><!-- /main -->
 
@@ -2656,7 +2661,7 @@ var TICKER_DATA = [
   { date: '07/01', type: 'new', title: '商品分类', page: 'goods-class', status: 'done' },
   { date: '07/01', type: 'adjust', title: '商品列表', page: 'goods-list', status: 'done' },
   { date: '—',   type: 'new', title: '企业管理', page: 'group-manage', status: 'pending' },
-  { date: '—',   type: 'new', title: '门店管理', page: 'store-manage', status: 'pending' }
+  { date: '07/01', type: 'new', title: '门店管理', page: 'store-manage', status: 'done' },
 ];
 
 function initTicker() {
@@ -3348,7 +3353,7 @@ const pageTitles = {
   'item-code': '打码记录', 'remove-guard': '结算移除',
   'order-hold': '挂单记录', 'shift-handover': '交班记录', 'personal-shift': '交班记录',
   'price-log': '改价日志', 'goods-class': '商品分类', 'goods-list': '商品列表',
-  'group-manage': '企业管理', 'store-manage': '门店管理', 'group-form': '企业管理'
+  'group-manage': '企业管理', 'store-manage': '门店管理', 'group-form': '企业管理', 'store-form': '门店管理'
 };
 const PAGE_GROUPS = {
   overview: '核心看板', transaction: '核心看板',
@@ -3359,7 +3364,7 @@ const PAGE_GROUPS = {
   'label-print': '打印管理',
   'item-code': '销售管理', 'remove-guard': '销售管理', 'order-hold': '销售管理', 'shift-handover': '销售管理', 'personal-shift': '销售管理',
   'price-log': '商品管理', 'goods-class': '商品管理', 'goods-list': '商品管理',
-  'group-manage': '系统管理', 'store-manage': '系统管理', 'group-form': '系统管理'
+  'group-manage': '系统管理', 'store-manage': '系统管理', 'group-form': '系统管理', 'store-form': '系统管理'
 };
 const initializedPages = new Set();
 
@@ -3449,7 +3454,7 @@ function initPage(id) {
     'order-hold': initOrderHold, 'shift-handover': initShiftHandover, 'daily-report': initDailyReport,
     'personal-shift': initPersonalShift, 'price-log': initPriceLog,
     'goods-class': initGoodsClass, 'goods-list': initGoodsList,
-    'group-manage': initGroupManage, 'store-manage': initStoreManage, 'group-form': initGroupForm
+    'group-manage': initGroupManage, 'store-manage': initStoreManage, 'group-form': initGroupForm, 'store-form': initStoreForm
   };
   if (fns[id]) fns[id]();
 }
@@ -3469,7 +3474,7 @@ var STORE_DATA = [
   { shopId: 'S2006', companyId: 'G1003', shopName: '鲜达-福田社区店', businessLicenseNo: '92440300MA5XXXXX32', businessLicenseFileId: '', businessLicenseExpirationTime: '2027-09-30', businessRegistrationAddress: '深圳市福田区福华路50号', shopFrontFileId: '', identityCardFrontFileId: '', identityCardBackFileId: '', lrName: '王强', identityCardNo: '440301198910204567', identityCardExpirationTime: '2030-10-20', licenseFileId: '', businessScenarioFileIds: [], inventorySwitch: 1, contact: '周杰', contactPhoneNumber: '13400134006', effectiveTime: '2024-01-05', status: '1' }
 ];
 var GROUP_PAGE = 1, GROUP_PAGE_SIZE = 10, GROUP_FILTER_KEYWORD = '', GROUP_EDIT_ID = null;
-var STORE_PAGE = 1, STORE_PAGE_SIZE = 10, STORE_FILTER_COMPANY = 'all', STORE_FILTER_KEYWORD = '', STORE_EDIT_ID = null;
+var SM_PAGE = 1, SM_PAGE_SIZE = 10, SM_FILTER_COMPANY = 'all', SM_FILTER_KEYWORD = '', STORE_EDIT_ID = null;
 
 function gmBuildCompanyOptions(selectedId) {
   return GROUP_DATA.map(function(r){return '<option value="'+r.companyId+'"'+(r.companyId===selectedId?' selected':'')+'>'+r.companyName+'</option>';}).join('');
@@ -3848,202 +3853,234 @@ function gmGoPage(p) {
 function initStoreManage() {
   var el = document.getElementById('storeManageContent');
   if (!el) { setTimeout(initStoreManage, 80); return; }
+  var companyOpts = '<option value="all">全部企业</option>' + (GROUP_DATA||[]).map(function(r){return '<option value="'+r.companyId+'">'+r.companyName+'</option>';}).join('');
   el.innerHTML =
     '<div style="display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden;background:#F1F2F5">' +
+      // 筛选栏
       '<div style="margin:0;padding:14px 24px;background:#fff;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:10px;flex-wrap:wrap">' +
-        '<select class="gl-form-input" id="storeCompanyFilter" style="width:180px" onchange="STORE_FILTER_COMPANY=this.value;STORE_PAGE=1;renderStoreTable()">' +
-          '<option value="all">全部企业</option>' +
-          GROUP_DATA.map(function(r){return '<option value="'+r.companyId+'">'+r.companyName+'</option>';}).join('') +
+        '<select id="smFilterCompany" style="width:160px;height:32px;padding:0 10px;border:1px solid #e8e8e8;border-radius:4px;font-size:13px;background:#fff;outline:none;box-sizing:border-box" onchange="SM_FILTER_COMPANY=this.value;SM_PAGE=1;smRenderTable()">' +
+          companyOpts +
         '</select>' +
-        '<input class="gl-form-input" id="storeSearchInput" style="width:200px" placeholder="门店名称或信用代码" oninput="STORE_FILTER_KEYWORD=this.value;STORE_PAGE=1;renderStoreTable()">' +
-        '<div style="flex:1"></div>' +
-        (CURRENT_USER_ROLE === 'enterprise' ? '<button class="ic-btn ic-btn-pri" style="margin-right:8px" onclick="showStoreModal()"><span style="margin-right:3px;font-size:13px">+</span>新增</button>' : '') +
-        (CURRENT_USER_ROLE === 'enterprise' ? '<button class="ic-btn" onclick="smBatchEnable()">启用</button>' : '') +
-        (CURRENT_USER_ROLE === 'enterprise' ? '<button class="ic-btn" onclick="smBatchDisable()">禁用</button>' : '') +
+        '<input id="smFilterKeyword" style="width:200px;height:32px;padding:0 10px;border:1px solid #e8e8e8;border-radius:4px;font-size:13px;outline:none;box-sizing:border-box" placeholder="门店名称或信用代码" oninput="smFilterInput()">' +
+        '<button class="ic-btn" onclick="smReset()" style="margin-left:auto">重置</button>' +
+        '<button class="ic-btn ic-btn-pri" onclick="smSearch()">查询</button>' +
       '</div>' +
-      '<div id="storeTableWrap" style="flex:1;overflow:auto;margin:10px 8px 8px;padding:1px;background:linear-gradient(180deg,#e0e3e8,#f0f2f5);border-radius:10px">' +
-        '<table class="gl-table" id="storeTable"><thead><tr>' +
-          '<th style="width:40px"><input type="checkbox" id="storeCheckAll" onchange="smToggleCheckAll(this)"></th>' +
-          '<th style="width:50px">序号</th><th>门店名称</th><th>统一社会信用代码</th><th>联系人</th><th>开通时间</th><th>所属企业</th><th>状态</th>' +
-        '</tr></thead><tbody id="storeTableBody"></tbody></table>' +
+      // 按钮栏
+      (CURRENT_USER_ROLE === 'enterprise' ?
+      '<div style="padding:12px 24px;background:#fff;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:8px">' +
+        '<button class="ic-btn ic-btn-pri" onclick="smOpenAdd()"><span style="margin-right:3px;font-size:13px">+</span>新增</button>' +
+        '<button class="ic-btn" onclick="smBatchEdit()">编辑</button>' +
+        '<button class="ic-btn" onclick="smBatchEnable()">启用</button>' +
+        '<button class="ic-btn" onclick="smBatchDisable()">禁用</button>' +
+      '</div>' : '') +
+      // 表格卡片
+      '<div id="smTableCard" style="flex:1;overflow:auto;margin:10px 8px 8px;padding:1px;background:linear-gradient(180deg,#e0e3e8,#f0f2f5);border-radius:4px">' +
+        '<table class="gl-table" id="smTable" style="background:#fff;border-radius:3px">' +
+          '<thead><tr>' +
+            '<th style="width:40px"><input type="checkbox" id="smCheckAll" onchange="smToggleCheckAll(this)"></th>' +
+            '<th style="width:50px">序号</th><th>门店名称</th><th>统一社会信用代码</th><th>联系人</th><th>开通时间</th><th>所属企业</th><th>状态</th>' +
+          '</tr></thead>' +
+          '<tbody id="smTableBody"></tbody>' +
+        '</table>' +
       '</div>' +
-      '<div class="pagination-bar" id="storePageBar"></div>' +
+      // 分页
+      '<div class="pagination-bar" id="smPageBar" style="flex-shrink:0"></div>' +
     '</div>';
-  if (!document.getElementById('storeModal')) {
-    document.body.insertAdjacentHTML('beforeend',
-      '<div id="storeModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:1000;background:rgba(0,0,0,0.35);justify-content:center;align-items:center" onclick="if(event.target===this)closeStoreModal()">' +
-        '<div style="background:#fff;border-radius:12px;width:680px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.2)">' +
-          '<div style="padding:16px 24px;border-bottom:1px solid #e8e8e8;font-size:16px;font-weight:700" id="storeModalTitle">新增门店</div>' +
-          '<div style="padding:20px 24px">' +
-            '<!-- 门店信息 -->' +
-            '<div style="margin-bottom:20px;border:1px solid #e8e8e8;border-radius:8px;overflow:hidden">' +
-              '<div style="padding:10px 16px;background:#fafafa;font-weight:600;font-size:13px;border-bottom:1px solid #e8e8e8">门店信息</div>' +
-              '<div style="padding:14px 16px;display:grid;grid-template-columns:1fr 1fr;gap:12px 20px">' +
-                '<div class="gl-form-item"><label>营业执照</label><input class="gl-form-input" id="sBizLicenseFileId" placeholder="营业执照文件ID"></div>' +
-                '<div class="gl-form-item"><label>门头照 <span style="color:#f56c6c">*</span></label><input class="gl-form-input" id="sShopFrontFileId" placeholder="门头照文件ID（必填）"></div>' +
-                '<div class="gl-form-item"><label>门店名称 <span style="color:#f56c6c">*</span></label><input class="gl-form-input" id="sShopName" placeholder="请输入门店名称"></div>' +
-                '<div class="gl-form-item"><label>统一社会信用代码</label><input class="gl-form-input" id="sLicenseNo" placeholder="请输入统一社会信用代码"></div>' +
-                '<div class="gl-form-item"><label>营业执照有效期至</label><input class="gl-form-input" type="date" id="sBizLicenseExpTime"></div>' +
-                '<div class="gl-form-item"><label>注册地址</label><input class="gl-form-input" id="sBizRegAddress" placeholder="请输入注册地址"></div>' +
+  smRenderTable();
+}
+
+
+// ===== STORE FORM FUNCTIONS =====
+function initStoreForm() {
+  var el = document.getElementById('storeFormContent');
+  if (!el) { setTimeout(initStoreForm, 80); return; }
+  var isEdit = STORE_EDIT_ID !== null;
+  var title = document.getElementById('storeFormTitle');
+  if (title) title.textContent = isEdit ? '编辑门店' : '新增门店';
+
+  var d = isEdit ? (function(){ var r=null; STORE_DATA.forEach(function(s){if(s.shopId===STORE_EDIT_ID)r=s;}); return r; })() : null;
+  var companyOpts = (GROUP_DATA||[]).map(function(g){
+    return '<option value="'+g.companyId+'"'+(d&&d.companyId===g.companyId?' selected':'')+'>'+g.companyName+'</option>';
+  }).join('');
+
+  el.innerHTML =
+    '<div style="background:#fff;min-height:100%;display:flex;flex-direction:column">' +
+      '<div style="flex:1;padding:24px 28px;overflow-y:auto">' +
+
+        '<!-- 门店信息 -->' +
+        '<div class="gf-section" style="margin-bottom:28px">' +
+          '<div class="gf-section-hd">门店信息</div>' +
+          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 32px">' +
+            '<div class="gf-row" style="display:flex;align-items:center;margin-bottom:18px">' +
+              '<label class="gf-label" style="width:100px;text-align:right;padding-right:12px;color:#606266;font-size:13px;flex-shrink:0">营业执照</label>' +
+              '<div class="sf-upload" id="sfLicenseUpload" style="width:148px;height:148px;border:1px dashed #dcdfe6;border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;overflow:hidden" onclick="smTriggerUpload(\'businessLicenseFileId\',\'sfLicensePreview\',this)">' +
+                (d&&d.businessLicenseFileId?'<img id="sfLicensePreview" src="#" style="width:100%;height:100%;object-fit:cover"><div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.45);color:#fff;font-size:11px;text-align:center;padding:3px 0;display:none" id="sfLicenseRemove" onclick="event.stopPropagation();smRemoveUpload(\'businessLicenseFileId\',\'sfLicensePreview\',\'sfLicenseUpload\')">移除</div>':'<span style="font-size:28px;color:#bbb;line-height:1">+</span><span style="font-size:11px;color:#999;margin-top:4px">营业执照</span><img id="sfLicensePreview" style="display:none;width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0"><input type="file" id="sfFileInput_license" accept="image/*" style="display:none" onchange="smHandleUpload(this,\'businessLicenseFileId\',\'sfLicensePreview\',\'sfLicenseUpload\')">') +
               '</div>' +
             '</div>' +
-            '<!-- 法人信息 -->' +
-            '<div style="margin-bottom:20px;border:1px solid #e8e8e8;border-radius:8px;overflow:hidden">' +
-              '<div style="padding:10px 16px;background:#fafafa;font-weight:600;font-size:13px;border-bottom:1px solid #e8e8e8">法人信息</div>' +
-              '<div style="padding:14px 16px;display:grid;grid-template-columns:1fr 1fr;gap:12px 20px">' +
-                '<div class="gl-form-item"><label>身份证正面 <span style="color:#f56c6c">*</span></label><input class="gl-form-input" id="sIdCardFrontFileId" placeholder="人像面文件ID（必填）"></div>' +
-                '<div class="gl-form-item"><label>身份证反面 <span style="color:#f56c6c">*</span></label><input class="gl-form-input" id="sIdCardBackFileId" placeholder="国徽面文件ID（必填）"></div>' +
-                '<div class="gl-form-item"><label>法人姓名</label><input class="gl-form-input" id="sLrName" placeholder="请输入法人姓名"></div>' +
-                '<div class="gl-form-item"><label>身份证号</label><input class="gl-form-input" id="sIdCardNo" placeholder="请输入法人身份证号"></div>' +
-                '<div class="gl-form-item"><label>身份证有效期至</label><input class="gl-form-input" type="date" id="sIdCardExpTime"></div>' +
+            '<div class="gf-row" style="display:flex;align-items:center;margin-bottom:18px">' +
+              '<label class="gf-label" style="width:100px;text-align:right;padding-right:12px;color:#606266;font-size:13px;flex-shrink:0"><span style="color:#f56c6c;margin-right:2px">*</span>门头照</label>' +
+              '<div class="sf-upload" id="sfDoorUpload" style="width:148px;height:148px;border:1px dashed #dcdfe6;border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;overflow:hidden" onclick="smTriggerUpload(\'shopFrontFileId\',\'sfDoorPreview\',this)">' +
+                (d&&d.shopFrontFileId?'<img id="sfDoorPreview" src="#" style="width:100%;height:100%;object-fit:cover"><div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.45);color:#fff;font-size:11px;text-align:center;padding:3px 0;display:none" id="sfDoorRemove" onclick="event.stopPropagation();smRemoveUpload(\'shopFrontFileId\',\'sfDoorPreview\',\'sfDoorUpload\')">移除</div>':'<span style="font-size:28px;color:#bbb;line-height:1">+</span><span style="font-size:11px;color:#999;margin-top:4px">门头照</span><img id="sfDoorPreview" style="display:none;width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0"><input type="file" id="sfFileInput_door" accept="image/*" style="display:none" onchange="smHandleUpload(this,\'shopFrontFileId\',\'sfDoorPreview\',\'sfDoorUpload\')">') +
               '</div>' +
             '</div>' +
-            '<!-- 其他证照 -->' +
-            '<div style="margin-bottom:20px;border:1px solid #e8e8e8;border-radius:8px;overflow:hidden">' +
-              '<div style="padding:10px 16px;background:#fafafa;font-weight:600;font-size:13px;border-bottom:1px solid #e8e8e8">其他证照</div>' +
-              '<div style="padding:14px 16px;display:grid;grid-template-columns:1fr 1fr;gap:12px 20px">' +
-                '<div class="gl-form-item"><label>许可证 <span style="color:#f56c6c">*</span></label><input class="gl-form-input" id="sLicenseFileId" placeholder="许可证文件ID（必填）"></div>' +
-                '<div class="gl-form-item"><label>经营场景-收银台 <span style="color:#f56c6c">*</span></label><input class="gl-form-input" id="sSceneFileId1" placeholder="收银台照片文件ID（必填）"></div>' +
-                '<div class="gl-form-item"><label>经营场景-货架1</label><input class="gl-form-input" id="sSceneFileId2" placeholder="货架1照片文件ID"></div>' +
-                '<div class="gl-form-item"><label>经营场景-货架2</label><input class="gl-form-input" id="sSceneFileId3" placeholder="货架2照片文件ID"></div>' +
-                '<div class="gl-form-item"><label>经营场景-货架3</label><input class="gl-form-input" id="sSceneFileId4" placeholder="货架3照片文件ID"></div>' +
-              '</div>' +
+            '<div class="gf-row" style="display:flex;align-items:center;margin-bottom:18px">' +
+              '<label class="gf-label" style="width:100px;text-align:right;padding-right:12px;color:#606266;font-size:13px;flex-shrink:0"><span style="color:#f56c6c;margin-right:2px">*</span>门店名称</label>' +
+              '<input class="gf-input" id="sfShopName" value="'+(d?d.shopName:'')+'" placeholder="请输入门店名称" style="flex:1;height:32px;padding:0 10px;border:1px solid #e8e8e8;border-radius:4px;font-size:13px;outline:none;box-sizing:border-box">' +
             '</div>' +
-            '<!-- 其他信息 -->' +
-            '<div style="margin-bottom:20px;border:1px solid #e8e8e8;border-radius:8px;overflow:hidden">' +
-              '<div style="padding:10px 16px;background:#fafafa;font-weight:600;font-size:13px;border-bottom:1px solid #e8e8e8">其他信息</div>' +
-              '<div style="padding:14px 16px;display:grid;grid-template-columns:1fr 1fr;gap:12px 20px">' +
-                '<div class="gl-form-item"><label>所属企业</label><select class="gl-form-input" id="sCompanyId">'+gmBuildCompanyOptions()+'</select></div>' +
-                '<div class="gl-form-item" style="display:flex;align-items:center;gap:8px"><label>库存开关</label><label class="gl-switch"><input type="checkbox" id="sInventorySwitch"><span class="gl-switch-slider"></span></label></div>' +
-                '<div class="gl-form-item"><label>联系人</label><input class="gl-form-input" id="sContact" placeholder="请输入联系人"></div>' +
-                '<div class="gl-form-item"><label>联系电话</label><input class="gl-form-input" id="sContactPhone" placeholder="请输入联系人电话"></div>' +
-              '</div>' +
+            '<div class="gf-row" style="display:flex;align-items:center;margin-bottom:18px">' +
+              '<label class="gf-label" style="width:100px;text-align:right;padding-right:12px;color:#606266;font-size:13px;flex-shrink:0">统一代码</label>' +
+              '<input class="gf-input" id="sfLicenseNo" value="'+(d?d.businessLicenseNo:'')+'" placeholder="请输入统一社会信用代码" style="flex:1;height:32px;padding:0 10px;border:1px solid #e8e8e8;border-radius:4px;font-size:13px;outline:none;box-sizing:border-box">' +
             '</div>' +
-          '</div>' +
-          '<div style="padding:16px 24px;border-top:1px solid #e8e8e8;display:flex;justify-content:flex-end;gap:10px">' +
-            '<button class="ic-btn" onclick="closeStoreModal()">取消</button>' +
-            '<button class="ic-btn ic-btn-pri" onclick="saveStore()">保存</button>' +
+            '<div class="gf-row" style="display:flex;align-items:center;margin-bottom:18px">' +
+              '<label class="gf-label" style="width:100px;text-align:right;padding-right:12px;color:#606266;font-size:13px;flex-shrink:0">有效期至</label>' +
+              '<input class="gf-input" type="date" id="sfBizLicenseExp" value="'+(d?d.businessLicenseExpirationTime:'')+'" style="flex:1;height:32px;padding:0 10px;border:1px solid #e8e8e8;border-radius:4px;font-size:13px;outline:none;box-sizing:border-box">' +
+            '</div>' +
+            '<div class="gf-row" style="display:flex;align-items:center;margin-bottom:18px">' +
+              '<label class="gf-label" style="width:100px;text-align:right;padding-right:12px;color:#606266;font-size:13px;flex-shrink:0">地址</label>' +
+              '<input class="gf-input" id="sfBizRegAddress" value="'+(d?d.businessRegistrationAddress:'')+'" placeholder="请输入注册地址" style="flex:1;height:32px;padding:0 10px;border:1px solid #e8e8e8;border-radius:4px;font-size:13px;outline:none;box-sizing:border-box">' +
+            '</div>' +
           '</div>' +
         '</div>' +
-      '</div>');
+
+        '<!-- 法人信息 -->' +
+        '<div class="gf-section" style="margin-bottom:28px">' +
+          '<div class="gf-section-hd">法人信息</div>' +
+          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 32px">' +
+            '<div class="gf-row" style="display:flex;align-items:center;margin-bottom:18px">' +
+              '<label class="gf-label" style="width:100px;text-align:right;padding-right:12px;color:#606266;font-size:13px;flex-shrink:0"><span style="color:#f56c6c;margin-right:2px">*</span>身份证正反面</label>' +
+              '<div style="display:flex;gap:12px">' +
+                '<div class="sf-upload" id="sfCardFrontUpload" style="width:148px;height:148px;border:1px dashed #dcdfe6;border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;overflow:hidden" onclick="smTriggerUpload(\'identityCardFrontFileId\',\'sfCardFrontPreview\',this)">' +
+                  (d&&d.identityCardFrontFileId?'<img id="sfCardFrontPreview" src="#" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:28px;color:#bbb;line-height:1">+</span><span style="font-size:11px;color:#999;margin-top:4px">人像面</span><img id="sfCardFrontPreview" style="display:none;width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0"><input type="file" id="sfFileInput_front" accept="image/*" style="display:none" onchange="smHandleUpload(this,\'identityCardFrontFileId\',\'sfCardFrontPreview\',\'sfCardFrontUpload\')">') +
+                '</div>' +
+                '<div class="sf-upload" id="sfCardBackUpload" style="width:148px;height:148px;border:1px dashed #dcdfe6;border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;overflow:hidden" onclick="smTriggerUpload(\'identityCardBackFileId\',\'sfCardBackPreview\',this)">' +
+                  (d&&d.identityCardBackFileId?'<img id="sfCardBackPreview" src="#" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:28px;color:#bbb;line-height:1">+</span><span style="font-size:11px;color:#999;margin-top:4px">国徽面</span><img id="sfCardBackPreview" style="display:none;width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0"><input type="file" id="sfFileInput_back" accept="image/*" style="display:none" onchange="smHandleUpload(this,\'identityCardBackFileId\',\'sfCardBackPreview\',\'sfCardBackUpload\')">') +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+            '<div class="gf-row" style="display:flex;align-items:center;margin-bottom:18px">' +
+              '<label class="gf-label" style="width:100px;text-align:right;padding-right:12px;color:#606266;font-size:13px;flex-shrink:0">法人姓名</label>' +
+              '<input class="gf-input" id="sfLrName" value="'+(d?d.lrName:'')+'" placeholder="请输入法人姓名" style="flex:1;height:32px;padding:0 10px;border:1px solid #e8e8e8;border-radius:4px;font-size:13px;outline:none;box-sizing:border-box">' +
+            '</div>' +
+            '<div class="gf-row" style="display:flex;align-items:center;margin-bottom:18px">' +
+              '<label class="gf-label" style="width:100px;text-align:right;padding-right:12px;color:#606266;font-size:13px;flex-shrink:0">身份证号</label>' +
+              '<input class="gf-input" id="sfIdCardNo" value="'+(d?d.identityCardNo:'')+'" placeholder="请输入法人身份证号" style="flex:1;height:32px;padding:0 10px;border:1px solid #e8e8e8;border-radius:4px;font-size:13px;outline:none;box-sizing:border-box">' +
+            '</div>' +
+            '<div class="gf-row" style="display:flex;align-items:center;margin-bottom:18px">' +
+              '<label class="gf-label" style="width:100px;text-align:right;padding-right:12px;color:#606266;font-size:13px;flex-shrink:0">有效期至</label>' +
+              '<input class="gf-input" type="date" id="sfIdCardExp" value="'+(d?d.identityCardExpirationTime:'')+'" style="flex:1;height:32px;padding:0 10px;border:1px solid #e8e8e8;border-radius:4px;font-size:13px;outline:none;box-sizing:border-box">' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+
+        '<!-- 其他证照 -->' +
+        '<div class="gf-section" style="margin-bottom:28px">' +
+          '<div class="gf-section-hd">其他证照</div>' +
+          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 32px">' +
+            '<div class="gf-row" style="display:flex;align-items:center;margin-bottom:18px">' +
+              '<label class="gf-label" style="width:100px;text-align:right;padding-right:12px;color:#606266;font-size:13px;flex-shrink:0"><span style="color:#f56c6c;margin-right:2px">*</span>许可证</label>' +
+              '<div class="sf-upload" id="sfPermitUpload" style="width:148px;height:148px;border:1px dashed #dcdfe6;border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;overflow:hidden" onclick="smTriggerUpload(\'licenseFileId\',\'sfPermitPreview\',this)">' +
+                (d&&d.licenseFileId?'<img id="sfPermitPreview" src="#" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:28px;color:#bbb;line-height:1">+</span><span style="font-size:11px;color:#999;margin-top:4px">许可证</span><img id="sfPermitPreview" style="display:none;width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0"><input type="file" id="sfFileInput_permit" accept="image/*" style="display:none" onchange="smHandleUpload(this,\'licenseFileId\',\'sfPermitPreview\',\'sfPermitUpload\')">') +
+              '</div>' +
+            '</div>' +
+            '<div class="gf-row" style="display:flex;align-items:flex-start;margin-bottom:18px">' +
+              '<label class="gf-label" style="width:100px;text-align:right;padding-right:12px;color:#606266;font-size:13px;flex-shrink:0;margin-top:4px"><span style="color:#f56c6c;margin-right:2px">*</span>经营场景</label>' +
+              '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+                '<div class="sf-upload" id="sfScene1Upload" style="width:110px;height:110px;border:1px dashed #dcdfe6;border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;overflow:hidden;font-size:11px" onclick="smTriggerUpload(\'sceneFileId1\',\'sfScene1Preview\',this)">' +
+                  (d&&d.businessScenarioFileIds&&d.businessScenarioFileIds[0]?'<img id="sfScene1Preview" src="#" style="width:100%;height:100%;object-fit:cover">':'收银台<input type="file" id="sfFileInput_scene1" accept="image/*" style="display:none" onchange="smHandleUpload(this,\'sceneFileId1\',\'sfScene1Preview\',\'sfScene1Upload\')">') +
+                '</div>' +
+                '<div class="sf-upload" id="sfScene2Upload" style="width:110px;height:110px;border:1px dashed #dcdfe6;border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;overflow:hidden;font-size:11px" onclick="smTriggerUpload(\'sceneFileId2\',\'sfScene2Preview\',this)">' +
+                  (d&&d.businessScenarioFileIds&&d.businessScenarioFileIds[1]?'<img id="sfScene2Preview" src="#" style="width:100%;height:100%;object-fit:cover">':'货架1<input type="file" id="sfFileInput_scene2" accept="image/*" style="display:none" onchange="smHandleUpload(this,\'sceneFileId2\',\'sfScene2Preview\',\'sfScene2Upload\')">') +
+                '</div>' +
+                '<div class="sf-upload" id="sfScene3Upload" style="width:110px;height:110px;border:1px dashed #dcdfe6;border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;overflow:hidden;font-size:11px" onclick="smTriggerUpload(\'sceneFileId3\',\'sfScene3Preview\',this)">' +
+                  (d&&d.businessScenarioFileIds&&d.businessScenarioFileIds[2]?'<img id="sfScene3Preview" src="#" style="width:100%;height:100%;object-fit:cover">':'货架2<input type="file" id="sfFileInput_scene3" accept="image/*" style="display:none" onchange="smHandleUpload(this,\'sceneFileId3\',\'sfScene3Preview\',\'sfScene3Upload\')">') +
+                '</div>' +
+                '<div class="sf-upload" id="sfScene4Upload" style="width:110px;height:110px;border:1px dashed #dcdfe6;border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;overflow:hidden;font-size:11px" onclick="smTriggerUpload(\'sceneFileId4\',\'sfScene4Preview\',this)">' +
+                  (d&&d.businessScenarioFileIds&&d.businessScenarioFileIds[3]?'<img id="sfScene4Preview" src="#" style="width:100%;height:100%;object-fit:cover">':'货架3<input type="file" id="sfFileInput_scene4" accept="image/*" style="display:none" onchange="smHandleUpload(this,\'sceneFileId4\',\'sfScene4Preview\',\'sfScene4Upload\')">') +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+
+        '<!-- 其他信息 -->' +
+        '<div class="gf-section" style="margin-bottom:28px">' +
+          '<div class="gf-section-hd">其他信息</div>' +
+          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 32px">' +
+            '<div class="gf-row" style="display:flex;align-items:center;margin-bottom:18px">' +
+              '<label class="gf-label" style="width:100px;text-align:right;padding-right:12px;color:#606266;font-size:13px;flex-shrink:0"><span style="color:#f56c6c;margin-right:2px">*</span>所属企业</label>' +
+              '<select class="gf-input" id="sfCompanyId" style="flex:1;height:32px;padding:0 10px;border:1px solid #e8e8e8;border-radius:4px;font-size:13px;outline:none;box-sizing:border-box;background:#fff">' +
+                '<option value="">请选择企业</option>' + companyOpts +
+              '</select>' +
+            '</div>' +
+            '<div class="gf-row" style="display:flex;align-items:center;margin-bottom:18px">' +
+              '<label class="gf-label" style="width:100px;text-align:right;padding-right:12px;color:#606266;font-size:13px;flex-shrink:0">联系人</label>' +
+              '<input class="gf-input" id="sfContact" value="'+(d?d.contact:'')+'" placeholder="请输入联系人" style="flex:1;height:32px;padding:0 10px;border:1px solid #e8e8e8;border-radius:4px;font-size:13px;outline:none;box-sizing:border-box">' +
+            '</div>' +
+            '<div class="gf-row" style="display:flex;align-items:center;margin-bottom:18px">' +
+              '<label class="gf-label" style="width:100px;text-align:right;padding-right:12px;color:#606266;font-size:13px;flex-shrink:0">联系电话</label>' +
+              '<input class="gf-input" id="sfContactPhone" value="'+(d?d.contactPhoneNumber:'')+'" placeholder="请输入联系电话" style="flex:1;height:32px;padding:0 10px;border:1px solid #e8e8e8;border-radius:4px;font-size:13px;outline:none;box-sizing:border-box">' +
+            '</div>' +
+            '<div class="gf-row" style="display:flex;align-items:center;margin-bottom:18px">' +
+              '<label class="gf-label" style="width:100px;text-align:right;padding-right:12px;color:#606266;font-size:13px;flex-shrink:0">库存开关</label>' +
+              '<label style="display:flex;align-items:center;cursor:pointer"><input type="checkbox" id="sfInventorySwitch" '+(d&&d.inventorySwitch===1?'checked':'')+' style="margin-right:8px">开启</label>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+
+      '</div>' +
+    '</div>';
+
+  // 如果有图片，显示预览（用本地文件读取）
+  if (isEdit && d) {
+    // 触发一次文件读取来显示预览（如果有文件路径）
+    // 这里用占位符，实际项目中应该显示服务器图片
   }
-  renderStoreTable();
 }
 
-function smToggleCheckAll(cb) {
-  document.querySelectorAll('#storeTableBody input[type=checkbox]').forEach(function(c){c.checked=cb.checked;});
+function smCloseForm() {
+  STORE_EDIT_ID = null;
+  switchPage('store-manage');
 }
 
-function smGetSelectedShopIds() {
-  var ids = [];
-  document.querySelectorAll('#storeTableBody input[type=checkbox]:checked').forEach(function(cb){
-    var tr = cb.closest('tr');
-    if (tr && tr.dataset.shopId) ids.push(tr.dataset.shopId);
-  });
-  return ids;
-}
-
-function smBatchEnable() {
-  var ids = smGetSelectedShopIds();
-  if (!ids.length) { alert('请先选择要操作的门店'); return; }
-  ids.forEach(function(id){var d=STORE_DATA.find(function(r){return r.shopId===id;});if(d)d.status='0';});
-  renderStoreTable(); renderGroupTable();
-}
-
-function smBatchDisable() {
-  var ids = smGetSelectedShopIds();
-  if (!ids.length) { alert('请先选择要操作的门店'); return; }
-  ids.forEach(function(id){var d=STORE_DATA.find(function(r){return r.shopId===id;});if(d)d.status='1';});
-  renderStoreTable(); renderGroupTable();
-}
-
-function closeStoreModal() {
-  var m = document.getElementById('storeModal');
-  if (m) { m.style.display = 'none'; STORE_EDIT_ID = null; }
-}
-
-function showStoreModal(editId) {
-  STORE_EDIT_ID = editId || null;
-  var m = document.getElementById('storeModal');
-  var title = document.getElementById('storeModalTitle');
-  if (!m || !title) return;
-  title.textContent = editId ? '编辑门店' : '新增门店';
-  document.getElementById('sCompanyId').innerHTML = gmBuildCompanyOptions(editId ? (STORE_DATA.find(function(s){return s.shopId===editId;})||{}).companyId : null);
-  if (editId) {
-    var d = STORE_DATA.find(function(r){return r.shopId===editId;});
-    if (d) {
-      document.getElementById('sCompanyId').value = d.companyId || '';
-      document.getElementById('sShopName').value = d.shopName || '';
-      document.getElementById('sBizLicenseFileId').value = d.businessLicenseFileId || '';
-      document.getElementById('sShopFrontFileId').value = d.shopFrontFileId || '';
-      document.getElementById('sLicenseNo').value = d.businessLicenseNo || '';
-      document.getElementById('sBizLicenseExpTime').value = d.businessLicenseExpirationTime || '';
-      document.getElementById('sBizRegAddress').value = d.businessRegistrationAddress || '';
-      document.getElementById('sIdCardFrontFileId').value = d.identityCardFrontFileId || '';
-      document.getElementById('sIdCardBackFileId').value = d.identityCardBackFileId || '';
-      document.getElementById('sLrName').value = d.lrName || '';
-      document.getElementById('sIdCardNo').value = d.identityCardNo || '';
-      document.getElementById('sIdCardExpTime').value = d.identityCardExpirationTime || '';
-      document.getElementById('sLicenseFileId').value = d.licenseFileId || '';
-      var sceneIds = d.businessScenarioFileIds || [];
-      document.getElementById('sSceneFileId1').value = sceneIds[0] || '';
-      document.getElementById('sSceneFileId2').value = sceneIds[1] || '';
-      document.getElementById('sSceneFileId3').value = sceneIds[2] || '';
-      document.getElementById('sSceneFileId4').value = sceneIds[3] || '';
-      document.getElementById('sInventorySwitch').checked = d.inventorySwitch === 1;
-      document.getElementById('sContact').value = d.contact || '';
-      document.getElementById('sContactPhone').value = d.contactPhoneNumber || '';
-    }
-  } else {
-    ['sShopName','sBizLicenseFileId','sShopFrontFileId','sLicenseNo','sBizLicenseExpTime','sBizRegAddress','sIdCardFrontFileId','sIdCardBackFileId','sLrName','sIdCardNo','sIdCardExpTime','sLicenseFileId','sSceneFileId1','sSceneFileId2','sSceneFileId3','sSceneFileId4','sContact','sContactPhone'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});
-    var sw = document.getElementById('sInventorySwitch'); if(sw) sw.checked = false;
-  }
-  m.style.display = 'flex';
-}
-
-function saveStore() {
-  var name = document.getElementById('sShopName').value.trim();
-  var companyId = document.getElementById('sCompanyId').value;
-  var shopFront = document.getElementById('sShopFrontFileId').value.trim();
-  var idCardFront = document.getElementById('sIdCardFrontFileId').value.trim();
-  var idCardBack = document.getElementById('sIdCardBackFileId').value.trim();
-  var license = document.getElementById('sLicenseFileId').value.trim();
-  var scene1 = document.getElementById('sSceneFileId1').value.trim();
+function smSaveForm() {
+  var name = document.getElementById('sfShopName').value.trim();
+  var companyId = document.getElementById('sfCompanyId').value;
   if (!name) { alert('请输入门店名称'); return; }
-  if (!shopFront) { alert('请填写门头照文件ID'); return; }
-  if (!idCardFront) { alert('请填写身份证正面文件ID'); return; }
-  if (!idCardBack) { alert('请填写身份证反面文件ID'); return; }
-  if (!license) { alert('请填写许可证文件ID'); return; }
-  if (!scene1) { alert('请填写经营场景(收银台)文件ID'); return; }
+  if (!companyId) { alert('请选择所属企业'); return; }
+
   var data = {
     companyId: companyId,
     shopName: name,
-    businessLicenseNo: document.getElementById('sLicenseNo').value.trim(),
-    businessLicenseFileId: document.getElementById('sBizLicenseFileId').value.trim(),
-    businessLicenseExpirationTime: document.getElementById('sBizLicenseExpTime').value,
-    businessRegistrationAddress: document.getElementById('sBizRegAddress').value.trim(),
-    shopFrontFileId: shopFront,
-    identityCardFrontFileId: idCardFront,
-    identityCardBackFileId: idCardBack,
-    lrName: document.getElementById('sLrName').value.trim(),
-    identityCardNo: document.getElementById('sIdCardNo').value.trim(),
-    identityCardExpirationTime: document.getElementById('sIdCardExpTime').value,
-    licenseFileId: license,
-    businessScenarioFileIds: [
-      scene1,
-      document.getElementById('sSceneFileId2').value.trim(),
-      document.getElementById('sSceneFileId3').value.trim(),
-      document.getElementById('sSceneFileId4').value.trim()
-    ].filter(Boolean),
-    inventorySwitch: document.getElementById('sInventorySwitch').checked ? 1 : 0,
-    contact: document.getElementById('sContact').value.trim(),
-    contactPhoneNumber: document.getElementById('sContactPhone').value.trim()
+    businessLicenseNo: document.getElementById('sfLicenseNo').value.trim(),
+    businessLicenseExpirationTime: document.getElementById('sfBizLicenseExp').value,
+    businessRegistrationAddress: document.getElementById('sfBizRegAddress').value.trim(),
+    lrName: document.getElementById('sfLrName').value.trim(),
+    identityCardNo: document.getElementById('sfIdCardNo').value.trim(),
+    identityCardExpirationTime: document.getElementById('sfIdCardExp').value,
+    inventorySwitch: document.getElementById('sfInventorySwitch').checked ? 1 : 0,
+    contact: document.getElementById('sfContact').value.trim(),
+    contactPhoneNumber: document.getElementById('sfContactPhone').value.trim(),
+    businessLicenseFileId: '',
+    shopFrontFileId: '',
+    identityCardFrontFileId: '',
+    identityCardBackFileId: '',
+    licenseFileId: '',
+    businessScenarioFileIds: []
   };
+
   if (STORE_EDIT_ID) {
-    var d = STORE_DATA.find(function(r){return r.shopId===STORE_EDIT_ID;});
-    if (d) {
-      var oldCompanyId = d.companyId;
-      Object.assign(d, data);
+    var idx = -1;
+    STORE_DATA.forEach(function(r, i){ if(r.shopId===STORE_EDIT_ID) idx = i; });
+    if (idx >= 0) {
+      var oldCompanyId = STORE_DATA[idx].companyId;
+      // 保留原有文件ID（编辑时如果不重新上传，保持原值）
+      data.businessLicenseFileId = STORE_DATA[idx].businessLicenseFileId || '';
+      data.shopFrontFileId = STORE_DATA[idx].shopFrontFileId || '';
+      data.identityCardFrontFileId = STORE_DATA[idx].identityCardFrontFileId || '';
+      data.identityCardBackFileId = STORE_DATA[idx].identityCardBackFileId || '';
+      data.licenseFileId = STORE_DATA[idx].licenseFileId || '';
+      data.businessScenarioFileIds = STORE_DATA[idx].businessScenarioFileIds || [];
+      Object.assign(STORE_DATA[idx], data);
       if (oldCompanyId !== companyId) {
         var oldC = GROUP_DATA.find(function(r){return r.companyId===oldCompanyId;});
         if (oldC) oldC.shopNum = Math.max(0, (oldC.shopNum||0) - 1);
@@ -4053,7 +4090,7 @@ function saveStore() {
     }
   } else {
     var maxId = 0;
-    STORE_DATA.forEach(function(r){var n=parseInt(r.shopId.replace('S',''));if(n>maxId)maxId=n;});
+    STORE_DATA.forEach(function(r){ var n=parseInt(r.shopId.replace('S','')); if(n>maxId)maxId=n; });
     data.shopId = 'S' + (maxId + 1);
     data.effectiveTime = new Date().toISOString().slice(0,10);
     data.status = '0';
@@ -4061,28 +4098,74 @@ function saveStore() {
     var c = GROUP_DATA.find(function(r){return r.companyId===companyId;});
     if (c) c.shopNum = (c.shopNum||0) + 1;
   }
-  closeStoreModal();
-  renderStoreTable();
-  renderGroupTable();
+  STORE_EDIT_ID = null;
+  showToast(STORE_EDIT_ID ? '保存成功' : '新增成功');
+  switchPage('store-manage');
 }
 
-function renderStoreTable() {
-  var tbody = document.getElementById('storeTableBody');
+// 门店表单文件上传
+var _SF_FILE_DATA = {};  // fieldId -> base64 data URL
+
+function smTriggerUpload(fieldId, previewId, uploadEl) {
+  var inputId = 'sfFileInput_' + fieldId.replace(/([A-Z])/g, '_$1').toLowerCase().replace(/^_/,'');
+  // 简化：用文本输入框替代文件上传（demo用）
+  var url = prompt('请输入图片URL（demo模式，实际应上传文件）:', '');
+  if (url) {
+    _SF_FILE_DATA[fieldId] = url;
+    var preview = document.getElementById(previewId);
+    if (preview) { preview.src = url; preview.style.display = 'block'; }
+    // 标记已上传
+    var hiddenInput = document.getElementById('sfHidden_' + fieldId);
+    if (!hiddenInput) {
+      hiddenInput = document.createElement('input');
+      hiddenInput.type = 'hidden';
+      hiddenInput.id = 'sfHidden_' + fieldId;
+      document.getElementById('storeFormContent').appendChild(hiddenInput);
+    }
+    hiddenInput.value = url;
+  }
+}
+
+function smHandleUpload(input, fieldId, previewId, uploadElId) {
+  // 文件上传处理（简化版）
+  if (!input.files || !input.files[0]) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    _SF_FILE_DATA[fieldId] = e.target.result;
+    var preview = document.getElementById(previewId);
+    if (preview) { preview.src = e.target.result; preview.style.display = 'block'; }
+    var uploadEl = document.getElementById(uploadElId);
+    if (uploadEl) uploadEl.style.borderColor = '#005CF5';
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+
+function smRemoveUpload(fieldId, previewId, uploadElId) {
+  delete _SF_FILE_DATA[fieldId];
+  var preview = document.getElementById(previewId);
+  if (preview) { preview.src = '#'; preview.style.display = 'none'; }
+  var uploadEl = document.getElementById(uploadElId);
+  if (uploadEl) uploadEl.style.borderColor = '#dcdfe6';
+}
+
+
+function smRenderTable() {
+  var tbody = document.getElementById('smTableBody');
   if (!tbody) return;
   var list = STORE_DATA;
-  if (STORE_FILTER_COMPANY !== 'all') {
-    list = list.filter(function(r){return r.companyId===STORE_FILTER_COMPANY;});
+  if (SM_FILTER_COMPANY !== 'all') {
+    list = list.filter(function(r){return r.companyId===SM_FILTER_COMPANY;});
   }
-  if (STORE_FILTER_KEYWORD) {
-    var kw = STORE_FILTER_KEYWORD.toLowerCase();
+  if (SM_FILTER_KEYWORD) {
+    var kw = SM_FILTER_KEYWORD.toLowerCase();
     list = list.filter(function(r){return r.shopName.toLowerCase().indexOf(kw)>-1||r.businessLicenseNo.indexOf(kw)>-1;});
   }
   var total = list.length;
-  var pages = Math.ceil(total / STORE_PAGE_SIZE) || 1;
-  if (STORE_PAGE > pages) STORE_PAGE = pages;
-  if (STORE_PAGE < 1) STORE_PAGE = 1;
-  var start = (STORE_PAGE - 1) * STORE_PAGE_SIZE;
-  var pageData = list.slice(start, start + STORE_PAGE_SIZE);
+  var pages = Math.ceil(total / SM_PAGE_SIZE) || 1;
+  if (SM_PAGE > pages) SM_PAGE = pages;
+  if (SM_PAGE < 1) SM_PAGE = 1;
+  var start = (SM_PAGE - 1) * SM_PAGE_SIZE;
+  var pageData = list.slice(start, start + SM_PAGE_SIZE);
   var canEdit = CURRENT_USER_ROLE === 'enterprise';
   var companyMap = {};
   GROUP_DATA.forEach(function(r){companyMap[r.companyId]=r.companyName;});
@@ -4090,9 +4173,9 @@ function renderStoreTable() {
     var seq = start + idx + 1;
     var enabled = r.status === '0';
     var statusHtml = enabled ? '<span style="display:inline-block;padding:2px 10px;border-radius:10px;font-size:12px;color:#67c23a;background:#f0f9eb;border:1px solid #e1f3d8">启用</span>' : '<span style="display:inline-block;padding:2px 10px;border-radius:10px;font-size:12px;color:#f56c6c;background:#fef0f0;border:1px solid #fde2e2">禁用</span>';
-    var nameHtml = canEdit ? '<a href="javascript:void(0)" onclick="showStoreModal(\''+r.shopId+'\')" style="color:#1677ff;text-decoration:none">'+r.shopName+'</a>' : r.shopName;
+    var nameHtml = canEdit ? '<a href="javascript:void(0)" onclick="smOpenEdit(\''+r.shopId+'\')" style="color:#1677ff;text-decoration:none">'+r.shopName+'</a>' : r.shopName;
     return '<tr data-shop-id="'+r.shopId+'">' +
-      '<td><input type="checkbox" class="store-check-row"></td>' +
+      '<td><input type="checkbox" class="sm-check-row"></td>' +
       '<td style="text-align:center;color:#999">'+seq+'</td>' +
       '<td>'+nameHtml+'</td>' +
       '<td>'+r.businessLicenseNo+'</td>' +
@@ -4102,19 +4185,112 @@ function renderStoreTable() {
       '<td>'+statusHtml+'</td>' +
     '</tr>';
   }).join('') : '<tr><td colspan="8" style="text-align:center;color:#999;padding:30px">暂无数据</td></tr>';
-  var bar = document.getElementById('storePageBar');
-  if (bar) {
-    bar.innerHTML = '<div style="display:flex;align-items:center;gap:6px;font-size:13px">' +
-      '<span>共 <b>'+total+'</b> 条</span>' +
-      '<button class="ic-btn-sm" onclick="STORE_PAGE=1;renderStoreTable()" '+(STORE_PAGE<=1?'disabled':'')+'>&laquo;</button>' +
-      '<button class="ic-btn-sm" onclick="STORE_PAGE--;renderStoreTable()" '+(STORE_PAGE<=1?'disabled':'')+'>&lsaquo;</button>' +
-      '<span>'+STORE_PAGE+' / '+pages+'</span>' +
-      '<button class="ic-btn-sm" onclick="STORE_PAGE++;renderStoreTable()" '+(STORE_PAGE>=pages?'disabled':'')+'>&rsaquo;</button>' +
-      '<button class="ic-btn-sm" onclick="STORE_PAGE='+pages+';renderStoreTable()" '+(STORE_PAGE>=pages?'disabled':'')+'>&raquo;</button>' +
-    '</div>';
-  }
+  smUpdatePagination(total, pages);
 }
 
+function smUpdatePagination(total, pages) {
+  var bar = document.getElementById('smPageBar');
+  if (!bar) return;
+  var html = '<span class="page-info">共 '+total+' 条</span>';
+  // 页码按钮
+  var startP = Math.max(1, SM_PAGE - 2);
+  var endP = Math.min(pages, SM_PAGE + 2);
+  for (var p = startP; p <= endP; p++) {
+    html += '<button class="ic-page-btn'+(p===SM_PAGE?' active':'')+'" onclick="smGoPage('+p+')">'+p+'</button>';
+  }
+  html += '<span style="margin-left:8px;font-size:12px;color:#999">'+SM_PAGE_SIZE+'条/页</span>';
+  html += '<span style="margin-left:8px;font-size:12px;color:#999">跳至</span>';
+  html += '<input type="text" class="ic-page-input" id="smPageInput" style="width:40px;height:24px;text-align:center;border:1px solid #e8e8e8;border-radius:3px;font-size:12px;outline:none;margin:0 4px" onkeydown="if(event.key===\'Enter\')smGoPage(parseInt(this.value))">';
+  html += '<span style="font-size:12px;color:#999">页</span>';
+  bar.innerHTML = html;
+}
+
+function smGoPage(p) {
+  var pages = Math.ceil(STORE_DATA.length / SM_PAGE_SIZE) || 1;
+  if (p < 1 || p > pages) return;
+  SM_PAGE = p;
+  smRenderTable();
+}
+
+function smFilterInput() {
+  clearTimeout(smFilterTimer);
+  smFilterTimer = setTimeout(function(){
+    SM_FILTER_KEYWORD = document.getElementById('smFilterKeyword').value;
+    SM_PAGE = 1;
+    smRenderTable();
+  }, 300);
+}
+var smFilterTimer = null;
+
+function smReset() {
+  SM_FILTER_COMPANY = 'all';
+  SM_FILTER_KEYWORD = '';
+  SM_PAGE = 1;
+  var cf = document.getElementById('smFilterCompany');
+  if (cf) cf.value = 'all';
+  var kw = document.getElementById('smFilterKeyword');
+  if (kw) kw.value = '';
+  smRenderTable();
+}
+
+function smSearch() {
+  var cf = document.getElementById('smFilterCompany');
+  if (cf) SM_FILTER_COMPANY = cf.value;
+  var kw = document.getElementById('smFilterKeyword');
+  if (kw) SM_FILTER_KEYWORD = kw.value;
+  SM_PAGE = 1;
+  smRenderTable();
+}
+
+function smOpenAdd() {
+  STORE_EDIT_ID = null;
+  switchPage('store-form');
+}
+
+function smOpenEdit(id) {
+  STORE_EDIT_ID = id;
+  switchPage('store-form');
+}
+
+function smBatchEdit() {
+  var ids = smGetSelectedIds();
+  if (ids.length !== 1) { alert('请选择且仅选择一条记录进行编辑'); return; }
+  STORE_EDIT_ID = ids[0];
+  switchPage('store-form');
+}
+
+function smGetSelectedIds() {
+  var ids = [];
+  document.querySelectorAll('#smTableBody input[type=checkbox]:checked').forEach(function(cb){
+    var tr = cb.closest('tr');
+    if (tr && tr.dataset.shopId) ids.push(tr.dataset.shopId);
+  });
+  return ids;
+}
+
+function smToggleCheckAll(cb) {
+  document.querySelectorAll('#smTableBody input[type=checkbox]').forEach(function(c){c.checked=cb.checked;});
+}
+
+function smBatchEnable() {
+  var ids = smGetSelectedIds();
+  if (!ids.length) { alert('请先选择要操作的门店'); return; }
+  ids.forEach(function(id){
+    var d = STORE_DATA.find(function(r){return r.shopId===id;});
+    if (d && d.status !== '0') d.status = '0';
+  });
+  smRenderTable();
+}
+
+function smBatchDisable() {
+  var ids = smGetSelectedIds();
+  if (!ids.length) { alert('请先选择要操作的门店'); return; }
+  ids.forEach(function(id){
+    var d = STORE_DATA.find(function(r){return r.shopId===id;});
+    if (d && d.status !== '1') d.status = '1';
+  });
+  smRenderTable();
+}
 
 
 // ===== PRICE LOG PAGE =====

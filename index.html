@@ -516,7 +516,10 @@ Chart.register({
   .ticker-wrap { flex:1; min-width:0; overflow:hidden; position:relative; }
   .ticker-track { display:flex; gap:28px; white-space:nowrap; animation:ticker-scroll 25s linear infinite; }
   .ticker-track:hover { animation-play-state:paused; }
-  .ticker-item { font-size:11px; color:#888; display:flex; align-items:center; gap:5px; }
+  .ticker-item { font-size:11px; color:#888; display:flex; align-items:center; gap:5px; cursor:default; }
+  .ticker-item[onclick] { cursor:pointer; }
+  .ticker-item[onclick]:hover { color:#333; }
+  .ticker-item.t-pending { color:#bbb; }
   .ticker-item .t-tag { font-size:9px; padding:0 4px; border-radius:2px; flex-shrink:0; }
   .t-tag-feat { background:#e8f5e9; color:#2e7d32; }
   .t-tag-fix { background:#fff3e0; color:#e65100; }
@@ -2608,12 +2611,12 @@ function openConceptBar() {
   btn.classList.add('hidden');
 }
 
-// ===== UPDATE TICKER =====
+// ===== UPDATE TICKER（仅 deploy 时更新） =====
 var TICKER_DATA = [
-  { date: '07/01', tag: 'feat', desc: '商品分类管理：品类树增删改、启用/禁用及排序功能' },
-  { date: '07/01', tag: 'feat', desc: '商品列表：商品/标品增删改查、分类筛选、批量上下架及分页' },
-  { date: '07/01', tag: 'feat', desc: '挂单删除：挂单记录查看与批量删除' },
-  { date: '06/30', tag: 'feat', desc: '班次交接：收银班次交接记录管理' }
+  { date: '07/01', type: 'new', title: '商品分类', page: 'goods-class', status: 'done' },
+  { date: '07/01', type: 'new', title: '商品列表', page: 'goods-list', status: 'done' },
+  { date: '—',   type: 'new', title: '企业管理', page: 'group-manage', status: 'pending' },
+  { date: '—',   type: 'new', title: '门店管理', page: 'store-manage', status: 'pending' }
 ];
 
 function initTicker() {
@@ -2621,11 +2624,17 @@ function initTicker() {
   if (!track) return;
   var html = '';
   TICKER_DATA.forEach(function(item) {
-    var tagCls = item.tag === 'feat' ? 't-tag-feat' : item.tag === 'fix' ? 't-tag-fix' : 't-tag-opt';
-    var tagTxt = item.tag === 'feat' ? '新增' : item.tag === 'fix' ? '修复' : '优化';
-    html += '<span class="ticker-item"><span class="t-tag '+tagCls+'">'+tagTxt+'</span><span class="t-date">'+item.date+'</span> '+item.desc+'</span>';
+    var tagText = item.type === 'new' ? '新增' : '调整';
+    var tagCls = item.type === 'new' ? 't-tag-feat' : 't-tag-opt';
+    var statusCls = item.status === 'done' ? '' : ' t-pending';
+    var desc = item.status === 'done' ? item.title + '功能' : item.title + '（开发中）';
+    var onClick = item.status === 'done' ? ' onclick="switchPage(\\''+item.page+'\\')"' : '';
+    html += '<span class="ticker-item'+statusCls+'"'+onClick+'>'
+      + '<span class="t-tag '+tagCls+'">'+tagText+'</span>'
+      + '<span class="t-date">'+item.date+'</span> '
+      + desc
+      + '</span>';
   });
-  // 复制一份实现无缝滚动
   track.innerHTML = html + html;
 }
 

@@ -1411,9 +1411,12 @@ Chart.register({
   .gl-radio-group label { display:flex; align-items:center; gap:4px; font-size:14px; color:#606266; cursor:pointer; }
   .gl-radio-group input[type=radio] { accent-color:#005CF5; }
   .gl-tag-info { background:#e3f2fd; color:#1565c0; }
-  .gl-radio-group { display:inline-flex; align-items:center; height:32px; box-sizing:border-box; gap:0; background:#f5f5f5; border-radius:4px; padding:3px; }
-  .gl-radio-btn { padding:5px 14px; border-radius:3px; font-size:13px; cursor:pointer; color:#666; transition:all .15s; }
-  .gl-radio-btn.active { background:#005CF5; color:#fff; font-weight:600; }
+  .gl-radio-group { display:inline-flex; align-items:center; height:32px; box-sizing:border-box; gap:0; }
+  .gl-radio-btn { padding:5px 12px; height:100%; display:inline-flex; align-items:center; border:1px solid #dcdfe6; border-radius:0; font-size:12px; cursor:pointer; color:#606266; transition:all .15s; background:#fff; box-sizing:border-box; margin-left:-1px; }
+  .gl-radio-btn:first-child { margin-left:0; border-radius:4px 0 0 4px; }
+  .gl-radio-btn:last-child { border-radius:0 4px 4px 0; }
+  .gl-radio-btn:hover { color:#005CF5; }
+  .gl-radio-btn.active { border-color:#005CF5; color:#005CF5; z-index:1; position:relative; background:#fff; }
   /* ===== 企业/门店表单（对齐Vue oneEnterprise.vue）===== */
   /* ===== 企业表单（对齐 Vue oneEnterprise.vue 风格）===== */
   .gf-page { display:flex; flex-direction:column; flex:1; min-height:0; background:#fff; overflow:hidden; }
@@ -11984,6 +11987,7 @@ var GL_FILTER_ENABLE = ''; // 上下架: ''=全部, '0'=上架, '1'=下架
 var GL_FILTER_SHOP = '';   // 门店筛选: ''=全部
 var GL_FILTER_KEYWORD = '';
 var GL_FILTER_SALE_TYPE = ''; // 售卖类型: ''=全部, 'sell'=售卖品, 'nosell'=非售品
+var GL_FILTER_STATUS = '';   // 启用/禁用: ''=全部, '0'=启用, '1'=禁用
 var GL_PAGE = 1;
 var GL_PAGE_SIZE = 10;
 var GL_SELECTED_ID = null;
@@ -12155,6 +12159,11 @@ function initGoodsList() {
             '<span class="gl-radio-btn' + (GL_FILTER_ENABLE === '0' ? ' active' : '') + '" onclick="glSetEnable(\'0\',this)">上架</span>' +
             '<span class="gl-radio-btn' + (GL_FILTER_ENABLE === '1' ? ' active' : '') + '" onclick="glSetEnable(\'1\',this)">下架</span>' +
           '</div>' +
+          '<div class="gl-radio-group" id="glFilterStatus">' +
+            '<span class="gl-radio-btn' + (GL_FILTER_STATUS === '' ? ' active' : '') + '" onclick="glSetStatus(\'\',this)">全部</span>' +
+            '<span class="gl-radio-btn' + (GL_FILTER_STATUS === '0' ? ' active' : '') + '" onclick="glSetStatus(\'0\',this)">启用</span>' +
+            '<span class="gl-radio-btn' + (GL_FILTER_STATUS === '1' ? ' active' : '') + '" onclick="glSetStatus(\'1\',this)">禁用</span>' +
+          '</div>' +
           '<div style="position:relative;flex:0 1 220px">' +
             '<span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#bbb;font-size:12px">🔍</span>' +
             '<input type="text" id="glFilterKeyword" placeholder="搜索商品名称/编码" ' +
@@ -12286,6 +12295,10 @@ function glGetFilteredData() {
   if (GL_FILTER_ENABLE !== '') {
     data = data.filter(function(r) { return String(r.enable) === GL_FILTER_ENABLE; });
   }
+  // 启用/禁用
+  if (GL_FILTER_STATUS !== '') {
+    data = data.filter(function(r) { return r.status === GL_FILTER_STATUS; });
+  }
   // 关键词搜索
   if (GL_FILTER_KEYWORD) {
     var kw = GL_FILTER_KEYWORD.toLowerCase();
@@ -12302,6 +12315,16 @@ function glSetEnable(val, el) {
   btns.forEach(function(b) { b.classList.remove('active'); });
   if (el) el.classList.add('active');
   glSearch();
+}
+
+function glSetStatus(val, el) {
+  GL_FILTER_STATUS = val;
+  var btns = document.querySelectorAll('#glFilterStatus .gl-radio-btn');
+  btns.forEach(function(b) { b.classList.remove('active'); });
+  if (el) el.classList.add('active');
+  GL_PAGE = 1;
+  GL_SELECTED_ID = null;
+  glRenderTable();
 }
 
 function glSetSaleType(val, el) {
@@ -12327,6 +12350,7 @@ function glSearch() {
 function glReset() {
   GL_FILTER_CATEGORY = '';
   GL_FILTER_ENABLE = '';
+  GL_FILTER_STATUS = '';
   GL_FILTER_SHOP = '';
   GL_FILTER_SALE_TYPE = '';
   GL_FILTER_KEYWORD = '';
@@ -12342,6 +12366,9 @@ function glReset() {
   var saleBtns = document.querySelectorAll('#glFilterSaleType .gl-radio-btn');
   saleBtns.forEach(function(b) { b.classList.remove('active'); });
   if (saleBtns[0]) saleBtns[0].classList.add('active');
+  var statusBtns = document.querySelectorAll('#glFilterStatus .gl-radio-btn');
+  statusBtns.forEach(function(b) { b.classList.remove('active'); });
+  if (statusBtns[0]) statusBtns[0].classList.add('active');
   renderGoodsCatSidebar();
   glRenderTable();
 }

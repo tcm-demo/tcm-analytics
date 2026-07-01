@@ -3849,42 +3849,50 @@ function gmGoPage(p) {
   renderGroupTable();
 }
 
-// ========== 门店管理列表 ==========
+// ========== 门店管理列表（完全对齐企业管理列表结构）==========
 function initStoreManage() {
   var el = document.getElementById('storeManageContent');
   if (!el) { setTimeout(initStoreManage, 80); return; }
   var companyOpts = '<option value="all">全部企业</option>' + (GROUP_DATA||[]).map(function(r){return '<option value="'+r.companyId+'">'+r.companyName+'</option>';}).join('');
   el.innerHTML =
     '<div style="display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden;background:#F1F2F5">' +
-      // 筛选栏
-      '<div style="margin:0;padding:14px 24px;background:#fff;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:10px;flex-wrap:wrap">' +
+      // ===== 筛选栏（铺满，白色背景）=====
+      '<div style="flex-shrink:0;margin:0;padding:14px 24px;background:#fff;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:10px;flex-wrap:wrap">' +
         '<select id="smFilterCompany" style="width:160px;height:32px;padding:0 10px;border:1px solid #e8e8e8;border-radius:4px;font-size:13px;background:#fff;outline:none;box-sizing:border-box" onchange="SM_FILTER_COMPANY=this.value;SM_PAGE=1;smRenderTable()">' +
           companyOpts +
         '</select>' +
-        '<input id="smFilterKeyword" style="width:200px;height:32px;padding:0 10px;border:1px solid #e8e8e8;border-radius:4px;font-size:13px;outline:none;box-sizing:border-box" placeholder="门店名称或信用代码" oninput="smFilterInput()">' +
-        '<button class="ic-btn" onclick="smReset()" style="margin-left:auto">重置</button>' +
+        '<input type="text" id="smFilterKeyword" class="ic-search" placeholder="门店名称或信用代码" style="flex:0 1 240px" value="' + (SM_FILTER_KEYWORD || '') + '" onkeydown="if(event.key===\'Enter\')smSearch()">' +
+        '<button class="ic-btn" onclick="smReset()">重置</button>' +
         '<button class="ic-btn ic-btn-pri" onclick="smSearch()">查询</button>' +
       '</div>' +
-      // 按钮栏
-      (CURRENT_USER_ROLE === 'enterprise' ?
-      '<div style="padding:12px 24px;background:#fff;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:8px">' +
-        '<button class="ic-btn ic-btn-pri" onclick="smOpenAdd()"><span style="margin-right:3px;font-size:13px">+</span>新增</button>' +
-        '<button class="ic-btn" onclick="smBatchEdit()">编辑</button>' +
-        '<button class="ic-btn" onclick="smBatchEnable()">启用</button>' +
-        '<button class="ic-btn" onclick="smBatchDisable()">禁用</button>' +
-      '</div>' : '') +
-      // 表格卡片
-      '<div id="smTableCard" style="flex:1;overflow:auto;margin:10px 8px 8px;padding:1px;background:linear-gradient(180deg,#e0e3e8,#f0f2f5);border-radius:4px">' +
-        '<table class="gl-table" id="smTable" style="background:#fff;border-radius:3px">' +
-          '<thead><tr>' +
-            '<th style="width:40px"><input type="checkbox" id="smCheckAll" onchange="smToggleCheckAll(this)"></th>' +
-            '<th style="width:50px">序号</th><th>门店名称</th><th>统一社会信用代码</th><th>联系人</th><th>开通时间</th><th>所属企业</th><th>状态</th>' +
-          '</tr></thead>' +
-          '<tbody id="smTableBody"></tbody>' +
-        '</table>' +
+      // ===== 按钮栏（白色背景，独立一行）=====
+      '<div style="flex-shrink:0;margin:0;padding:8px 24px;background:#fff;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:8px;flex-wrap:wrap">' +
+        (CURRENT_USER_ROLE === 'enterprise' ? '<button class="ic-btn ic-btn-pri" onclick="smOpenAdd()"><span style="margin-right:3px;font-size:13px">+</span>新增</button>' : '') +
+        (CURRENT_USER_ROLE === 'enterprise' ? '<button class="ic-btn" onclick="smBatchEdit()">编辑</button>' : '') +
+        (CURRENT_USER_ROLE === 'enterprise' ? '<button class="ic-btn" onclick="smBatchEnable()">启用</button>' : '') +
+        (CURRENT_USER_ROLE === 'enterprise' ? '<button class="ic-btn" onclick="smBatchDisable()">禁用</button>' : '') +
       '</div>' +
-      // 分页
-      '<div class="pagination-bar" id="smPageBar" style="flex-shrink:0"></div>' +
+      // ===== 表格卡片（渐变边框 + 白色内层 + table-wrap + pagination-bar）=====
+      '<div style="flex:1;min-height:0;margin:10px 8px 8px;padding:1px;background:linear-gradient(180deg, #e0e3e8, #f0f2f5);border-radius:10px">' +
+        '<div style="height:100%;background:#fff;border-radius:9px;overflow:hidden;display:flex;flex-direction:column">' +
+          '<div class="table-wrap" style="flex:1;overflow-y:auto;min-height:0">' +
+            '<table>' +
+              '<thead><tr>' +
+                '<th style="width:40px"><input type="checkbox" id="smCheckAll" onchange="smToggleCheckAll(this)"></th>' +
+                '<th style="width:50px">序号</th>' +
+                '<th>门店名称</th>' +
+                '<th>统一社会信用代码</th>' +
+                '<th>联系人</th>' +
+                '<th>开通时间</th>' +
+                '<th>所属企业</th>' +
+                '<th>状态</th>' +
+              '</tr></thead>' +
+              '<tbody id="smTableBody"></tbody>' +
+            '</table>' +
+          '</div>' +
+          '<div class="pagination-bar" id="smPageBar" style="flex-shrink:0"></div>' +
+        '</div>' +
+      '</div>' +
     '</div>';
   smRenderTable();
 }
@@ -4185,42 +4193,50 @@ function smRenderTable() {
       '<td>'+statusHtml+'</td>' +
     '</tr>';
   }).join('') : '<tr><td colspan="8" style="text-align:center;color:#999;padding:30px">暂无数据</td></tr>';
-  smUpdatePagination(total, pages);
+  smUpdatePagination(total);
 }
 
-function smUpdatePagination(total, pages) {
+function smUpdatePagination(total) {
   var bar = document.getElementById('smPageBar');
   if (!bar) return;
-  var html = '<span class="page-info">共 '+total+' 条</span>';
-  // 页码按钮
-  var startP = Math.max(1, SM_PAGE - 2);
-  var endP = Math.min(pages, SM_PAGE + 2);
-  for (var p = startP; p <= endP; p++) {
-    html += '<button class="ic-page-btn'+(p===SM_PAGE?' active':'')+'" onclick="smGoPage('+p+')">'+p+'</button>';
+  var totalPages = Math.ceil(total / SM_PAGE_SIZE) || 1;
+  var html = '<span class="page-info">共 ' + total + ' 条</span>' +
+    '<div class="page-btns">' +
+      '<button class="page-btn" onclick="smGoPage(' + (SM_PAGE - 1) + ')" ' + (SM_PAGE <= 1 ? 'disabled' : '') + '>‹</button>';
+
+  // 页码按钮：前3页 + 当前附近 + 最后2页
+  var pages = [];
+  for (var p = 1; p <= totalPages; p++) {
+    if (p <= 3 || p > totalPages - 2 || Math.abs(p - SM_PAGE) <= 1) {
+      if (pages.length > 0 && p - pages[pages.length - 1] > 1) pages.push('...');
+      pages.push(p);
+    }
   }
-  html += '<span style="margin-left:8px;font-size:12px;color:#999">'+SM_PAGE_SIZE+'条/页</span>';
-  html += '<span style="margin-left:8px;font-size:12px;color:#999">跳至</span>';
-  html += '<input type="text" class="ic-page-input" id="smPageInput" style="width:40px;height:24px;text-align:center;border:1px solid #e8e8e8;border-radius:3px;font-size:12px;outline:none;margin:0 4px" onkeydown="if(event.key===\'Enter\')smGoPage(parseInt(this.value))">';
-  html += '<span style="font-size:12px;color:#999">页</span>';
+  for (var pi = 0; pi < pages.length; pi++) {
+    var pg = pages[pi];
+    if (pg === '...') {
+      html += '<span class="page-num" style="opacity:0.4">...</span>';
+    } else {
+      html += '<button class="page-btn' + (pg === SM_PAGE ? ' active' : '') + '" onclick="smGoPage(' + pg + ')">' + pg + '</button>';
+    }
+  }
+  html += '<button class="page-btn" onclick="smGoPage(' + (SM_PAGE + 1) + ')" ' + (SM_PAGE >= totalPages ? 'disabled' : '') + '>›</button></div>' +
+    '<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#666"><span>' + SM_PAGE_SIZE + '条/页</span><span>跳至</span><input type="number" class="page-jump-input" id="smJumpInput" min="1" max="' + totalPages + '" value="' + SM_PAGE + '" onkeydown="if(event.key===\'Enter\')smGoPage(parseInt(this.value))"><span>页</span></div>';
   bar.innerHTML = html;
 }
 
 function smGoPage(p) {
-  var pages = Math.ceil(STORE_DATA.length / SM_PAGE_SIZE) || 1;
-  if (p < 1 || p > pages) return;
+  var list = STORE_DATA;
+  if (SM_FILTER_COMPANY !== 'all') list = list.filter(function(r){return r.companyId===SM_FILTER_COMPANY;});
+  if (SM_FILTER_KEYWORD) {
+    var kw = SM_FILTER_KEYWORD.toLowerCase();
+    list = list.filter(function(r){return r.shopName.toLowerCase().indexOf(kw)>-1||r.businessLicenseNo.indexOf(kw)>-1;});
+  }
+  var totalPages = Math.ceil(list.length / SM_PAGE_SIZE) || 1;
+  if (p < 1 || p > totalPages) return;
   SM_PAGE = p;
   smRenderTable();
 }
-
-function smFilterInput() {
-  clearTimeout(smFilterTimer);
-  smFilterTimer = setTimeout(function(){
-    SM_FILTER_KEYWORD = document.getElementById('smFilterKeyword').value;
-    SM_PAGE = 1;
-    smRenderTable();
-  }, 300);
-}
-var smFilterTimer = null;
 
 function smReset() {
   SM_FILTER_COMPANY = 'all';

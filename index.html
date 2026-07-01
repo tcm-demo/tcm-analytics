@@ -176,8 +176,8 @@ Chart.register({
     padding: 0 24px; border-bottom: 1px solid var(--border);
     box-shadow: 0 2px 8px rgba(0,0,0,0.06); flex-shrink: 0;
   }
-  .header-left { display: flex; align-items: center; gap: 12px; flex-shrink: 0; min-width: 0; }
-  .page-title { font-size: 17px; font-weight: 700; color: var(--text); white-space: nowrap; }
+  .header-left { display: flex; align-items: center; gap: 12px; flex-shrink: 1; min-width: 0; }
+  .page-title { font-size: 17px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .breadcrumb { font-size: 12px; color: var(--text-muted); }
   .header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; position: relative; }
   .date-range {
@@ -1563,8 +1563,11 @@ Chart.register({
   .rg-simulate-row button { flex:1; padding:8px 12px; border:1px dashed #aaa; border-radius:6px; background:#fff; cursor:pointer; font-size:12px; transition:.2s; }
   .rg-simulate-row button:hover { border-color:#005CF5; color:#005CF5; }
 
-  .gm-selected-row { background:#e6f7ff !important; }
-  .sm-selected-row { background:#e6f7ff !important; }
+  .gm-selected-row td,
+  .gm-selected-row:hover td { background:#e6f7ff !important; }
+  .sm-selected-row td,
+  .sm-selected-row:hover td { background:#e6f7ff !important; }
+  tr.gm-selected-row td, tr.sm-selected-row td { background:#e6f7ff !important; }
 
   @media (max-width:768px) {
     .ic-stat-row { grid-template-columns:repeat(2,1fr); }
@@ -3476,8 +3479,8 @@ var STORE_DATA = [
   { shopId: 'S2005', companyId: 'G1003', shopName: '鲜达-南山配送中心', businessLicenseNo: '92440300MA5XXXXX31', businessLicenseFileId: '', businessLicenseExpirationTime: '2026-06-30', businessRegistrationAddress: '深圳市南山区科技南路10号', shopFrontFileId: '', identityCardFrontFileId: '', identityCardBackFileId: '', lrName: '王强', identityCardNo: '440301198910204567', identityCardExpirationTime: '2030-10-20', licenseFileId: '', businessScenarioFileIds: [], inventorySwitch: 0, contact: '孙涛', contactPhoneNumber: '13500135005', effectiveTime: '2023-12-01', status: '1' },
   { shopId: 'S2006', companyId: 'G1003', shopName: '鲜达-福田社区店', businessLicenseNo: '92440300MA5XXXXX32', businessLicenseFileId: '', businessLicenseExpirationTime: '2027-09-30', businessRegistrationAddress: '深圳市福田区福华路50号', shopFrontFileId: '', identityCardFrontFileId: '', identityCardBackFileId: '', lrName: '王强', identityCardNo: '440301198910204567', identityCardExpirationTime: '2030-10-20', licenseFileId: '', businessScenarioFileIds: [], inventorySwitch: 1, contact: '周杰', contactPhoneNumber: '13400134006', effectiveTime: '2024-01-05', status: '1' }
 ];
-var GROUP_PAGE = 1, GROUP_PAGE_SIZE = 10, GROUP_FILTER_KEYWORD = '', GROUP_EDIT_ID = null;
-var SM_PAGE = 1, SM_PAGE_SIZE = 10, SM_FILTER_COMPANY = 'all', SM_FILTER_KEYWORD = '', STORE_EDIT_ID = null;
+var GROUP_PAGE = 1, GROUP_PAGE_SIZE = 10, GROUP_FILTER_KEYWORD = '', GROUP_EDIT_ID = null, GM_SELECTED_ID = null;
+var SM_PAGE = 1, SM_PAGE_SIZE = 10, SM_FILTER_COMPANY = 'all', SM_FILTER_KEYWORD = '', STORE_EDIT_ID = null, SM_SELECTED_ID = null;
 
 function gmBuildCompanyOptions(selectedId) {
   return GROUP_DATA.map(function(r){return '<option value="'+r.companyId+'"'+(r.companyId===selectedId?' selected':'')+'>'+r.companyName+'</option>';}).join('');
@@ -3533,30 +3536,26 @@ function closeGroupForm() {
   switchPage('group-manage');
 }
 
-function gmToggleCheckAll(cb) {
-  document.querySelectorAll('#groupTableBody input[type=checkbox]').forEach(function(c){c.checked=cb.checked;});
-}
-
-function gmGetSelectedCompanyIds() {
-  var ids = [];
-  document.querySelectorAll('#groupTableBody input[type=checkbox]:checked').forEach(function(cb){
-    var tr = cb.closest('tr');
-    if (tr && tr.dataset.companyId) ids.push(tr.dataset.companyId);
-  });
-  return ids;
+function closeStoreForm() {
+  STORE_EDIT_ID = null;
+  switchPage('store-manage');
 }
 
 function gmBatchEnable() {
-  var ids = gmGetSelectedCompanyIds();
-  if (!ids.length) { alert('请先选择要操作的企业'); return; }
-  ids.forEach(function(id){var d=GROUP_DATA.find(function(r){return r.companyId===id;});if(d)d.status=0;});
+  if (!GM_SELECTED_ID) { alert('请先点击选择要操作的企业'); return; }
+  var d = GROUP_DATA.find(function(r){return r.companyId===GM_SELECTED_ID;});
+  if (d) d.status = 0;
+  GM_SELECTED_ID = null;
+  document.querySelectorAll('#groupTableBody tr.gm-selected-row').forEach(function(r){ r.classList.remove('gm-selected-row'); });
   renderGroupTable();
 }
 
 function gmBatchDisable() {
-  var ids = gmGetSelectedCompanyIds();
-  if (!ids.length) { alert('请先选择要操作的企业'); return; }
-  ids.forEach(function(id){var d=GROUP_DATA.find(function(r){return r.companyId===id;});if(d)d.status=1;});
+  if (!GM_SELECTED_ID) { alert('请先点击选择要操作的企业'); return; }
+  var d = GROUP_DATA.find(function(r){return r.companyId===GM_SELECTED_ID;});
+  if (d) d.status = 1;
+  GM_SELECTED_ID = null;
+  document.querySelectorAll('#groupTableBody tr.gm-selected-row').forEach(function(r){ r.classList.remove('gm-selected-row'); });
   renderGroupTable();
 }
 
@@ -3810,22 +3809,15 @@ function renderGroupTable() {
 
 // 企业列表点击行选中（单选）
 function gmSelectRow(tr) {
-  // 移除其他行选中状态
   document.querySelectorAll('#groupTableBody tr.gm-selected-row').forEach(function(r){ r.classList.remove('gm-selected-row'); });
-  // 选中当前行
   tr.classList.add('gm-selected-row');
-  // 可选：同时勾选复选框
-  var cb = tr.querySelector('input[type=checkbox]');
-  if (cb) cb.checked = true;
+  GM_SELECTED_ID = tr.dataset.companyId;
 }
 
 function smSelectRow(tr) {
-  // 移除其他行选中状态
   document.querySelectorAll('#smTableBody tr.sm-selected-row').forEach(function(r){ r.classList.remove('sm-selected-row'); });
-  // 选中当前行
   tr.classList.add('sm-selected-row');
-  var cb = tr.querySelector('input[type=checkbox]');
-  if (cb) cb.checked = true;
+  SM_SELECTED_ID = tr.dataset.shopId;
 }
 
 // ===== 企业管理分页渲染 =====
@@ -3932,8 +3924,14 @@ function initStoreForm() {
   }).join('');
 
   el.innerHTML =
-    '<div style="background:#fff;min-height:100%;display:flex;flex-direction:column">' +
-      '<div style="flex:1;padding:24px 28px;overflow-y:auto">' +
+    '<div class="gf-page">' +
+      // 页头
+      '<div style="flex-shrink:0;padding:14px 24px;background:#fff;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:12px">' +
+        '<button class="ic-btn" onclick="closeStoreForm()" style="display:flex;align-items:center;gap:4px;font-size:13px"><span style="font-size:15px">←</span>返回</button>' +
+        '<span style="font-size:16px;font-weight:700;color:#1a1a2e">' + (isEdit ? '编辑门店' : '新增门店') + '</span>' +
+      '</div>' +
+      // 表单主体
+      '<div class="gf-body">' +
 
         '<!-- 门店信息 -->' +
         '<div class="gf-section" style="margin-bottom:28px">' +
@@ -4203,7 +4201,6 @@ function smRenderTable() {
     var statusHtml = enabled ? '<span style="display:inline-block;padding:2px 10px;border-radius:10px;font-size:12px;color:#67c23a;background:#f0f9eb;border:1px solid #e1f3d8">启用</span>' : '<span style="display:inline-block;padding:2px 10px;border-radius:10px;font-size:12px;color:#f56c6c;background:#fef0f0;border:1px solid #fde2e2">禁用</span>';
     var nameHtml = canEdit ? '<a href="javascript:void(0)" onclick="smOpenEdit(\''+r.shopId+'\')" style="color:#1677ff;text-decoration:none">'+r.shopName+'</a>' : r.shopName;
     return '<tr data-shop-id="'+r.shopId+'" onclick="smSelectRow(this)" style="cursor:pointer">' +
-      '<td><input type="checkbox" class="sm-check-row" onclick="event.stopPropagation()"></td>' +
       '<td style="text-align:center;color:#999">'+seq+'</td>' +
       '<td>'+nameHtml+'</td>' +
       '<td>'+r.businessLicenseNo+'</td>' +
@@ -4212,7 +4209,7 @@ function smRenderTable() {
       '<td>'+(companyMap[r.companyId]||'未知')+'</td>' +
       '<td>'+statusHtml+'</td>' +
     '</tr>';
-  }).join('') : '<tr><td colspan="8" style="text-align:center;color:#999;padding:30px">暂无数据</td></tr>';
+  }).join('') : '<tr><td colspan="7" style="text-align:center;color:#999;padding:30px">暂无数据</td></tr>';
   smUpdatePagination(total);
 }
 
@@ -4300,36 +4297,21 @@ function smBatchEdit() {
   switchPage('store-form');
 }
 
-function smGetSelectedIds() {
-  var ids = [];
-  document.querySelectorAll('#smTableBody input[type=checkbox]:checked').forEach(function(cb){
-    var tr = cb.closest('tr');
-    if (tr && tr.dataset.shopId) ids.push(tr.dataset.shopId);
-  });
-  return ids;
-}
-
-function smToggleCheckAll(cb) {
-  document.querySelectorAll('#smTableBody input[type=checkbox]').forEach(function(c){c.checked=cb.checked;});
-}
-
 function smBatchEnable() {
-  var ids = smGetSelectedIds();
-  if (!ids.length) { alert('请先选择要操作的门店'); return; }
-  ids.forEach(function(id){
-    var d = STORE_DATA.find(function(r){return r.shopId===id;});
-    if (d && d.status !== '0') d.status = '0';
-  });
+  if (!SM_SELECTED_ID) { alert('请先点击选择要操作的门店'); return; }
+  var d = STORE_DATA.find(function(r){return r.shopId===SM_SELECTED_ID;});
+  if (d && d.status !== '0') d.status = '0';
+  SM_SELECTED_ID = null;
+  document.querySelectorAll('#smTableBody tr.sm-selected-row').forEach(function(r){ r.classList.remove('sm-selected-row'); });
   smRenderTable();
 }
 
 function smBatchDisable() {
-  var ids = smGetSelectedIds();
-  if (!ids.length) { alert('请先选择要操作的门店'); return; }
-  ids.forEach(function(id){
-    var d = STORE_DATA.find(function(r){return r.shopId===id;});
-    if (d && d.status !== '1') d.status = '1';
-  });
+  if (!SM_SELECTED_ID) { alert('请先点击选择要操作的门店'); return; }
+  var d = STORE_DATA.find(function(r){return r.shopId===SM_SELECTED_ID;});
+  if (d && d.status !== '1') d.status = '1';
+  SM_SELECTED_ID = null;
+  document.querySelectorAll('#smTableBody tr.sm-selected-row').forEach(function(r){ r.classList.remove('sm-selected-row'); });
   smRenderTable();
 }
 

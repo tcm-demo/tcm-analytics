@@ -511,7 +511,7 @@ Chart.register({
   .concept-reopen.hidden { display:none; }
 
   /* ===== UPDATE TICKER ===== */
-  .update-ticker { width:60%; display:flex; align-items:center; gap:8px; overflow:hidden; }
+  .update-ticker { max-width:260px; display:flex; align-items:center; gap:6px; overflow:hidden; flex-shrink:1; }
   .update-time { font-size:11px; color:var(--text-muted); white-space:nowrap; }
   .ticker-wrap { flex:1; min-width:0; overflow:hidden; position:relative; }
   .ticker-track { display:flex; gap:28px; white-space:nowrap; animation:ticker-scroll 25s linear infinite; }

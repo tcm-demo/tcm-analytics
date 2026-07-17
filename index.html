@@ -746,19 +746,53 @@ Chart.register({
   .lp-new-option-info span { font-size: 11px; color: var(--text-muted); }
 
   /* ---- Product Selector for Printing ---- */
-  .ps-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 9600; display: flex; align-items: center; justify-content: center; }
-  .ps-dialog { width: min(640px, 94vw); max-height: 80vh; background: #fff; border-radius: 4px; box-shadow: 0 12px 48px rgba(0,0,0,0.25); display: flex; flex-direction: column; overflow: hidden; }
-  .ps-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 20px; border-bottom: 1px solid var(--border); }
-  .ps-header h3 { margin: 0; font-size: 16px; }
-  .ps-close { border: none; background: none; font-size: 22px; color: #999; cursor: pointer; padding: 0 4px; line-height: 1; }
-  .ps-search { padding: 20px 20px; border-bottom: 1px solid var(--border); }
-  .ps-search input { width: 100%; box-sizing: border-box; height: 32px; padding: 0 12px; border: 1px solid var(--border); border-radius: 4px; font-size: 12px; outline: none; }
-  .ps-search input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(0,92,245,0.12); }
-  .ps-body { flex: 1; overflow-y: auto; padding: 8px 0; }
-  .ps-row { display: flex; align-items: center; padding: 8px 20px; gap: 10px; cursor: pointer; transition: background 0.1s; }
-  .ps-row:hover { background: #f5f7fa; }
-  .ps-row.selected { background: var(--primary-bg); }
-  .ps-row input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--primary); flex-shrink: 0; cursor: pointer; }
+  .ps-overlay { position: fixed; top: var(--header-h); left: var(--sidebar-w); right: 0; bottom: 0; background: rgba(0,0,0,0.45); z-index: 9500; display: flex; align-items: center; justify-content: center; }
+  .ps-dialog { width: min(640px, 94vw); max-height: 80vh; background: #fff; border-radius: 4px; box-shadow: 0 8px 32px rgba(0,0,0,0.18); display: flex; flex-direction: column; overflow: hidden; }
+  .ps-header { display: flex; align-items: center; justify-content: space-between; height: 48px; padding: 0 16px; border-bottom: 1px solid #dfe3ed; position: relative; }
+  .ps-header h3 { margin: 0; font-size: 16px; font-weight: bold; color: #0b1019; }
+  .ps-close { border: none; background: none; font-size: 16px; color: #0b1019; cursor: pointer; padding: 4px; line-height: 1; font-weight: bold; }
+  .ps-close:hover { color: #024dca; }
+  .ps-search { padding: 10px 16px; border-bottom: 1px solid #dfe3ed; }
+  .ps-search input { width: 100%; box-sizing: border-box; height: 32px; padding: 0 12px; border: 1px solid #d9dbde; border-radius: 4px; font-size: 12px; outline: none; color: #0b1019; }
+  .ps-search input:focus { border-color: #005cf5; box-shadow: 0 0 0 2px rgba(0,92,245,0.12); }
+  .ps-body { flex: 1; overflow-y: auto; padding: 24px 16px 16px; font-size: 12px; color: #0b1019; }
+  .ps-row { display: flex; align-items: center; padding: 8px 16px; gap: 8px; cursor: pointer; transition: background 0.1s; }
+  .ps-row:hover { background: #f2f8ff; }
+  .ps-row.selected { background: #ECF3FF; }
+  .ps-row input[type="checkbox"] { width: 16px; height: 16px; accent-color: #005cf5; flex-shrink: 0; cursor: pointer; }
+  /* 弹窗底部操作栏（对齐Vue foot-class） */
+  .ps-footer { padding: 16px; display: flex; justify-content: flex-end; align-items: center; gap: 8px; background: #fff; position: relative; flex-shrink: 0; }
+  .ps-footer::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: #dfe3ed; }
+  /* 弹窗内信息条 */
+  .ps-info-bar { padding: 8px 16px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; font-size: 12px; color: #606266; border-bottom: 1px solid #dfe3ed; }
+  .ps-info-bar b { color: #0b1019; font-weight: 500; }
+  /* 弹窗内按钮栏 */
+  .ps-btn-bar { padding: 8px 16px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #dfe3ed; flex-shrink: 0; }
+  /* 弹窗内表单字段 */
+  .ps-form-item { margin-bottom: 20px; display: flex; align-items: center; }
+  .ps-form-item .ps-label { width: 100px; font-size: 12px; color: #606266; flex-shrink: 0; }
+  .ps-form-item .ps-label .ps-required { color: #ec2d30; }
+  .ps-form-item .ps-field { flex: 1; }
+  .ps-form-item input, .ps-form-item select { height: 32px; padding: 0 12px; border: 1px solid #d9dbde; border-radius: 4px; font-size: 12px; color: #0b1019; background: #fff; outline: none; width: 100%; box-sizing: border-box; }
+  .ps-form-item input:focus, .ps-form-item select:focus { border-color: #005cf5; box-shadow: 0 0 0 2px rgba(0,92,245,0.12); }
+  /* 弹窗内表格 */
+  .ps-table { width: 100%; }
+  .ps-table th { height: 36px; font-size: 12px; font-weight: 500; color: #0b1019; background: #f3f4f7; border-bottom: 1px solid #e9eef7; padding: 0 16px; text-align: left; }
+  .ps-table td { height: 49px; font-size: 12px; color: #0b1019; padding: 8px 16px; border-bottom: 1px solid #e9eef7; }
+  .ps-table tr:hover td { background: #f2f8ff; }
+  /* 弹窗内操作按钮 */
+  .ps-op-btn { padding: 0 16px; height: 32px; border: 1px solid #d9dbde; border-radius: 4px; background: rgba(11,16,25,0.1); color: #0b1019; font-size: 12px; cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; }
+  .ps-op-btn:hover { background: rgba(11,16,25,0.15); }
+  .ps-op-pri { background: #005cf5; color: #fff; border-color: #005cf5; font-weight: 600; }
+  .ps-op-pri:hover { background: #0558e1; }
+  .ps-op-danger { background: rgba(252,75,82,0.1); color: #fc4b52; border-color: #fc4b52; }
+  .ps-op-danger:hover { background: rgba(252,75,82,0.2); }
+  .ps-op-link { background: none; border: none; color: #005cf5; padding: 0; font-size: 12px; font-weight: 500; cursor: pointer; }
+  .ps-op-link:hover { color: #024dca; }
+  .ps-status-tag { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; }
+  .pp-batch-tag { display: inline-block; margin-left: 4px; padding: 0 5px; font-size: 10px; line-height: 15px; color: #005cf5; background: #f2f8ff; border-radius: 3px; vertical-align: middle; }
+  .pp-qty-btn { width: 22px; height: 22px; line-height: 1; padding: 0; border: 1px solid #d9dbde; border-radius: 4px; background: #fff; color: #0b1019; font-size: 14px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+  .pp-qty-btn:hover { border-color: #005cf5; color: #005cf5; }
   .ps-row-name { font-size: 13px; font-weight: 600; color: var(--text); flex: 1; min-width: 0; }
   .ps-row-cat { font-size: 11px; color: var(--text-muted); background: #f0f0f0; padding: 2px 6px; border-radius: 4px; flex-shrink: 0; }
   .ps-row-price { font-size: 14px; font-weight: 700; color: #d32f2f; flex-shrink: 0; width: 60px; text-align: right; }
@@ -1646,6 +1680,10 @@ Chart.register({
     <span class="icon">🖨️</span> 价签打印
     <span class="nav-phase-tag">一期</span>
   </div>
+  <div class="nav-item phase-one" onclick="switchPage('print-plan', this)">
+    <span class="icon">📋</span> 打印计划
+    <span class="nav-phase-tag">一期</span>
+  </div>
 
   <div class="sidebar-section">销售管理</div>
   <div class="nav-item phase-one" onclick="switchPage('item-code', this)">
@@ -2452,6 +2490,11 @@ Chart.register({
       <div id="labelPrintContent" style="flex:1;min-height:0;overflow-y:auto;overflow-x:hidden"></div>
     </div>
 
+    <!-- 打印计划 -->
+    <div class="page page-fill" id="page-print-plan">
+      <div id="printPlanContent" style="display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden;background:#F1F2F5"></div>
+    </div>
+
     <!-- ========== PAGE: 打码记录 ========== -->
     <div class="page" id="page-item-code">
       <div id="itemCodeContent"></div>
@@ -2581,6 +2624,10 @@ Chart.register({
   <div class="mobile-more-section">打印管理</div>
   <div class="mobile-more-item phase-one" onclick="mobileMoreSelect('label-print')">
     <span class="mm-icon">🖨️</span> 价签打印
+    <span class="mm-phase-tag">一期</span>
+  </div>
+  <div class="mobile-more-item phase-one" onclick="mobileMoreSelect('print-plan')">
+    <span class="mm-icon">📋</span> 打印计划
     <span class="mm-phase-tag">一期</span>
   </div>
   <div class="mobile-more-section">销售管理</div>
@@ -3355,7 +3402,7 @@ const pageTitles = {
   category: '品类管理', trend: '销售趋势', profit: '利润分析',
   cost: '成本管控', member: '会员分析', inventory: '库存预警',
   'biz-stats': '经营统计', 'sales-stats': '销售统计', 'daily-report': '营业日报',
-  'product-detail': '销售明细', 'label-print': '价签打印',
+  'product-detail': '销售明细', 'label-print': '价签打印', 'print-plan': '打印计划',
   'item-code': '打码记录', 'remove-guard': '结算移除',
   'order-hold': '挂单记录', 'shift-handover': '交班记录', 'personal-shift': '交班记录',
   'price-log': '改价日志', 'goods-class': '商品分类', 'goods-list': '商品列表',
@@ -3367,7 +3414,7 @@ const PAGE_GROUPS = {
   profit: '财务分析', cost: '财务分析',
   member: '客户运营', inventory: '客户运营',
   'biz-stats': '统计报表', 'sales-stats': '统计报表', 'daily-report': '统计报表',
-  'label-print': '打印管理',
+  'label-print': '打印管理', 'print-plan': '打印管理',
   'item-code': '销售管理', 'remove-guard': '销售管理', 'order-hold': '销售管理', 'shift-handover': '销售管理', 'personal-shift': '销售管理',
   'price-log': '商品管理', 'goods-class': '商品管理', 'goods-list': '商品管理',
   'group-manage': '系统管理', 'store-manage': '系统管理', 'group-form': '系统管理', 'store-form': '系统管理'
@@ -3391,7 +3438,7 @@ function activatePage(id) {
   var scopeItems = document.querySelectorAll('.scope-bar .scope-item');
   var scopeSep = document.querySelectorAll('.scope-bar .scope-sep');
   var scopeSpacer = document.querySelectorAll('.scope-bar .scope-spacer');
-  var hideScope = (id === 'label-print' || id === 'price-log' || id === 'goods-class' || id === 'goods-list' || id === 'group-manage' || id === 'store-manage' || id === 'group-form' || id === 'store-form' || id === 'remove-guard' || id === 'order-hold' || id === 'shift-handover' || id === 'daily-report' || id === 'personal-shift');
+  var hideScope = (id === 'label-print' || id === 'print-plan' || id === 'price-log' || id === 'goods-class' || id === 'goods-list' || id === 'group-manage' || id === 'store-manage' || id === 'group-form' || id === 'store-form' || id === 'remove-guard' || id === 'order-hold' || id === 'shift-handover' || id === 'daily-report' || id === 'personal-shift');
   if (scopeBar) {
     scopeBar.style.display = hideScope ? 'none' : '';
   }
@@ -3455,7 +3502,7 @@ function initPage(id) {
     transaction: initTransaction, product: initProduct, category: initCategory,
     trend: initTrend, profit: initProfit, cost: initCost, member: initMember, inventory: initInventory,
     'biz-stats': initBizStats, 'sales-stats': initSalesStats,
-    'product-detail': initProductDetail, 'label-print': initLabelPrint,
+    'product-detail': initProductDetail, 'label-print': initLabelPrint, 'print-plan': initPrintPlan,
     'item-code': initItemCode, 'remove-guard': initRemoveGuard,
     'order-hold': initOrderHold, 'shift-handover': initShiftHandover, 'daily-report': initDailyReport,
     'personal-shift': initPersonalShift, 'price-log': initPriceLog,
@@ -4597,6 +4644,17 @@ function plPrintLabels() {
   _showPlPrintDialog()
 }
 
+// ===== 改价日志 → 加入打印计划 =====
+function plAddToPrintPlan() {
+  var cbs = document.querySelectorAll('.pl-row-cb:checked')
+  var ids = []
+  for (var i = 0; i < cbs.length; i++) {
+    ids.push(parseInt(cbs[i].getAttribute('data-id')))
+  }
+  if (ids.length === 0) { alert('请先在表格中勾选要加入的商品'); return }
+  ppAddToPlanFromPriceLog(ids)
+}
+
 function _showPlPrintDialog() {
   _PL_PRINT_TPL = 'tpl-01'
 
@@ -4608,7 +4666,7 @@ function _showPlPrintDialog() {
   }
 
   var html =
-    '<div class="ps-overlay" id="plPrintOverlay" onclick="closePlPrintDialog()">' +
+    '<div class="ps-overlay" id="plPrintOverlay" style="z-index:9700" onclick="closePlPrintDialog()">' +
       '<div class="ps-dialog" style="width:min(860px,96vw)" onclick="event.stopPropagation()">' +
         '<div class="ps-header">' +
           '<h3>打印价签 — 已选 <span style="color:#005CF5">' + _PL_PRINT_PRODUCTS.length + '</span> 件商品</h3>' +
@@ -4713,8 +4771,8 @@ function initPriceLog() {
 
   el.innerHTML =
       // 筛选栏（铺满，上部紧接）
-      '<div style="flex-shrink:0;margin:0;padding:14px 24px;background:#fff;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:10px;flex-wrap:wrap">' +
-        '<select id="plFilterStore" style="padding:7px 12px;border:1px solid #e0e0e0;border-radius:6px;font-size:13px;background:#fff;outline:none" onchange="plSearch()">' +
+      '<div style="flex-shrink:0;margin:0;padding:10px 16px;background:#fff;border-bottom:1px solid #dfe3ed;display:flex;align-items:center;gap:8px;flex-wrap:wrap">' +
+        '<select id="plFilterStore" style="width:169px;height:32px;padding:0 12px;border:1px solid #d9dbde;border-radius:4px;font-size:12px;background:#fff;outline:none;color:#0b1019" onchange="plSearch()">' +
           '<option value="all">全部门店</option>' +
           stores.map(function(s) { return '<option value="' + s + '">' + s + '</option>'; }).join('') +
         '</select>' +
@@ -4725,13 +4783,13 @@ function initPriceLog() {
           '<span class="ic-ftab' + (PL_FILTER_DATE === 'week' ? ' active' : '') + '" onclick="plSetDateFilter(\'week\',this)">近7天</span>' +
           '<span class="ic-ftab' + (PL_FILTER_DATE === 'month' ? ' active' : '') + '" onclick="plSetDateFilter(\'month\',this)">近30天</span>' +
         '</div>' +
-        '<input type="text" id="plFilterKeyword" class="ic-search" placeholder="条形码/编码" style="flex:0 1 220px" onkeydown="if(event.key===\'Enter\')plSearch()">' +
-        '<button class="ic-btn" onclick="plReset()">重置</button>' +
-        '<button class="ic-btn" style="background:#005CF5;color:#fff;border-color:#005CF5;font-weight:600" onclick="plSearch()">查询</button>' +
+        '<input type="text" id="plFilterKeyword" style="flex:0 1 220px;height:32px;padding:0 12px;border:1px solid #d9dbde;border-radius:4px;font-size:12px;outline:none;color:#0b1019" placeholder="条形码/编码" onkeydown="if(event.key===\'Enter\')plSearch()" onfocus="this.style.borderColor=\'#005cf5\'" onblur="this.style.borderColor=\'#d9dbde\'">' +
+        '<button class="ps-op-btn" onclick="plReset()">重置</button>' +
+        '<button class="ps-op-btn ps-op-pri" onclick="plSearch()">查询</button>' +
       '</div>' +
-      // 操作栏（左右缩进8px，上方间隔10px）
-      '<div style="flex-shrink:0;margin:10px 8px 0;display:flex;align-items:center;gap:10px">' +
-        '<button class="ic-btn" style="background:#005CF5;color:#fff;border-color:#005CF5;font-weight:600" onclick="plPrintLabels()">打印价签</button>' +
+      // 操作栏（紧接筛选栏，白底+border）
+      '<div style="flex-shrink:0;padding:8px;display:flex;align-items:center;gap:8px;background:#fff;border-bottom:1px solid #dfe3ed">' +
+        '<button class="ps-op-btn ps-op-pri" onclick="plAddToPrintPlan()">加入打印计划</button>' +
       '</div>' +
       // 表格卡片（左右缩进8px，上方间隔10px，底部间隔8px，渐变边框）
       '<div style="flex:1;min-height:0;margin:10px 8px 8px;padding:1px;background:linear-gradient(180deg, #e0e3e8, #f0f2f5);border-radius:4px">' +
@@ -5600,6 +5658,7 @@ function refreshPageCharts(pageId) {
     case 'sales-stats': initSalesStats(); break;
     case 'product-detail': initProductDetail(); break;
     case 'label-print': initLabelPrint(); break;
+    case 'print-plan': initPrintPlan(); break;
     case 'item-code': initItemCode(); break;
     case 'remove-guard': initRemoveGuard(); break;
     case 'goods-list': renderGoodsCatSidebar(); glRenderTable(); break;
@@ -7104,12 +7163,12 @@ window.addEventListener('hashchange', function() {
 // ===== 价签打印 =====
 // Sample product data for label printing — shared across templates
 var LABEL_PRODUCTS = [
-  { id:'p01', name:'大白菜', cat:'蔬菜', price:3.5, origPrice:5.0, memberPrice:3.0, unit:'斤', origin:'山东寿光', barcode:'6901234567012', spec:'约500g', produceDate:'2026-06-03' },
+  { id:'p01', name:'大白菜', cat:'蔬菜', price:3.5, origPrice:5.0, memberPrice:3.0, unit:'斤', origin:'山东寿光', barcode:'6901234567012', spec:'约500g', produceDate:'2026-06-03', batches:[{produceDate:'2026-06-03',qty:12},{produceDate:'2026-06-10',qty:8}] },
   { id:'p02', name:'黄瓜', cat:'蔬菜', price:4.2, origPrice:6.5, memberPrice:3.6, unit:'斤', origin:'山东兰陵', barcode:'6901234567029', spec:'约400g', produceDate:'2026-06-04' },
-  { id:'p03', name:'番茄', cat:'蔬菜', price:5.8, origPrice:8.0, memberPrice:4.8, unit:'斤', origin:'云南昆明', barcode:'6901234567036', spec:'约500g', produceDate:'2026-06-04' },
+  { id:'p03', name:'番茄', cat:'蔬菜', price:5.8, origPrice:8.0, memberPrice:4.8, unit:'斤', origin:'云南昆明', barcode:'6901234567036', spec:'约500g', produceDate:'2026-05-28', batches:[{produceDate:'2026-05-28',qty:5},{produceDate:'2026-06-04',qty:15},{produceDate:'2026-06-11',qty:10}] },
   { id:'p04', name:'土鸡蛋', cat:'禽蛋', price:1.5, origPrice:2.0, memberPrice:1.2, unit:'枚', origin:'安徽阜阳', barcode:'6901234567043', spec:'约55g/枚', produceDate:'2026-05-30' },
   { id:'p05', name:'五花肉', cat:'猪肉', price:18.5, origPrice:24.0, memberPrice:16.0, unit:'斤', origin:'河南双汇', barcode:'6901234567050', spec:'约500g', produceDate:'2026-06-04' },
-  { id:'p06', name:'鲜牛奶', cat:'乳品', price:12.9, origPrice:16.9, memberPrice:11.5, unit:'瓶', origin:'内蒙古伊利', barcode:'6901234567067', spec:'950ml', produceDate:'2026-06-03' },
+  { id:'p06', name:'鲜牛奶', cat:'乳品', price:12.9, origPrice:16.9, memberPrice:11.5, unit:'瓶', origin:'内蒙古伊利', barcode:'6901234567067', spec:'950ml', produceDate:'2026-06-03', batches:[{produceDate:'2026-06-03',qty:30},{produceDate:'2026-06-12',qty:20}] },
   { id:'p07', name:'东北大米', cat:'粮油', price:38.0, origPrice:49.0, memberPrice:35.0, unit:'袋', origin:'黑龙江五常', barcode:'6901234567074', spec:'5kg', produceDate:'2026-05-15' },
   { id:'p08', name:'金龙鱼调和油', cat:'粮油', price:68.0, origPrice:78.0, memberPrice:62.0, unit:'桶', origin:'上海益海嘉里', barcode:'6901234567081', spec:'5L', produceDate:'2026-04-20' },
   { id:'p09', name:'红富士苹果', cat:'水果', price:8.8, origPrice:12.0, memberPrice:7.5, unit:'斤', origin:'陕西洛川', barcode:'6901234567098', spec:'约200g/个', produceDate:'2026-05-28' },
@@ -7503,7 +7562,977 @@ function icPreviewPrice() {
   if (el) el.textContent = p && w ? '单价 ¥'+p.toFixed(2)+'/斤 × '+w.toFixed(2)+'斤 = ¥'+(p*w).toFixed(2) : '单价 × 重量 = 金额';
 }
 
-// ===== 商品选择器 =====
+// ===== 打印计划 =====
+var PRINT_PLANS = [];
+var PP_PAGE = 1;
+var PP_PAGE_SIZE = 20;
+var PP_FILTER_TYPE = 'all';
+var PP_FILTER_STATUS = 'all';
+var PP_FILTER_KEYWORD = '';
+var PP_FILTER_STORE = 'all';
+var PP_FILTER_TIME = 'all';
+var PP_STORES = ['崧泽大道中心店', '华科东路店', '盈港路店'];
+var PP_EDITING_PLAN_ID = null;
+var PP_DETAIL_PLAN_ID = null;
+var _PP_ID_COUNTER = 1;
+
+function _ppGenId() { return 'plan-' + String(_PP_ID_COUNTER++).padStart(3, '0'); }
+
+function _ppGenItemId() { return 'item-' + Date.now() + '-' + Math.floor(Math.random() * 10000); }
+
+function _ppNow() {
+  var d = new Date();
+  var pad = function(n) { return n < 10 ? '0' + n : '' + n; };
+  return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+}
+
+function _ppFmtPrintedAt(s) {
+  if (!s) return '';
+  var m = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})(?::\d{2})?$/.exec(s);
+  if (m) return m[2] + '-' + m[3] + ' ' + m[4] + ':' + m[5];
+  return s;
+}
+
+function _ppTodayStr() {
+  var d = new Date();
+  var pad = function(n) { return n < 10 ? '0' + n : '' + n; };
+  return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+}
+
+// ===== 本地缓存（localStorage 持久化）=====
+var PP_STORAGE_KEY = 'tcm_print_plans_v1';
+function _ppSave() {
+  try { localStorage.setItem(PP_STORAGE_KEY, JSON.stringify(PRINT_PLANS)); } catch (e) {}
+}
+function _ppLoad() {
+  try {
+    var raw = localStorage.getItem(PP_STORAGE_KEY);
+    if (!raw) return false;
+    var arr = JSON.parse(raw);
+    if (!Array.isArray(arr)) return false;
+    PRINT_PLANS = arr;
+    var maxN = 0;
+    for (var i = 0; i < arr.length; i++) {
+      var m = /^plan-(\d+)$/.exec(arr[i].id || '');
+      if (m) { var n = parseInt(m[1], 10); if (n > maxN) maxN = n; }
+    }
+    _PP_ID_COUNTER = maxN + 1;
+    return true;
+  } catch (e) { return false; }
+}
+
+// 初始化模拟数据
+function _ppInitMockData() {
+  if (_ppLoad()) return;
+  var stores = ['崧泽大道中心店', '华科东路店', '盈港路店'];
+  var today = _ppTodayStr();
+  PRINT_PLANS = [
+    {
+      id: _ppGenId(),
+      name: today + ' 调价打印',
+      type: 'price-change',
+      status: 'partial',
+      store: '崧泽大道中心店',
+      createdAt: today + ' 09:30',
+      createdBy: '系统自动',
+      items: [
+        { id: _ppGenItemId(), name: '大白菜', barcode: '6901234567012', price: 3.5, origPrice: 5.0, memberPrice: 3.0, unit: '斤', spec: '约500g', origin: '山东寿光', printQty: 2, printed: true, printedAt: today + ' 10:15' },
+        { id: _ppGenItemId(), name: '黄瓜', barcode: '6901234567029', price: 4.2, origPrice: 6.5, memberPrice: 3.6, unit: '斤', spec: '约400g', origin: '山东兰陵', printQty: 1, printed: false, printedAt: null },
+        { id: _ppGenItemId(), name: '番茄', barcode: '6901234567036', price: 5.8, origPrice: 8.0, memberPrice: 4.8, unit: '斤', spec: '约500g', origin: '云南昆明', printQty: 1, printed: false, printedAt: null }
+      ]
+    },
+    {
+      id: _ppGenId(),
+      name: '生鲜区价签补打',
+      type: 'manual',
+      status: 'pending',
+      store: '华科东路店',
+      createdAt: today + ' 14:00',
+      createdBy: '李四',
+      items: [
+        { id: _ppGenItemId(), name: '五花肉', barcode: '6901234567050', price: 18.5, origPrice: 24.0, memberPrice: 16.0, unit: '斤', spec: '约500g', origin: '河南双汇', printQty: 3, printed: false, printedAt: null },
+        { id: _ppGenItemId(), name: '牛腱子肉', barcode: '6901234567135', price: 42.0, origPrice: 55.0, memberPrice: 38.0, unit: '斤', spec: '约500g', origin: '内蒙古科尔沁', printQty: 2, printed: false, printedAt: null }
+      ]
+    },
+    {
+      id: _ppGenId(),
+      name: today + ' 调价打印',
+      type: 'price-change',
+      status: 'done',
+      store: '盈港路店',
+      createdAt: today + ' 08:00',
+      createdBy: '系统自动',
+      items: [
+        { id: _ppGenItemId(), name: '鲜牛奶', barcode: '6901234567067', price: 12.9, origPrice: 16.9, memberPrice: 11.5, unit: '瓶', spec: '950ml', origin: '内蒙古伊利', printQty: 2, printed: true, printedAt: today + ' 08:30' },
+        { id: _ppGenItemId(), name: '东北大米', barcode: '6901234567074', price: 38.0, origPrice: 49.0, memberPrice: 35.0, unit: '袋', spec: '5kg', origin: '黑龙江五常', printQty: 1, printed: true, printedAt: today + ' 08:30' }
+      ]
+    }
+  ];
+  _ppSave();
+}
+
+function _ppGetPlan(id) {
+  for (var i = 0; i < PRINT_PLANS.length; i++) {
+    if (PRINT_PLANS[i].id === id) return PRINT_PLANS[i];
+  }
+  return null;
+}
+
+function _ppUpdateStatus(plan) {
+  if (!plan || !plan.items || plan.items.length === 0) { plan.status = 'pending'; return; }
+  var printed = 0;
+  for (var i = 0; i < plan.items.length; i++) {
+    if (plan.items[i].printed) printed++;
+  }
+  if (printed === 0) plan.status = 'pending';
+  else if (printed < plan.items.length) plan.status = 'partial';
+  else plan.status = 'done';
+}
+
+function _ppStatusText(s) {
+  return s === 'pending' ? '待打印' : s === 'partial' ? '部分打印' : '已完成';
+}
+
+function _ppStatusColor(s) {
+  return s === 'pending' ? '#e65100' : s === 'partial' ? '#005CF5' : '#52c41a';
+}
+function _ppStatusBg(s) {
+  return s === 'pending' ? '#fff7e6' : s === 'partial' ? '#f2f8ff' : '#f6ffed';
+}
+
+function _ppTypeText(t) {
+  return t === 'price-change' ? '调价自动' : '手动创建';
+}
+function _ppProductSummary(items) {
+  if (!items || items.length === 0) return '—';
+  var names = items.slice(0, 3).map(function(it) { return it.name; });
+  var extra = items.length > 3 ? ' 等' + items.length + '件' : '';
+  return names.join('、') + extra;
+}
+
+// 取商品生产日期：多批次共存时按 FIFO 取最早（最临近过期）批次
+function _ppLookupProduceDate(barcode) {
+  for (var i = 0; i < LABEL_PRODUCTS.length; i++) {
+    var p = LABEL_PRODUCTS[i];
+    if (p.barcode === barcode) {
+      if (p.batches && p.batches.length) {
+        var ds = p.batches.map(function(b){ return b.produceDate; }).filter(Boolean).sort();
+        return ds.length ? ds[0] : (p.produceDate || '');
+      }
+      return p.produceDate || '';
+    }
+  }
+  return '';
+}
+// 取商品批次数（用于 UI 标注多批次）
+function _ppBatchCount(barcode) {
+  for (var i = 0; i < LABEL_PRODUCTS.length; i++) {
+    if (LABEL_PRODUCTS[i].barcode === barcode) {
+      var bs = LABEL_PRODUCTS[i].batches;
+      return (bs && bs.length) ? bs.length : 1;
+    }
+  }
+  return 1;
+}
+
+function _ppPlanInTimeRange(createdAt, range) {
+  if (range === 'all' || !createdAt) return true;
+  var pad = function(n) { return n < 10 ? '0' + n : '' + n; };
+  var now = new Date();
+  var todayStr = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate());
+  var day = createdAt.slice(0, 10);
+  if (range === 'today') return day === todayStr;
+  if (range === 'month') return createdAt.slice(0, 7) === (now.getFullYear() + '-' + pad(now.getMonth() + 1));
+  if (range === 'week') {
+    var dow = now.getDay();
+    var diff = (dow === 0 ? -6 : 1 - dow);
+    var mon = new Date(now.getFullYear(), now.getMonth(), now.getDate() + diff);
+    var monStr = mon.getFullYear() + '-' + pad(mon.getMonth() + 1) + '-' + pad(mon.getDate());
+    var sun = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + 6);
+    var sunStr = sun.getFullYear() + '-' + pad(sun.getMonth() + 1) + '-' + pad(sun.getDate());
+    return day >= monStr && day <= sunStr;
+  }
+  return true;
+}
+
+function _ppFilteredPlans() {
+  return PRINT_PLANS.filter(function(p) {
+    if (PP_FILTER_TYPE !== 'all' && p.type !== PP_FILTER_TYPE) return false;
+    if (PP_FILTER_STATUS !== 'all' && p.status !== PP_FILTER_STATUS) return false;
+    if (PP_FILTER_STORE !== 'all' && p.store !== PP_FILTER_STORE) return false;
+    if (PP_FILTER_TIME !== 'all' && !_ppPlanInTimeRange(p.createdAt, PP_FILTER_TIME)) return false;
+    if (PP_FILTER_KEYWORD) {
+      var kw = PP_FILTER_KEYWORD.toLowerCase();
+      if (p.name.toLowerCase().indexOf(kw) < 0 && p.store.toLowerCase().indexOf(kw) < 0) return false;
+    }
+    return true;
+  });
+}
+
+function initPrintPlan() {
+  var el = document.getElementById('printPlanContent');
+  if (!el) return;
+  _ppInitMockData();
+
+  el.innerHTML =
+      '<div style="flex-shrink:0;margin:0;padding:10px 16px;background:#fff;border-bottom:1px solid #dfe3ed;display:flex;align-items:center;gap:8px;flex-wrap:wrap">' +
+      '<div class="scope-item" id="ppStorePicker" onclick="ppToggleStorePicker(event)" style="height:32px;flex:0 0 auto">' +
+        '<span class="scope-val" id="ppStorePickerLabel">' + (PP_FILTER_STORE === 'all' ? '全部门店' : _esc(PP_FILTER_STORE)) + '</span>' +
+        '<span class="scope-arrow">▼</span>' +
+        '<div class="scope-dropdown" id="ppStoreDropdown"></div>' +
+      '</div>' +
+      '<div class="gl-radio-group" id="ppFilterType">' +
+        '<span class="gl-radio-btn' + (PP_FILTER_TYPE === 'all' ? ' active' : '') + '" onclick="ppSetFilterType(\'all\',this)">全部</span>' +
+        '<span class="gl-radio-btn' + (PP_FILTER_TYPE === 'manual' ? ' active' : '') + '" onclick="ppSetFilterType(\'manual\',this)">手动创建</span>' +
+        '<span class="gl-radio-btn' + (PP_FILTER_TYPE === 'price-change' ? ' active' : '') + '" onclick="ppSetFilterType(\'price-change\',this)">调价自动</span>' +
+      '</div>' +
+      '<div class="gl-radio-group" id="ppFilterStatus">' +
+        '<span class="gl-radio-btn' + (PP_FILTER_STATUS === 'all' ? ' active' : '') + '" onclick="ppSetFilterStatus(\'all\',this)">全部</span>' +
+        '<span class="gl-radio-btn' + (PP_FILTER_STATUS === 'pending' ? ' active' : '') + '" onclick="ppSetFilterStatus(\'pending\',this)">待打印</span>' +
+        '<span class="gl-radio-btn' + (PP_FILTER_STATUS === 'partial' ? ' active' : '') + '" onclick="ppSetFilterStatus(\'partial\',this)">部分打印</span>' +
+        '<span class="gl-radio-btn' + (PP_FILTER_STATUS === 'done' ? ' active' : '') + '" onclick="ppSetFilterStatus(\'done\',this)">已完成</span>' +
+      '</div>' +
+      '<div class="gl-radio-group" id="ppFilterTime">' +
+        '<span class="gl-radio-btn' + (PP_FILTER_TIME === 'all' ? ' active' : '') + '" onclick="ppSetFilterTime(\'all\',this)">全部</span>' +
+        '<span class="gl-radio-btn' + (PP_FILTER_TIME === 'today' ? ' active' : '') + '" onclick="ppSetFilterTime(\'today\',this)">今天</span>' +
+        '<span class="gl-radio-btn' + (PP_FILTER_TIME === 'week' ? ' active' : '') + '" onclick="ppSetFilterTime(\'week\',this)">本周</span>' +
+        '<span class="gl-radio-btn' + (PP_FILTER_TIME === 'month' ? ' active' : '') + '" onclick="ppSetFilterTime(\'month\',this)">本月</span>' +
+      '</div>' +
+      '<input type="text" id="ppFilterKeyword" style="flex:0 1 220px;height:32px;padding:0 12px;border:1px solid #d9dbde;border-radius:4px;font-size:12px;outline:none;color:#0b1019" placeholder="计划名称" value="' + _esc(PP_FILTER_KEYWORD) + '" onkeydown="if(event.key===\'Enter\')ppSearch()" onfocus="this.style.borderColor=\'#005cf5\'" onblur="this.style.borderColor=\'#d9dbde\'">' +
+      '<button class="ps-op-btn" onclick="ppReset()">重置</button>' +
+      '<button class="ps-op-btn ps-op-pri" onclick="ppSearch()">查询</button>' +
+      '<button class="ps-op-btn" style="margin-left:auto;border:1px dashed #b8bcc4;color:#606266" onclick="ppOpenPrd()">📋 产品需求说明</button>' +
+    '</div>' +
+    '<div style="flex-shrink:0;padding:8px;display:flex;align-items:center;gap:8px;background:#fff;border-bottom:1px solid #dfe3ed">' +
+      '<button class="ps-op-btn ps-op-pri" onclick="ppOpenCreate()">+ 新建计划</button>' +
+    '</div>' +
+    '<div style="flex:1;min-height:0;margin:10px 8px 8px;padding:1px;background:linear-gradient(180deg, #e0e3e8, #f0f2f5);border-radius:4px">' +
+      '<div style="height:100%;background:#fff;border-radius:3px;overflow:hidden;display:flex;flex-direction:column">' +
+        '<div class="table-wrap" style="flex:1;overflow-y:auto;min-height:0">' +
+          '<table style="width:100%;table-layout:fixed">' +
+            '<thead id="ppTableHead"></thead>' +
+            '<tbody id="ppTableBody"></tbody>' +
+          '</table>' +
+        '</div>' +
+        '<div class="pagination-bar" id="ppPagination" style="flex-shrink:0"></div>' +
+      '</div>' +
+    '</div>';
+
+  ppRenderTable();
+}
+
+function ppSearch() {
+  var k = document.getElementById('ppFilterKeyword');
+  if (k) PP_FILTER_KEYWORD = k.value.trim();
+  PP_PAGE = 1;
+  ppRenderTable();
+}
+
+function ppSetFilterType(val, el) {
+  PP_FILTER_TYPE = val;
+  var btns = document.querySelectorAll('#ppFilterType .gl-radio-btn');
+  for (var i = 0; i < btns.length; i++) btns[i].classList.remove('active');
+  if (el) el.classList.add('active');
+  PP_PAGE = 1;
+  ppRenderTable();
+}
+
+function ppSetFilterStatus(val, el) {
+  PP_FILTER_STATUS = val;
+  var btns = document.querySelectorAll('#ppFilterStatus .gl-radio-btn');
+  for (var i = 0; i < btns.length; i++) btns[i].classList.remove('active');
+  if (el) el.classList.add('active');
+  PP_PAGE = 1;
+  ppRenderTable();
+}
+
+function ppSetFilterTime(val, el) {
+  PP_FILTER_TIME = val;
+  var btns = document.querySelectorAll('#ppFilterTime .gl-radio-btn');
+  for (var i = 0; i < btns.length; i++) btns[i].classList.remove('active');
+  if (el) el.classList.add('active');
+  PP_PAGE = 1;
+  ppRenderTable();
+}
+
+function ppReset() {
+  PP_FILTER_TYPE = 'all';
+  PP_FILTER_STATUS = 'all';
+  PP_FILTER_KEYWORD = '';
+  PP_FILTER_STORE = 'all';
+  PP_FILTER_TIME = 'all';
+  PP_PAGE = 1;
+  initPrintPlan();
+}
+
+// ===== 门店筛选 picker =====
+function ppToggleStorePicker(e) {
+  if (e) e.stopPropagation();
+  var picker = document.getElementById('ppStorePicker');
+  var dd = document.getElementById('ppStoreDropdown');
+  if (!picker || !dd) return;
+  if (dd.classList.contains('show')) { ppCloseStorePicker(); return; }
+  var html = '<div class="scope-dropdown-item' + (PP_FILTER_STORE === 'all' ? ' active' : '') + '" onclick="ppSelectStoreFilter(\'all\', event)">全部门店</div>';
+  for (var i = 0; i < PP_STORES.length; i++) {
+    var s = PP_STORES[i];
+    html += '<div class="scope-dropdown-item' + (PP_FILTER_STORE === s ? ' active' : '') + '" onclick="ppSelectStoreFilter(\'' + _esc(s) + '\', event)">' + _esc(s) + '</div>';
+  }
+  dd.innerHTML = html;
+  dd.classList.add('show');
+  picker.classList.add('open');
+  setTimeout(function() { document.addEventListener('click', ppCloseStorePickerOnDoc); }, 0);
+}
+
+function ppSelectStoreFilter(store, e) {
+  if (e) e.stopPropagation();
+  PP_FILTER_STORE = store;
+  var label = document.getElementById('ppStorePickerLabel');
+  if (label) label.textContent = (store === 'all' ? '全部门店' : store);
+  PP_PAGE = 1;
+  ppCloseStorePicker();
+  ppRenderTable();
+}
+
+function ppCloseStorePicker() {
+  var dd = document.getElementById('ppStoreDropdown');
+  var picker = document.getElementById('ppStorePicker');
+  if (dd) dd.classList.remove('show');
+  if (picker) picker.classList.remove('open');
+  document.removeEventListener('click', ppCloseStorePickerOnDoc);
+}
+
+function ppCloseStorePickerOnDoc(e) {
+  var picker = document.getElementById('ppStorePicker');
+  if (picker && !picker.contains(e.target)) ppCloseStorePicker();
+}
+
+function ppRenderTable() {
+  var head = document.getElementById('ppTableHead');
+  var body = document.getElementById('ppTableBody');
+  var pag = document.getElementById('ppPagination');
+  if (!head || !body) return;
+
+  var filtered = _ppFilteredPlans();
+  var total = filtered.length;
+  var totalPages = Math.max(1, Math.ceil(total / PP_PAGE_SIZE));
+  if (PP_PAGE > totalPages) PP_PAGE = totalPages;
+  var start = (PP_PAGE - 1) * PP_PAGE_SIZE;
+  var pageData = filtered.slice(start, start + PP_PAGE_SIZE);
+
+  head.innerHTML = '<tr>' +
+    '<th style="width:56px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">序号</th>' +
+    '<th style="width:18%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">计划名称</th>' +
+    '<th style="width:88px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">类型</th>' +
+    '<th style="width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">门店</th>' +
+    '<th style="width:72px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">商品数</th>' +
+    '<th style="width:72px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">待打印</th>' +
+    '<th style="width:72px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">已打印</th>' +
+    '<th style="width:100px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">打印进度</th>' +
+    '<th style="width:22%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">计划商品</th>' +
+    '<th style="width:100px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">状态</th>' +
+    '<th style="width:170px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">创建时间</th>' +
+    '<th style="width:112px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">操作</th>' +
+  '</tr>';
+
+  if (pageData.length === 0) {
+    body.innerHTML = '<tr><td colspan="12" style="text-align:center;padding:40px;color:#999">暂无打印计划</td></tr>';
+  } else {
+    var html = '';
+    for (var i = 0; i < pageData.length; i++) {
+      var p = pageData[i];
+      _ppUpdateStatus(p);
+      var unprinted = 0;
+      for (var j = 0; j < p.items.length; j++) { if (!p.items[j].printed) unprinted++; }
+      var printed = p.items.length - unprinted;
+      var progress = p.items.length ? Math.round(printed / p.items.length * 100) : 0;
+      var productSummary = _ppProductSummary(p.items);
+      html += '<tr>' +
+        '<td style="text-align:center;white-space:nowrap">' + (start + i + 1) + '</td>' +
+        '<td style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><button class="ps-op-link" onclick="ppOpenDetail(\'' + p.id + '\')">' + _esc(p.name) + '</button></td>' +
+        '<td style="white-space:nowrap">' + _ppTypeText(p.type) + '</td>' +
+        '<td style="white-space:nowrap">' + _esc(p.store || '—') + '</td>' +
+        '<td style="text-align:center;white-space:nowrap">' + p.items.length + '</td>' +
+        '<td style="text-align:center;white-space:nowrap">' + unprinted + '</td>' +
+        '<td style="text-align:center;white-space:nowrap">' + printed + '</td>' +
+        '<td style="text-align:center;white-space:nowrap">' +
+          '<span style="display:inline-block;min-width:34px;text-align:right;color:#606266">' + printed + '/' + p.items.length + '</span>' +
+          '<span style="display:inline-block;width:42px;height:6px;background:#eef0f3;border-radius:3px;vertical-align:middle;margin-left:6px;overflow:hidden">' +
+            '<span style="display:block;height:100%;background:' + (progress === 100 ? '#52c41a' : '#005cf5') + ';width:' + progress + '%"></span>' +
+          '</span>' +
+        '</td>' +
+        '<td style="font-size:12px;color:#606266;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + _esc(productSummary) + '">' + _esc(productSummary) + '</td>' +
+        '<td style="white-space:nowrap"><span class="ps-status-tag" style="background:' + _ppStatusBg(p.status) + ';color:' + _ppStatusColor(p.status) + '">' + _ppStatusText(p.status) + '</span></td>' +
+        '<td style="white-space:nowrap">' + _esc(p.createdAt) + '</td>' +
+        '<td style="white-space:nowrap">' +
+          '<button class="ps-op-btn" style="padding:0 8px;height:28px;font-size:12px;color:#005cf5;border-color:#005cf5;background:rgba(0,92,245,0.1)" onclick="ppOpenDetail(\'' + p.id + '\')">查看</button> ' +
+          (p.status === 'pending'
+            ? '<button class="ps-op-btn ps-op-danger" style="padding:0 8px;height:28px;font-size:12px" onclick="ppDeletePlan(\'' + p.id + '\')">删除</button>'
+            : '<button class="ps-op-btn ps-op-danger" disabled style="padding:0 8px;height:28px;font-size:12px;opacity:.45;cursor:not-allowed">删除</button>') +
+        '</td>' +
+      '</tr>';
+    }
+    body.innerHTML = html;
+  }
+
+  // 分页
+  if (pag) {
+    var pagHtml = '<span class="ic-page-info">共 ' + total + ' 条</span>';
+    pagHtml += '<button class="ic-page-btn' + (PP_PAGE <= 1 ? ' disabled' : '') + '"' + (PP_PAGE <= 1 ? ' disabled' : ' onclick="ppGoPage(' + (PP_PAGE - 1) + ')"') + '>上一页</button>';
+    var maxBtn = 5;
+    var s2 = Math.max(1, PP_PAGE - Math.floor(maxBtn / 2));
+    var e2 = Math.min(totalPages, s2 + maxBtn - 1);
+    if (e2 - s2 < maxBtn - 1) s2 = Math.max(1, e2 - maxBtn + 1);
+    for (var pg = s2; pg <= e2; pg++) {
+      pagHtml += '<button class="ic-page-btn' + (pg === PP_PAGE ? ' active' : '') + '" onclick="ppGoPage(' + pg + ')">' + pg + '</button>';
+    }
+    pagHtml += '<button class="ic-page-btn' + (PP_PAGE >= totalPages ? ' disabled' : '') + '"' + (PP_PAGE >= totalPages ? ' disabled' : ' onclick="ppGoPage(' + (PP_PAGE + 1) + ')"') + '>下一页</button>';
+    pagHtml += '<span class="ic-page-jump">第 <input type="text" id="ppJumpInput" style="width:36px;text-align:center" value="' + PP_PAGE + '" onkeydown="if(event.key===\'Enter\'){var v=parseInt(this.value);if(v>=1&&v<=' + totalPages + ')ppGoPage(v);}""> / ' + totalPages + ' 页</span>';
+    pag.innerHTML = pagHtml;
+  }
+}
+
+function ppGoPage(p) {
+  PP_PAGE = p;
+  ppRenderTable();
+}
+
+// ===== 产品需求说明（PRD：新标签页打开独立文档）=====
+function ppOpenPrd() {
+  window.open('PRD.html', '_blank');
+}
+
+// ===== 新建计划弹窗 =====
+// ===== 新建计划弹窗 =====
+function ppOpenCreate() {
+  var stores = PP_STORES;
+  var defStore = (PP_FILTER_STORE !== 'all') ? PP_FILTER_STORE : stores[0];
+  var storeOpts = stores.map(function(s) { return '<option value="' + s + '"' + (s === defStore ? ' selected' : '') + '>' + s + '</option>'; }).join('');
+  var html =
+    '<div class="ps-overlay" id="ppCreateOverlay" onclick="ppCloseCreate()">' +
+      '<div class="ps-dialog" style="width:460px" onclick="event.stopPropagation()">' +
+        '<div class="ps-header">' +
+          '<h3>新建打印计划</h3>' +
+          '<button class="ps-close" onclick="ppCloseCreate()">×</button>' +
+        '</div>' +
+        '<div class="ps-body">' +
+          '<div class="ps-form-item">' +
+            '<label class="ps-label">计划名称 <span class="ps-required">*</span></label>' +
+            '<div class="ps-field"><input type="text" id="ppCreateName" placeholder="请输入计划名称" /></div>' +
+          '</div>' +
+          '<div class="ps-form-item">' +
+            '<label class="ps-label">门店</label>' +
+            '<div class="ps-field"><select id="ppCreateStore">' + storeOpts + '</select></div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="ps-footer">' +
+          '<button class="ps-op-btn" onclick="ppCloseCreate()">取消</button>' +
+          '<button class="ps-op-btn ps-op-pri" onclick="ppCreatePlan()">创建</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  document.body.insertAdjacentHTML('beforeend', html);
+  setTimeout(function() { var inp = document.getElementById('ppCreateName'); if (inp) inp.focus(); }, 50);
+}
+
+function ppCloseCreate() {
+  var ov = document.getElementById('ppCreateOverlay');
+  if (ov) ov.remove();
+}
+
+function ppCreatePlan() {
+  var name = (document.getElementById('ppCreateName') || {}).value || '';
+  var store = (document.getElementById('ppCreateStore') || {}).value || '';
+  name = name.trim();
+  if (!name) { alert('请输入计划名称'); return; }
+  var plan = {
+    id: _ppGenId(),
+    name: name,
+    type: 'manual',
+    status: 'pending',
+    store: store,
+    createdAt: _ppNow(),
+    createdBy: '当前用户',
+    items: []
+  };
+  PRINT_PLANS.unshift(plan);
+  _ppSave();
+  ppCloseCreate();
+  PP_PAGE = 1;
+  ppRenderTable();
+}
+
+// ===== 删除计划 =====
+function ppDeletePlan(id) {
+  var plan = _ppGetPlan(id);
+  if (!plan) return;
+  if (plan.status !== 'pending') { alert('仅「待打印」状态的计划可以删除'); return; }
+  if (!confirm('确认删除计划「' + plan.name + '」？')) return;
+  for (var i = 0; i < PRINT_PLANS.length; i++) {
+    if (PRINT_PLANS[i].id === id) { PRINT_PLANS.splice(i, 1); break; }
+  }
+  ppRenderTable();
+  _ppSave();
+}
+
+// ===== 计划详情弹窗 =====
+function ppOpenDetail(id) {
+  var plan = _ppGetPlan(id);
+  if (!plan) return;
+  _ppUpdateStatus(plan);
+  PP_DETAIL_PLAN_ID = id;
+  _ppRenderDetail();
+}
+
+function _ppRenderDetail() {
+  var plan = _ppGetPlan(PP_DETAIL_PLAN_ID);
+  if (!plan) return;
+  _ppUpdateStatus(plan);
+  ppCloseDetail();
+
+  var unprinted = 0;
+  for (var j = 0; j < plan.items.length; j++) { if (!plan.items[j].printed) unprinted++; }
+
+  var itemsHtml = '';
+  if (plan.items.length === 0) {
+    itemsHtml = '<tr><td colspan="11" style="text-align:center;padding:30px;color:#999">暂无商品，点击「添加商品」</td></tr>';
+  } else {
+    for (var i = 0; i < plan.items.length; i++) {
+      var it = plan.items[i];
+      var checked = it.printed ? '' : 'checked';
+      var statusHtml = it.printed
+        ? '<span class="ps-status-tag" style="background:#f6ffed;color:#52c41a">已打印</span>'
+        : '<span class="ps-status-tag" style="background:#fff7e6;color:#e65100">待打印</span>';
+      var qtyCell = it.printed
+        ? '<span style="font-size:12px;color:#999">' + (it.printQty || 1) + '</span>'
+        : '<span style="display:inline-flex;align-items:center;gap:4px">'
+          + '<button class="pp-qty-btn" onclick="ppStepQty(\'' + it.id + '\',-1)">−</button>'
+          + '<span style="min-width:18px;text-align:center;font-size:12px">' + (it.printQty || 1) + '</span>'
+          + '<button class="pp-qty-btn" onclick="ppStepQty(\'' + it.id + '\',1)">＋</button>'
+        + '</span>';
+      itemsHtml += '<tr>' +
+        '<td style="text-align:center;width:40px"><input type="checkbox" class="pp-item-cb" data-item-id="' + it.id + '" data-printed="' + (it.printed ? '1' : '0') + '"' + ' ' + checked + ' style="width:16px;height:16px;accent-color:#005cf5" /></td>' +
+        '<td style="width:50px;text-align:center">' + (i + 1) + '</td>' +
+        '<td style="width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + _esc(it.name) + '</td>' +
+        '<td style="width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + _esc(it.barcode) + '</td>' +
+        '<td style="width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + _esc(it.spec || '—') + '</td>' +
+        '<td style="text-align:center;width:118px">¥' + it.price.toFixed(2) + '/' + _esc(it.unit) + '</td>' +
+        '<td style="text-align:center;width:112px">¥' + (it.origPrice != null ? it.origPrice.toFixed(2) : '—') + '</td>' +
+        (function(){ var _pd = it.produceDate || _ppLookupProduceDate(it.barcode) || ''; var _bc = _ppBatchCount(it.barcode); return '<td style="width:130px">' + (_pd ? _esc(_pd) : '—') + (_bc > 1 ? '<span class="pp-batch-tag" title="多批次共存，按 FIFO 取最早批次（最临近过期）打印">'+_bc+'批</span>' : '') + '</td>'; })() +
+        '<td style="text-align:center;width:100px">' + statusHtml + '</td>' +
+        '<td style="text-align:center;width:110px;white-space:nowrap">' + qtyCell + '</td>' +
+        '<td style="text-align:center;width:100px;white-space:nowrap" title="' + _esc(it.printedAt || '') + '">' + (it.printed ? _esc(_ppFmtPrintedAt(it.printedAt) || '—') : '<button class="ps-op-btn ps-op-danger" style="padding:0 8px;height:26px;font-size:12px" onclick="ppRemoveProduct(\'' + it.id + '\')">移除</button>') + '</td>' +
+      '</tr>';
+    }
+  }
+
+  var html =
+    '<div class="ps-overlay" id="ppDetailOverlay" onclick="ppCloseDetail()">' +
+      '<div class="ps-dialog" style="width:min(1400px,95%);height:calc(100% - 120px);max-height:none" onclick="event.stopPropagation()">' +
+        '<div class="ps-header">' +
+          '<h3>' + _esc(plan.name) + '</h3>' +
+          '<div style="display:flex;align-items:center;gap:12px">' +
+            '<span class="ps-status-tag" style="background:' + _ppStatusBg(plan.status) + ';color:' + _ppStatusColor(plan.status) + '">' + _ppStatusText(plan.status) + '</span>' +
+            '<button class="ps-close" onclick="ppCloseDetail()">×</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="ps-info-bar">' +
+          '<span>门店：<b>' + _esc(plan.store || '—') + '</b></span>' +
+          '<span>类型：<b>' + _ppTypeText(plan.type) + '</b></span>' +
+          '<span>商品数：<b>' + plan.items.length + '</b></span>' +
+          '<span>待打印：<b style="color:#e65100">' + unprinted + '</b></span>' +
+          '<span>创建：<b>' + _esc(plan.createdAt) + '</b></span>' +
+        '</div>' +
+        '<div style="padding:8px 16px;background:#f7f9fc;border-bottom:1px solid #eef1f5;font-size:12px;color:#8a94a6;display:flex;align-items:center;gap:6px">' +
+          '📅 备注：商品生产日期按批次先进先出（FIFO）取最早批次（最临近过期）打印；多批次共存时标注批次数' +
+        '</div>' +
+        '<div class="ps-btn-bar">' +
+          '<button class="ps-op-btn ps-op-pri" onclick="ppAddProduct()">+ 添加商品</button>' +
+          '<label style="font-size:12px;color:#606266;display:flex;align-items:center;gap:4px;cursor:pointer">' +
+            '<input type="checkbox" id="ppSelectAllCb" onchange="ppToggleAll(this.checked)" style="width:16px;height:16px;accent-color:#005cf5" /> 全选未打印' +
+          '</label>' +
+          '<div style="flex:1"></div>' +
+          '<button class="ps-op-btn ps-op-danger" onclick="ppRemoveAllUnprinted()">移除未打印</button>' +
+        '</div>' +
+        '<div style="flex:1;min-height:0;overflow-x:auto;overflow-y:auto">' +
+          '<table class="ps-table" style="table-layout:fixed;min-width:1260px">' +
+            '<thead><tr>' +
+              '<th style="width:40px;text-align:center"></th>' +
+              '<th style="width:50px;text-align:center">序号</th>' +
+              '<th style="width:220px">商品名称</th>' +
+              '<th style="width:150px">编码</th>' +
+              '<th style="width:120px">规格</th>' +
+              '<th style="width:118px;text-align:center">价格</th>' +
+              '<th style="width:112px;text-align:center">原价</th>' +
+              '<th style="width:130px">生产日期</th>' +
+              '<th style="width:100px;text-align:center">状态</th>' +
+              '<th style="width:110px;text-align:center;white-space:nowrap">打印份数</th>' +
+              '<th style="width:100px;text-align:center;white-space:nowrap">操作</th>' +
+            '</tr></thead>' +
+            '<tbody id="ppDetailItems">' + itemsHtml + '</tbody>' +
+          '</table>' +
+        '</div>' +
+        '<div class="ps-footer" style="justify-content:flex-end">' +
+          '<button class="ps-op-btn" onclick="ppCloseDetail()">取消</button>' +
+          '<button class="ps-op-btn ps-op-pri" onclick="ppPrintSelected()">打印选中</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  document.body.insertAdjacentHTML('beforeend', html);
+  ppRenderTable(); // 加入/删除/打印商品后同步刷新底层列表状态
+}
+
+function ppCloseDetail() {
+  var ov = document.getElementById('ppDetailOverlay');
+  if (ov) ov.remove();
+}
+
+function ppToggleAll(checked) {
+  var cbs = document.querySelectorAll('.pp-item-cb');
+  for (var i = 0; i < cbs.length; i++) {
+    // 全选只针对未打印项；已打印项保留手动勾选（二次打印）能力，不随全选变动
+    if (cbs[i].getAttribute('data-printed') !== '1') cbs[i].checked = checked;
+  }
+}
+
+function ppSetQty(itemId, val) {
+  var plan = _ppGetPlan(PP_DETAIL_PLAN_ID);
+  if (!plan) return;
+  var qty = parseInt(val) || 1;
+  if (qty < 1) qty = 1;
+  for (var i = 0; i < plan.items.length; i++) {
+    if (plan.items[i].id === itemId) { plan.items[i].printQty = qty; break; }
+  }
+}
+
+function ppStepQty(itemId, delta) {
+  var plan = _ppGetPlan(PP_DETAIL_PLAN_ID);
+  if (!plan) return;
+  for (var i = 0; i < plan.items.length; i++) {
+    if (plan.items[i].id === itemId) {
+      var q = parseInt(plan.items[i].printQty) || 1;
+      q += delta;
+      if (q < 1) q = 1;
+      plan.items[i].printQty = q;
+      break;
+    }
+  }
+  _ppRenderDetail();
+  _ppSave();
+}
+
+function ppRemoveProduct(itemId) {
+  var plan = _ppGetPlan(PP_DETAIL_PLAN_ID);
+  if (!plan) return;
+  for (var i = 0; i < plan.items.length; i++) {
+    if (plan.items[i].id === itemId) { plan.items.splice(i, 1); break; }
+  }
+  _ppRenderDetail();
+  _ppSave();
+}
+
+function ppRemoveAllUnprinted() {
+  var plan = _ppGetPlan(PP_DETAIL_PLAN_ID);
+  if (!plan) return;
+  var unprinted = plan.items.filter(function(it) { return !it.printed; });
+  if (unprinted.length === 0) { alert('当前没有未打印的商品'); return; }
+  if (!confirm('确认移除全部 ' + unprinted.length + ' 件未打印商品？已打印的商品将保留。')) return;
+  plan.items = plan.items.filter(function(it) { return it.printed; });
+  _ppRenderDetail();
+  _ppSave();
+}
+
+// ===== 添加商品弹窗 =====
+function ppAddProduct() {
+  var plan = _ppGetPlan(PP_DETAIL_PLAN_ID);
+  if (!plan) return;
+
+  var productHtml = '';
+  var catSet = {};
+  for (var i = 0; i < LABEL_PRODUCTS.length; i++) {
+    var p = LABEL_PRODUCTS[i];
+    if (p.cat) catSet[p.cat] = true;
+    var alreadyIn = false;
+    for (var j = 0; j < plan.items.length; j++) {
+      if (plan.items[j].barcode === p.barcode) { alreadyIn = true; break; }
+    }
+    productHtml += '<tr data-cat="' + _esc(p.cat || '') + '">' +
+      '<td style="text-align:center;width:40px"><input type="checkbox" class="pp-add-cb" data-prod-id="' + p.id + '"' + (alreadyIn ? ' disabled' : '') + ' style="width:16px;height:16px;accent-color:#005cf5" /></td>' +
+      '<td style="width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + _esc(p.name) + '</td>' +
+      '<td style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + _esc(p.barcode) + '</td>' +
+      '<td style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + _esc(p.spec || '—') + '</td>' +
+      '<td style="text-align:center;width:110px">¥' + p.price.toFixed(2) + '/' + _esc(p.unit) + '</td>' +
+      '<td style="text-align:center;width:100px">' + (alreadyIn ? '<span class="ps-status-tag" style="background:#f3f4f7;color:#999">已添加</span>' : '') + '</td>' +
+    '</tr>';
+  }
+
+  var cats = Object.keys(catSet);
+  var catOpts = '<option value="all">全部分类</option>';
+  for (var c = 0; c < cats.length; c++) {
+    catOpts += '<option value="' + _esc(cats[c]) + '">' + _esc(cats[c]) + '</option>';
+  }
+
+  var html =
+    '<div class="ps-overlay" id="ppAddOverlay" onclick="ppCloseAdd()">' +
+      '<div class="ps-dialog" style="width:min(760px,94vw)" onclick="event.stopPropagation()">' +
+        '<div class="ps-header">' +
+          '<h3>添加商品到「' + _esc(plan.name) + '」</h3>' +
+          '<button class="ps-close" onclick="ppCloseAdd()">×</button>' +
+        '</div>' +
+        '<div class="ps-search" style="display:flex;align-items:center;gap:8px">' +
+          '<select id="ppAddCat" onchange="ppFilterAddList()" style="width:140px;height:32px;padding:0 12px;border:1px solid #d9dbde;border-radius:4px;font-size:12px;background:#fff;outline:none;color:#0b1019;flex-shrink:0">' + catOpts + '</select>' +
+          '<input type="text" id="ppAddSearch" placeholder="搜索商品名称/条码" oninput="ppFilterAddList()" style="flex:1" />' +
+        '</div>' +
+        '<div style="min-height:0;overflow-x:auto;overflow-y:auto;height:380px">' +
+          '<table class="ps-table" id="ppAddTable" style="table-layout:fixed;width:100%">' +
+            '<thead><tr>' +
+              '<th style="width:40px"></th>' +
+              '<th style="width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">商品名称</th>' +
+              '<th style="width:130px">编码</th>' +
+              '<th style="width:96px">规格</th>' +
+              '<th style="width:110px">价格</th>' +
+              '<th style="width:100px;text-align:center">状态</th>' +
+            '</tr></thead>' +
+            '<tbody id="ppAddBody">' + productHtml + '</tbody>' +
+          '</table>' +
+        '</div>' +
+        '<div class="ps-footer">' +
+          '<span style="flex:1;font-size:12px;color:#606266" id="ppAddCount">已选 0 件</span>' +
+          '<button class="ps-op-btn" onclick="ppCloseAdd()">取消</button>' +
+          '<button class="ps-op-btn ps-op-pri" onclick="ppConfirmAdd()">确认添加</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  document.body.insertAdjacentHTML('beforeend', html);
+  // 更新选中计数
+  document.querySelectorAll('.pp-add-cb').forEach(function(cb) {
+    cb.addEventListener('change', function() { ppUpdateAddCount(); });
+  });
+}
+
+function ppUpdateAddCount() {
+  var cbs = document.querySelectorAll('.pp-add-cb:checked');
+  var el = document.getElementById('ppAddCount');
+  if (el) el.textContent = '已选 ' + cbs.length + ' 件';
+}
+
+function ppFilterAddList() {
+  var kwEl = document.getElementById('ppAddSearch');
+  var catEl = document.getElementById('ppAddCat');
+  var kw = (kwEl ? kwEl.value : '').toLowerCase();
+  var cat = catEl ? catEl.value : 'all';
+  var rows = document.querySelectorAll('#ppAddBody tr');
+  for (var i = 0; i < rows.length; i++) {
+    var text = (rows[i].textContent || '').toLowerCase();
+    var rowCat = rows[i].getAttribute('data-cat') || '';
+    var okKw = text.indexOf(kw) >= 0;
+    var okCat = (cat === 'all') || (rowCat === cat);
+    rows[i].style.display = (okKw && okCat) ? '' : 'none';
+  }
+}
+
+function ppCloseAdd() {
+  var ov = document.getElementById('ppAddOverlay');
+  if (ov) ov.remove();
+}
+
+function ppConfirmAdd() {
+  var plan = _ppGetPlan(PP_DETAIL_PLAN_ID);
+  if (!plan) return;
+  var cbs = document.querySelectorAll('.pp-add-cb:checked');
+  if (cbs.length === 0) { alert('请选择要添加的商品'); return; }
+  var added = 0;
+  for (var i = 0; i < cbs.length; i++) {
+    var pid = cbs[i].getAttribute('data-prod-id');
+    var prod = null;
+    for (var j = 0; j < LABEL_PRODUCTS.length; j++) {
+      if (LABEL_PRODUCTS[j].id === pid) { prod = LABEL_PRODUCTS[j]; break; }
+    }
+    if (prod) {
+      plan.items.push({
+        id: _ppGenItemId(),
+        name: prod.name,
+        barcode: prod.barcode,
+        price: prod.price,
+        origPrice: prod.origPrice,
+        memberPrice: prod.memberPrice,
+        unit: prod.unit,
+        spec: prod.spec,
+        produceDate: _ppLookupProduceDate(prod.barcode),
+        origin: prod.origin,
+        printQty: 1,
+        printed: false,
+        printedAt: null
+      });
+      added++;
+    }
+  }
+  ppCloseAdd();
+  _ppRenderDetail();
+  _ppSave();
+}
+
+// ===== 打印选中商品 =====
+function ppPrintSelected() {
+  var plan = _ppGetPlan(PP_DETAIL_PLAN_ID);
+  if (!plan) return;
+  var cbs = document.querySelectorAll('.pp-item-cb:checked');
+  if (cbs.length === 0) { alert('请勾选要打印的商品'); return; }
+
+  var selectedIds = [];
+  for (var i = 0; i < cbs.length; i++) {
+    selectedIds.push(cbs[i].getAttribute('data-item-id'));
+  }
+
+  var products = [];
+  for (var j = 0; j < plan.items.length; j++) {
+    var it = plan.items[j];
+    if (selectedIds.indexOf(it.id) >= 0) {
+      for (var k = 0; k < it.printQty; k++) {
+        products.push({
+          name: it.name,
+          price: it.price,
+          origPrice: it.origPrice,
+          spec: it.spec,
+          unit: it.unit,
+          barcode: it.barcode,
+          origin: it.origin,
+          memberPrice: it.memberPrice,
+          produceDate: it.produceDate
+        });
+      }
+    }
+  }
+
+  if (products.length === 0) { alert('未找到可打印的商品'); return; }
+
+  // 标记已打印
+  var now = _ppNow();
+  for (var m = 0; m < plan.items.length; m++) {
+    if (selectedIds.indexOf(plan.items[m].id) >= 0) {
+      plan.items[m].printed = true;
+      plan.items[m].printedAt = now;
+    }
+  }
+
+  // 使用已有的打印对话框
+  _PL_PRINT_PRODUCTS = products;
+  _showPlPrintDialog();
+  _ppRenderDetail();
+  ppRenderTable();
+  _ppSave();
+}
+
+// ===== 从列表直接打印 =====
+function ppPrintFromList(id) {
+  ppOpenDetail(id);
+  // 弹窗渲染后自动勾选未打印项（已打印需手动勾选二次打印）
+  setTimeout(function() {
+    var cbs = document.querySelectorAll('.pp-item-cb');
+    for (var i = 0; i < cbs.length; i++) {
+      if (cbs[i].getAttribute('data-printed') !== '1') cbs[i].checked = true;
+    }
+    var cb = document.getElementById('ppSelectAllCb');
+    if (cb) cb.checked = false;
+  }, 100);
+}
+
+// ===== 改价日志 → 加入打印计划 =====
+function ppAddToPlanFromPriceLog(logIds) {
+  // 从 PL_LOGS 收集商品
+  var seen = {};
+  var products = [];
+  for (var j = 0; j < PL_LOGS.length; j++) {
+    var log = PL_LOGS[j];
+    if (logIds.indexOf(log.id) >= 0 && !seen[log.code]) {
+      seen[log.code] = true;
+      products.push({
+        name: log.name,
+        barcode: log.code,
+        price: log.newPrice,
+        origPrice: log.origPrice,
+        memberPrice: log.newMemberPrice || 0,
+        unit: log.unit,
+        spec: log.spec,
+        produceDate: _ppLookupProduceDate(log.code),
+        origin: log.store || '',
+        printQty: 1,
+        printed: false,
+        printedAt: null
+      });
+    }
+  }
+  if (products.length === 0) { alert('未找到选中的改价商品'); return; }
+
+  // 查找当天最新的调价打印计划（createdAt 最大即为最新；含已完成，价格变了也要追加重打）
+  var today = _ppTodayStr();
+  var plan = null;
+  var latestTs = '';
+  for (var i = 0; i < PRINT_PLANS.length; i++) {
+    var p = PRINT_PLANS[i];
+    if (p.type === 'price-change' && p.createdAt.indexOf(today) === 0) {
+      if (p.createdAt > latestTs) { latestTs = p.createdAt; plan = p; }
+    }
+  }
+
+  // 不存在则新建
+  if (!plan) {
+    var store = products[0].origin || '';
+    plan = {
+      id: _ppGenId(),
+      name: today + ' 调价打印',
+      type: 'price-change',
+      status: 'pending',
+      store: store,
+      createdAt: _ppNow(),
+      createdBy: '系统自动',
+      items: []
+    };
+    PRINT_PLANS.unshift(plan);
+  }
+
+  // 添加/更新商品：
+  // - 计划里无同条码 → 新增（待打印）
+  // - 计划里有同条码：价格相同 → 不再加入；价格不同 → 更新为最新价，已打印的变更为未打印（旧价签作废）
+  var addedCount = 0, updatedCount = 0, resetCount = 0;
+  for (var m = 0; m < products.length; m++) {
+    var found = null;
+    for (var n = 0; n < plan.items.length; n++) {
+      if (plan.items[n].barcode === products[m].barcode) { found = plan.items[n]; break; }
+    }
+    if (found) {
+      var samePrice = (found.price === products[m].price)
+        && (found.origPrice === products[m].origPrice)
+        && (found.memberPrice === products[m].memberPrice);
+      if (samePrice) continue; // 价格相同，不再加入、不更改
+      found.price = products[m].price;
+      found.origPrice = products[m].origPrice;
+      found.memberPrice = products[m].memberPrice;
+      found.spec = products[m].spec;
+      found.unit = products[m].unit;
+      found.produceDate = products[m].produceDate;
+      found.origin = products[m].origin;
+      if (found.printed) { found.printed = false; found.printedAt = null; resetCount++; }
+      updatedCount++;
+    } else {
+      products[m].id = _ppGenItemId();
+      plan.items.push(products[m]);
+      addedCount++;
+    }
+  }
+
+  _ppUpdateStatus(plan);
+  if (addedCount > 0 || updatedCount > 0) {
+    var msg = '已将 ' + addedCount + ' 件商品加入计划「' + plan.name + '」';
+    if (updatedCount > 0) msg += '\n其中 ' + updatedCount + ' 件价格有变动已更新' + (resetCount > 0 ? '（' + resetCount + ' 件已打印的已重置为待打印，旧价签作废需重打）' : '') + (resetCount < updatedCount ? '，其余待打印项同步更新价格' : '');
+    alert(msg);
+  } else {
+    alert('选中的商品已在计划中且价格相同，无需重复添加');
+  }
+  ppRenderTable(); // 同步刷新打印计划列表（若当前在打印计划页）
+  _ppSave();
+}
+
+
 function icToggleDropdown() {
   var dd = document.getElementById('icSelectDropdown');
   var isOpen = dd.classList.contains('open');
@@ -13491,6 +14520,9 @@ function glSaveStandard() {
     <div id="shiftSimModalBody" style="flex:1;overflow-y:auto;padding:20px"></div>
   </div>
 </div>
+
+<!-- 打印计划模块 PRD 原文（供「产品需求说明」按钮渲染，原样存储不被解析） -->
+
 
 </body>
 </html>

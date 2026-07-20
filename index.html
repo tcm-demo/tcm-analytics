@@ -789,6 +789,19 @@ Chart.register({
   .ps-op-danger:hover { background: rgba(252,75,82,0.2); }
   .ps-op-link { background: none; border: none; color: #005cf5; padding: 0; font-size: 12px; font-weight: 500; cursor: pointer; }
   .ps-op-link:hover { color: #024dca; }
+  /* 改价日志 · 自动加入调价打印计划 开关 */
+  .pl-switch { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: #606266; cursor: pointer; user-select: none; margin-left: 6px; }
+  .pl-switch input { display: none; }
+  .pl-switch-track { position: relative; width: 38px; height: 20px; background: #dcdfe6; border-radius: 999px; transition: background .2s; flex-shrink: 0; }
+  .pl-switch-track .pl-switch-thumb { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; background: #fff; border-radius: 50%; transition: transform .2s; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+  .pl-switch input:checked + .pl-switch-track { background: #005cf5; }
+  .pl-switch input:checked + .pl-switch-track .pl-switch-thumb { transform: translateX(18px); }
+  .pl-switch-label { white-space: nowrap; }
+  .pl-auto-status { font-size: 12px; margin-left: 4px; }
+  .pl-auto-status.on { color: #005cf5; }
+  .pl-auto-status.off { color: #909399; }
+  .pl-toast { position: fixed; left: 50%; top: 64px; transform: translateX(-50%); background: rgba(11,16,25,.86); color: #fff; padding: 8px 16px; border-radius: 6px; font-size: 12px; z-index: 99999; box-shadow: 0 6px 20px rgba(0,0,0,.25); opacity: 0; transition: opacity .25s; pointer-events: none; max-width: 80vw; text-align: center; }
+  .pl-toast.show { opacity: 1; }
   .ps-status-tag { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; }
   .pp-batch-tag { display: inline-block; margin-left: 4px; padding: 0 5px; font-size: 10px; line-height: 15px; color: #005cf5; background: #f2f8ff; border-radius: 3px; vertical-align: middle; }
   .pp-qty-btn { width: 22px; height: 22px; line-height: 1; padding: 0; border: 1px solid #d9dbde; border-radius: 4px; background: #fff; color: #0b1019; font-size: 14px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
@@ -4605,16 +4618,150 @@ function plReset() {
   plRenderTable();
 }
 
-// ===== 改价日志 → 加入调价打印计划（需求：勾选「自动调价打印计划」后加入）=====
+// ===== 改价日志 → 自动加入调价打印计划 开关 =====
+// 监控字段（可扩展）：这些字段发生变更即视为「商品信息变更」，开关开启时自动加入调价打印计划
+var PP_AUTO_FIELDS = ['name', 'newPrice', 'origPrice', 'oldPrice', 'newMemberPrice', 'oldMemberPrice', 'spec', 'unit', 'store'];
+
+// 从 PL_LOGS 收集商品（开关自动加入 / 手动加入共用）
+function plCollectProducts(logIds) {
+  var seen = {};
+  var products = [];
+  for (var j = 0; j < PL_LOGS.length; j++) {
+    var log = PL_LOGS[j];
+    if (logIds.indexOf(log.id) >= 0 && !seen[log.code]) {
+      seen[log.code] = true;
+      products.push({
+        name: log.name,
+        barcode: log.code,
+        price: log.newPrice,
+        origPrice: log.origPrice,
+        memberPrice: log.newMemberPrice || 0,
+        unit: log.unit,
+        spec: log.spec,
+        produceDate: _ppLookupProduceDate(log.code),
+        batchCount: _ppBatchCount(log.code),
+        origin: log.store || '',
+        printQty: 1
+      });
+    }
+  }
+  return products;
+}
+
+// 自动加入（开关开启时调用）：将商品信息变更自动归集到调价自动计划
+function plAutoAdd(logIds, silent) {
+  var products = plCollectProducts(logIds);
+  if (products.length === 0) return 0;
+  if (PPApi.USE_HTTP) {
+    PPApi.addFromPriceChanges({
+      target: 'latest',
+      shopId: products[0].origin || '',
+      companyId: PP_COMPANY_ID,
+      goodsList: products.map(function(p) {
+        return { goodsId: '', goodsName: p.name, goodsListPrice: p.origPrice, goodsPrice: p.price, vipPrice: p.memberPrice, recordTime: '' };
+      })
+    }).then(function(res) {
+      if (!silent) plToast((res && res.code === 0) ? '已自动加入调价打印计划' : ('加入失败：' + ((res && res.message) || '')));
+      refreshPlansFromServerOrLocal();
+    });
+    return products.length;
+  }
+  var r = ppAddPriceChangeProducts(products, 'price-change');
+  if (!silent) {
+    var msg = '检测到商品信息变更，已自动加入调价打印计划（' + ((r && r.addedCount) || 0) + ' 件）';
+    if (r && r.updatedCount > 0) msg += '，' + r.updatedCount + ' 件价格有变动已更新';
+    plToast(msg);
+  }
+  ppRenderTable();
+  _ppSave();
+  return (r && r.addedCount) || 0;
+}
+
+// 开关切换
+function plAutoAddOnToggle() {
+  var cb = document.getElementById('plAutoAddSwitch');
+  var on = cb ? cb.checked : false;
+  try { localStorage.setItem('tcm_pp_autoprice_switch', on ? '1' : '0'); } catch (e) {}
+  plSetAutoStatus(on);
+  if (on) {
+    var ids = PL_LOGS.map(function(l) { return l.id; });
+    var added = plAutoAdd(ids, true);
+    plToast(added > 0 ? ('已开启：自动加入调价打印计划（本次新增 ' + added + ' 件）') : '已开启：自动加入调价打印计划');
+  } else {
+    plToast('已关闭：商品信息变更不再自动加入打印计划');
+  }
+}
+
+function plSetAutoStatus(on) {
+  var s = document.getElementById('plAutoStatus');
+  if (!s) return;
+  s.className = 'pl-auto-status ' + (on ? 'on' : 'off');
+  s.textContent = on ? '● 自动加入已开启' : '○ 已关闭';
+}
+
+// 进入页面时还原开关状态并静默同步（确保已变更商品已在计划中）
+function plLoadAutoSwitch() {
+  var on = false;
+  try { on = localStorage.getItem('tcm_pp_autoprice_switch') === '1'; } catch (e) {}
+  var cb = document.getElementById('plAutoAddSwitch');
+  if (cb) cb.checked = on;
+  plSetAutoStatus(on);
+  if (on) {
+    var ids = PL_LOGS.map(function(l) { return l.id; });
+    plAutoAdd(ids, true);
+  }
+}
+
+// 模拟一次商品信息变更（用于演示开关的自动加入效果）
+function plSimulateChange() {
+  var p = _PL_MOCK_PRODUCTS[Math.floor(Math.random() * _PL_MOCK_PRODUCTS.length)];
+  var stores = ['崧泽大道中心店', '华科东路店', '盈港路店'];
+  var store = stores[Math.floor(Math.random() * stores.length)];
+  var oldPrice = parseFloat((p.origPrice + (Math.random() * 4 - 2)).toFixed(2));
+  var newPrice = parseFloat((p.origPrice + (Math.random() * 6 - 2.5)).toFixed(2));
+  var newMember = parseFloat((newPrice * (0.82 + Math.random() * 0.1)).toFixed(2));
+  var now = new Date();
+  var pad = function(n) { return n < 10 ? '0' + n : '' + n; };
+  var ts = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate()) + ' ' + pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds());
+  var maxId = PL_LOGS.reduce(function(m, l) { return Math.max(m, l.id); }, 0);
+  var log = {
+    id: maxId + 1,
+    name: p.name, code: p.code, spec: p.spec, unit: p.unit,
+    oldPrice: oldPrice, newPrice: newPrice,
+    oldMemberPrice: parseFloat((oldPrice * 0.85).toFixed(2)), newMemberPrice: newMember,
+    origPrice: p.origPrice, category: p.category,
+    operator: '演示', store: store, time: ts
+  };
+  PL_LOGS.unshift(log);
+  PL_LOGS.sort(function(a, b) { return a.time < b.time ? 1 : -1; });
+  plRenderTable();
+  var cb = document.getElementById('plAutoAddSwitch');
+  var on = cb ? cb.checked : false;
+  if (on) {
+    plAutoAdd([log.id], false);
+  } else {
+    plToast('已记录商品信息变更（开关关闭，未自动加入计划）');
+  }
+}
+
+// 轻量 toast
+var _plToastTimer = null;
+function plToast(msg) {
+  var t = document.getElementById('plToast');
+  if (!t) { t = document.createElement('div'); t.id = 'plToast'; t.className = 'pl-toast'; document.body.appendChild(t); }
+  t.textContent = msg;
+  t.classList.add('show');
+  if (_plToastTimer) clearTimeout(_plToastTimer);
+  _plToastTimer = setTimeout(function() { t.classList.remove('show'); }, 2400);
+}
+
+// 手动加入选中项（独立于开关，始终加入调价自动计划）
 function plAddToPlan() {
   var cbs = document.querySelectorAll('.pl-row-cb:checked');
   if (cbs.length === 0) { alert('请先勾选要加入的改价记录'); return; }
   var ids = [];
-  for (var i = 0; i < cbs.length; i++) ids.push(cbs[i].getAttribute('data-id'));
-  var forceAuto = true;
-  var cb = document.getElementById('plAutoPlanCb');
-  if (cb) forceAuto = cb.checked;
-  ppAddToPlanFromPriceLog(ids, forceAuto ? 'price-change' : 'manual');
+  for (var i = 0; i < cbs.length; i++) ids.push(parseInt(cbs[i].getAttribute('data-id')));
+  ppAddToPlanFromPriceLog(ids, 'price-change');
 }
 
 // ===== 改价日志 → 打印价签 =====
@@ -4792,10 +4939,14 @@ function initPriceLog() {
       // 操作栏（紧接筛选栏，白底+border）
       '<div style="flex-shrink:0;padding:8px;display:flex;align-items:center;gap:8px;background:#fff;border-bottom:1px solid #dfe3ed">' +
         '<button class="ps-op-btn ps-op-pri" onclick="plPrintLabels()">打印价签</button>' +
-      '<label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#606266;cursor:pointer;margin-left:6px">' +
-        '<input type="checkbox" id="plAutoPlanCb" checked style="width:16px;height:16px;accent-color:#005cf5" /> 自动调价打印计划' +
-      '</label>' +
-      '<button class="ps-op-btn" onclick="plAddToPlan()">加入调价计划</button>' +
+        '<label class="pl-switch" title="打开后，商品信息（名称 / 现价 / 原价 / 会员价 / 产地等）发生变更将自动加入调价打印计划">' +
+          '<input type="checkbox" id="plAutoAddSwitch" onchange="plAutoAddOnToggle()" />' +
+          '<span class="pl-switch-track"><span class="pl-switch-thumb"></span></span>' +
+          '<span class="pl-switch-label">自动加入调价打印计划</span>' +
+        '</label>' +
+        '<span id="plAutoStatus" class="pl-auto-status off">○ 已关闭</span>' +
+        '<button class="ps-op-btn" onclick="plSimulateChange()">模拟新改价</button>' +
+        '<button class="ps-op-btn" onclick="plAddToPlan()">加入选中项</button>' +
       '</div>' +
       // 表格卡片（左右缩进8px，上方间隔10px，底部间隔8px，渐变边框）
       '<div style="flex:1;min-height:0;margin:10px 8px 8px;padding:1px;background:linear-gradient(180deg, #e0e3e8, #f0f2f5);border-radius:4px">' +
@@ -4811,6 +4962,7 @@ function initPriceLog() {
       '</div>';
 
   plRenderTable();
+  plLoadAutoSwitch();
 }
 
 // ===== 日期 Tab 切换（改价日志）=====
@@ -7630,23 +7782,28 @@ function _ppLoad() {
 /* ===================== 打印计划 · 接口适配层 PPApi =====================
  * 统一封装 /mnmart/printPlan/* 接口的请求构建与响应解析。
  * - 默认（USE_HTTP=false）：走前端内存模拟（演示态，localStorage 持久化），
- *   但请求/响应契约与新接口规范严格一致，便于后续对接。
- * - 联调模式（URL 加 ?api=1）：所有读写走真实 mock_server.py（见项目根 mock_server.py），
- *   满足前端人员接口调试。mock_server 持有唯一数据，前端不再落 localStorage。
+ *   请求/响应契约与新接口规范严格一致，便于后续对接。
+ * - 线上 Mock 模式（URL 加 ?api=1）：所有读写走「线上静态 Mock」
+ *   （GitHub Pages 托管的 JSON，见项目根 mock/ 目录，部署后位于 /mock/...json）。
+ *   无需起任何服务、无需 Python，其他技术人员直接打开页面即可调试页面与参数；
+ *   请求参数会 console.log 输出，便于校对入参。如需参数化动态响应，
+ *   将 PPApi.MOCK_BASE 指向任意在线 mock 服务（如 Beeceptor / Apifox）基址即可。
  * 删除类接口（§9.5）：code===0 即成功，data 内无冗余字段（需求3/4）。
  */
 var PP_COMPANY_ID = 'ent-001';
 var PPApi = {
   USE_HTTP: (window.location && window.location.search && window.location.search.indexOf('api=1') >= 0),
   BASE: '/mnmart',
+  // 线上静态 Mock 根目录（相对路径，GitHub Pages 与本地均可用）。
+  // 改为外部 mock 服务基址（如 'https://xxx.mock.pstmn.io'）即可获得参数化动态响应。
+  MOCK_BASE: './mock',
+  // 线上 Mock（?api=1）：GET 静态 JSON 文件（无需后端 / 无需起服务）
   _post: function(path, data, requestPage) {
     if (!this.USE_HTTP) return Promise.resolve(null); // 本地降级：调用方走内存逻辑
-    var body = requestPage ? { data: data, requestPage: requestPage } : { data: data };
-    return fetch(this.BASE + path, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    }).then(function(r) { return r.json(); });
+    var url = this.MOCK_BASE + this.BASE + path + '.json';
+    if (window.console && console.log) console.log('[PPApi mock] GET', url, 'params:', data);
+    return fetch(url, { method: 'GET', headers: { 'Accept': 'application/json' } })
+      .then(function(r) { if (!r.ok) throw new Error('mock HTTP ' + r.status); return r.json(); });
   },
   // §9.2 计划列表
   list: function(filters, requestPage) {

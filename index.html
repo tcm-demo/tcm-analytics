@@ -8437,6 +8437,98 @@ function ppPrintFromList(id) {
 }
 
 // ===== 改价日志 → 加入打印计划 =====
+// ===== 调价商品加入打印计划（核心）=====
+// 所有调价行为（改价日志/销售改价/商品编辑等，规则5）统一调用本函数。
+// products: [{ name, barcode, price, origPrice, memberPrice, unit, spec, produceDate, origin, printQty }]
+function ppAddPriceChangeProducts(products) {
+  if (!products || products.length === 0) return null;
+  var today = _ppTodayStr();
+
+  // —— 目标计划选择（规则2/3/4）——
+  // P1 规则4：当天存在「调价自动(price-change)」计划（任意状态，含已完成）→ 用该计划
+  // P2 规则2：否则当天存在「未完成(status≠done)」计划 → 用该计划
+  // P3 规则3：否则（当天只有已完成计划 或 无任何计划）→ 新建「调价自动」计划
+  var priceChangePlan = null, pcLatest = '';
+  var incompletePlan = null, incLatest = '';
+  for (var i = 0; i < PRINT_PLANS.length; i++) {
+    var p = PRINT_PLANS[i];
+    if (p.createdAt.indexOf(today) !== 0) continue; // 仅限当天
+    if (p.type === 'price-change') {
+      if (!priceChangePlan || p.createdAt > pcLatest) { priceChangePlan = p; pcLatest = p.createdAt; }
+    } else if (p.status !== 'done') {
+      if (!incompletePlan || p.createdAt > incLatest) { incompletePlan = p; incLatest = p.createdAt; }
+    }
+  }
+
+  var plan;
+  if (priceChangePlan) {
+    plan = priceChangePlan;                          // P1
+  } else if (incompletePlan) {
+    plan = incompletePlan;                           // P2
+  } else {
+    plan = {                                         // P3 新建「调价自动」计划
+      id: _ppGenId(),
+      name: today + ' 调价打印',
+      type: 'price-change',
+      status: 'pending',
+      store: products[0].origin || (products[0].store || ''),
+      createdAt: _ppNow(),
+      createdBy: '系统自动',
+      items: []
+    };
+    PRINT_PLANS.unshift(plan);
+  }
+
+  // —— 加入/更新商品（规则1/2/4）——
+  // 无同条码 → 新增（待打印，最新价）
+  // 有同条码且价格相同 → 不动（规则1：价格没变则不更新、无需重复）
+  // 有同条码且价格不同 → 同步最新价；并置为待打印（规则4：商品状态待打印；规则2：已打印项更新并标记未打印需重打）
+  var addedCount = 0, updatedCount = 0, resetCount = 0;
+  for (var m = 0; m < products.length; m++) {
+    var prod = products[m];
+    var mp = (prod.memberPrice != null) ? prod.memberPrice : 0;
+    var found = null;
+    for (var n = 0; n < plan.items.length; n++) {
+      if (plan.items[n].barcode === prod.barcode) { found = plan.items[n]; break; }
+    }
+    if (!found) {
+      plan.items.push({
+        id: _ppGenItemId(),
+        name: prod.name,
+        barcode: prod.barcode,
+        price: prod.price,
+        origPrice: prod.origPrice,
+        memberPrice: mp,
+        unit: prod.unit,
+        spec: prod.spec,
+        produceDate: prod.produceDate,
+        origin: prod.origin,
+        printQty: prod.printQty || 1,
+        printed: false,
+        printedAt: null
+      });
+      addedCount++;
+    } else {
+      var samePrice = (found.price === prod.price)
+        && (found.origPrice === prod.origPrice)
+        && (found.memberPrice === mp);
+      if (samePrice) continue;
+      found.price = prod.price;
+      found.origPrice = prod.origPrice;
+      found.memberPrice = mp;
+      found.spec = prod.spec;
+      found.unit = prod.unit;
+      found.produceDate = prod.produceDate;
+      found.origin = prod.origin;
+      if (found.printed) { found.printed = false; found.printedAt = null; resetCount++; }
+      updatedCount++;
+    }
+  }
+
+  _ppUpdateStatus(plan); // 规则4：计划状态 待打印/部分打印；规则6：进度 = 已打印/总商品数
+  return { plan: plan, addedCount: addedCount, updatedCount: updatedCount, resetCount: resetCount };
+}
+
 function ppAddToPlanFromPriceLog(logIds) {
   // 从 PL_LOGS 收集商品
   var seen = {};
@@ -8455,75 +8547,16 @@ function ppAddToPlanFromPriceLog(logIds) {
         spec: log.spec,
         produceDate: _ppLookupProduceDate(log.code),
         origin: log.store || '',
-        printQty: 1,
-        printed: false,
-        printedAt: null
+        printQty: 1
       });
     }
   }
   if (products.length === 0) { alert('未找到选中的改价商品'); return; }
 
-  // 查找当天最新的调价打印计划（createdAt 最大即为最新；含已完成，价格变了也要追加重打）
-  var today = _ppTodayStr();
-  var plan = null;
-  var latestTs = '';
-  for (var i = 0; i < PRINT_PLANS.length; i++) {
-    var p = PRINT_PLANS[i];
-    if (p.type === 'price-change' && p.createdAt.indexOf(today) === 0) {
-      if (p.createdAt > latestTs) { latestTs = p.createdAt; plan = p; }
-    }
-  }
-
-  // 不存在则新建
-  if (!plan) {
-    var store = products[0].origin || '';
-    plan = {
-      id: _ppGenId(),
-      name: today + ' 调价打印',
-      type: 'price-change',
-      status: 'pending',
-      store: store,
-      createdAt: _ppNow(),
-      createdBy: '系统自动',
-      items: []
-    };
-    PRINT_PLANS.unshift(plan);
-  }
-
-  // 添加/更新商品：
-  // - 计划里无同条码 → 新增（待打印）
-  // - 计划里有同条码：价格相同 → 不再加入；价格不同 → 更新为最新价，已打印的变更为未打印（旧价签作废）
-  var addedCount = 0, updatedCount = 0, resetCount = 0;
-  for (var m = 0; m < products.length; m++) {
-    var found = null;
-    for (var n = 0; n < plan.items.length; n++) {
-      if (plan.items[n].barcode === products[m].barcode) { found = plan.items[n]; break; }
-    }
-    if (found) {
-      var samePrice = (found.price === products[m].price)
-        && (found.origPrice === products[m].origPrice)
-        && (found.memberPrice === products[m].memberPrice);
-      if (samePrice) continue; // 价格相同，不再加入、不更改
-      found.price = products[m].price;
-      found.origPrice = products[m].origPrice;
-      found.memberPrice = products[m].memberPrice;
-      found.spec = products[m].spec;
-      found.unit = products[m].unit;
-      found.produceDate = products[m].produceDate;
-      found.origin = products[m].origin;
-      if (found.printed) { found.printed = false; found.printedAt = null; resetCount++; }
-      updatedCount++;
-    } else {
-      products[m].id = _ppGenItemId();
-      plan.items.push(products[m]);
-      addedCount++;
-    }
-  }
-
-  _ppUpdateStatus(plan);
-  if (addedCount > 0 || updatedCount > 0) {
-    var msg = '已将 ' + addedCount + ' 件商品加入计划「' + plan.name + '」';
-    if (updatedCount > 0) msg += '\n其中 ' + updatedCount + ' 件价格有变动已更新' + (resetCount > 0 ? '（' + resetCount + ' 件已打印的已重置为待打印，旧价签作废需重打）' : '') + (resetCount < updatedCount ? '，其余待打印项同步更新价格' : '');
+  var r = ppAddPriceChangeProducts(products);
+  if (r && (r.addedCount > 0 || r.updatedCount > 0)) {
+    var msg = '已将 ' + r.addedCount + ' 件商品加入计划「' + r.plan.name + '」';
+    if (r.updatedCount > 0) msg += '\n其中 ' + r.updatedCount + ' 件价格有变动已更新' + (r.resetCount > 0 ? '（' + r.resetCount + ' 件已打印的已重置为待打印，旧价签作废需重打）' : '') + (r.resetCount < r.updatedCount ? '，其余待打印项同步更新价格' : '');
     alert(msg);
   } else {
     alert('选中的商品已在计划中且价格相同，无需重复添加');

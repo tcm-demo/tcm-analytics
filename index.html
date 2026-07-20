@@ -4644,17 +4644,7 @@ function plPrintLabels() {
   _showPlPrintDialog()
 }
 
-// ===== 改价日志 → 加入打印计划 =====
-function plAddToPrintPlan() {
-  var cbs = document.querySelectorAll('.pl-row-cb:checked')
-  var ids = []
-  for (var i = 0; i < cbs.length; i++) {
-    ids.push(parseInt(cbs[i].getAttribute('data-id')))
-  }
-  if (ids.length === 0) { alert('请先在表格中勾选要加入的商品'); return }
-  ppAddToPlanFromPriceLog(ids)
-}
-
+// ===== 改价日志 → 打印价签 =====
 function _showPlPrintDialog() {
   _PL_PRINT_TPL = 'tpl-01'
 
@@ -4789,7 +4779,7 @@ function initPriceLog() {
       '</div>' +
       // 操作栏（紧接筛选栏，白底+border）
       '<div style="flex-shrink:0;padding:8px;display:flex;align-items:center;gap:8px;background:#fff;border-bottom:1px solid #dfe3ed">' +
-        '<button class="ps-op-btn ps-op-pri" onclick="plAddToPrintPlan()">加入打印计划</button>' +
+        '<button class="ps-op-btn ps-op-pri" onclick="plPrintLabels()">打印价签</button>' +
       '</div>' +
       // 表格卡片（左右缩进8px，上方间隔10px，底部间隔8px，渐变边框）
       '<div style="flex:1;min-height:0;margin:10px 8px 8px;padding:1px;background:linear-gradient(180deg, #e0e3e8, #f0f2f5);border-radius:4px">' +
@@ -8479,11 +8469,15 @@ function ppAddPriceChangeProducts(products) {
     PRINT_PLANS.unshift(plan);
   }
 
-  // —— 加入/更新商品（规则1/2/4）——
+  // —— 加入/更新商品（规则1/2/4，按 §5.3 精确化）——
   // 无同条码 → 新增（待打印，最新价）
-  // 有同条码且价格相同 → 不动（规则1：价格没变则不更新、无需重复）
-  // 有同条码且价格不同 → 同步最新价；并置为待打印（规则4：商品状态待打印；规则2：已打印项更新并标记未打印需重打）
+  // 有同条码且价格与计划相同 → 任何信息都不修改（含打印状态，规则1：价格没变则不更新、不重置）
+  // 有同条码且价格不同 → 仅当计划可更新时才：同步最新价 + 状态置为待打印
+  //   计划可更新 = 「调价自动(price-change)」任意状态 或 「用户新增(manual)且计划未完成(plan.status!=='done'，以计划状态为准)」
+  //   计划为「用户新增且已完成」→ 即便价格不同也不更新信息、不重置打印状态
   var addedCount = 0, updatedCount = 0, resetCount = 0;
+  var planUpdatable = (plan.type === 'price-change')
+    || (plan.type === 'manual' && plan.status !== 'done');
   for (var m = 0; m < products.length; m++) {
     var prod = products[m];
     var mp = (prod.memberPrice != null) ? prod.memberPrice : 0;
@@ -8512,7 +8506,8 @@ function ppAddPriceChangeProducts(products) {
       var samePrice = (found.price === prod.price)
         && (found.origPrice === prod.origPrice)
         && (found.memberPrice === mp);
-      if (samePrice) continue;
+      if (samePrice) continue;                 // 价格相同：不改任何信息（含打印状态）
+      if (!planUpdatable) continue;            // 用户新增且已完成：价格不同也不更新、不重置打印状态
       found.price = prod.price;
       found.origPrice = prod.origPrice;
       found.memberPrice = mp;

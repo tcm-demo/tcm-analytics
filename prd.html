@@ -63,15 +63,21 @@ body {
 .md-body pre code { background: none; color: inherit; padding: 0; }
 .md-body table {
   border-collapse: collapse; margin: 14px 0; font-size: 12px;
-  table-layout: auto;
+  width: 100%; table-layout: fixed;
 }
 .md-body th, .md-body td {
   border: 1px solid #e8e8e8; padding: 10px 14px;
   text-align: left; vertical-align: top; line-height: 1.65;
+  word-break: break-word;
 }
 .md-body th {
   background: #f3f4f7; font-weight: 600; white-space: nowrap; font-size: 12px;
 }
+/* 前两列：紧凑短列（版本/标识/日期/类型等），固定宽度不再被长内容挤压 */
+.md-body th:nth-child(1), .md-body td:nth-child(1) { width: 100px; }
+.md-body th:nth-child(2), .md-body td:nth-child(2) { width: 130px; white-space: nowrap; }
+/* 表格外层横向滚动：超宽表格走滚动条，而不是挤压短列 */
+.doc-body { overflow-x: auto; }
 .md-body blockquote { border-left: 3px solid #d9dbde; margin: 12px 0; padding: 4px 14px; color: #606266; background: #fafbfc; }
 .md-body a { color: #005cf5; }
 .md-body hr { border: none; border-top: 1px solid #e8e8e8; margin: 18px 0; }
@@ -1472,11 +1478,20 @@ Template(价签模板,前端渲染概念) 1─* PlanItem(打印时引用)
   var navLinks = Array.prototype.slice.call(document.querySelectorAll('.doc-nav a'));
   var sections = Array.prototype.slice.call(document.querySelectorAll('.md-doc'));
   function show(name) {
+    var valid = sections.some(function(s){ return s.getAttribute('data-doc') === name; });
+    if (!valid) name = sections[0].getAttribute('data-doc');
     navLinks.forEach(function(a){ a.classList.toggle('active', a.getAttribute('data-doc') === name); });
     sections.forEach(function(s){ s.classList.toggle('active', s.getAttribute('data-doc') === name); });
     var active = document.querySelector('.md-doc.active .doc-body');
     if (active) active.scrollTop = 0;
-    if (location.hash !== '#' + name) history.replaceState(null, '', '#' + name);
+    // 文档切换写到 ?doc=，避免和标题 anchor（#slug）冲突造成刷新空白
+    try {
+      var url = new URL(location.href);
+      if (url.searchParams.get('doc') !== name) {
+        url.searchParams.set('doc', name);
+        history.replaceState(null, '', url.pathname + '?' + url.searchParams.toString() + location.hash);
+      }
+    } catch (e) { /* file:// 下 URL 解析偶有兼容问题，忽略 */ }
   }
   navLinks.forEach(function(a){ a.addEventListener('click', function(){ show(a.getAttribute('data-doc')); }); });
   // PRD 页内的 API 入口（doc: 链接）
@@ -1484,10 +1499,9 @@ Template(价签模板,前端渲染概念) 1─* PlanItem(打印时引用)
     var el = e.target.closest('a[data-doc]');
     if (el) { e.preventDefault(); show(el.getAttribute('data-doc')); }
   });
-  // 初始：优先 hash，其次 ?doc=，否则第一篇
-  var initial = (location.hash || '').replace('#', '');
+  // 初始：优先 ?doc=，否则第一篇
   var q = new URLSearchParams(location.search).get('doc');
-  initial = initial || q || (sections[0] && sections[0].getAttribute('data-doc'));
+  var initial = q || (sections[0] && sections[0].getAttribute('data-doc'));
   show(initial);
 })();
 </script>

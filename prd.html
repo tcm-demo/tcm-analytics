@@ -1,0 +1,1495 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>打印计划文档</title>
+<style>
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  color: #0b1019; background: #fff;
+}
+.layout { display: flex; height: 100vh; }
+
+/* 左侧文档导航 */
+.doc-nav {
+  width: 220px; flex: 0 0 220px; height: 100%;
+  border-right: 1px solid #e8e8e8; background: #fafbfc;
+  padding: 20px 12px; overflow-y: auto;
+}
+.doc-nav-title { font-size: 12px; font-weight: 600; color: #909399; letter-spacing: .5px; margin: 0 4px 12px; }
+.doc-nav a {
+  display: block; padding: 9px 12px; margin: 2px 0; border-radius: 6px;
+  color: #303133; text-decoration: none; font-size: 13px; cursor: pointer;
+}
+.doc-nav a:hover { background: #eef3ff; color: #005cf5; }
+.doc-nav a.active { background: #005cf5; color: #fff; font-weight: 600; }
+
+/* 中间：文档区（激活时 flex 行布局，左正文右 TOC） */
+.doc-main { flex: 1; min-width: 0; height: 100%; position: relative; }
+.md-doc { display: none; position: absolute; inset: 0; }
+.md-doc.active { display: flex; }
+
+/* 正文滚动区 */
+.doc-body { flex: 1; min-width: 0; overflow-y: auto; overflow-x: auto; padding: 32px 44px 64px; }
+
+/* 右侧 TOC */
+.doc-toc {
+  width: 240px; flex: 0 0 240px; height: 100%; overflow-y: auto;
+  border-left: 1px solid #e8e8e8; background: #fafbfc;
+  padding: 24px 14px;
+}
+.doc-toc-title { font-size: 13px; font-weight: 600; color: #0b1019; margin-bottom: 12px; letter-spacing: .5px; }
+.doc-toc ul { list-style: none; margin: 0; padding: 0; }
+.doc-toc li { margin: 2px 0; font-size: 13px; line-height: 1.6; }
+.doc-toc li li { padding-left: 14px; }
+.doc-toc a { color: #606266; text-decoration: none; display: block; padding: 3px 6px; border-radius: 4px; }
+.doc-toc a:hover { color: #005cf5; background: #eef3ff; }
+
+/* ===== md-body 正文排版（对齐项目规范）===== */
+.md-body { font-size: 13px; line-height: 1.7; color: #0b1019; word-break: break-word; }
+.md-body h1 { font-size: 22px; margin: 4px 0 18px; padding-bottom: 10px; border-bottom: 1px solid #e8e8e8; }
+.md-body h2 { font-size: 18px; margin: 28px 0 12px; padding-bottom: 6px; border-bottom: 1px solid #f0f0f0; }
+.md-body h3 { font-size: 15px; margin: 20px 0 10px; }
+.md-body h4 { font-size: 14px; margin: 16px 0 8px; }
+.md-body p { margin: 10px 0; }
+.md-body ul, .md-body ol { margin: 10px 0; padding-left: 24px; }
+.md-body li { margin: 4px 0; }
+.md-body code { background: #f5f6f8; padding: 2px 5px; border-radius: 3px; font-family: Menlo, Consolas, monospace; font-size: 12px; color: #d83931; }
+.md-body pre { background: #0b1019; color: #e6e6e6; padding: 14px 16px; border-radius: 4px; overflow-x: auto; }
+.md-body pre code { background: none; color: inherit; padding: 0; }
+.md-body table {
+  border-collapse: collapse; margin: 14px 0; font-size: 12px;
+  table-layout: auto;
+}
+.md-body th, .md-body td {
+  border: 1px solid #e8e8e8; padding: 10px 14px;
+  text-align: left; vertical-align: top; line-height: 1.65;
+}
+.md-body th {
+  background: #f3f4f7; font-weight: 600; white-space: nowrap; font-size: 12px;
+}
+.md-body blockquote { border-left: 3px solid #d9dbde; margin: 12px 0; padding: 4px 14px; color: #606266; background: #fafbfc; }
+.md-body a { color: #005cf5; }
+.md-body hr { border: none; border-top: 1px solid #e8e8e8; margin: 18px 0; }
+
+/* PRD 页内的 API 入口卡片 */
+.api-entry {
+  display: inline-flex; align-items: center; gap: 8px; margin: 14px 0;
+  padding: 12px 16px; border: 1px solid #d9e4ff; background: #f3f7ff;
+  border-radius: 8px; color: #005cf5; text-decoration: none; font-size: 14px; font-weight: 600;
+  cursor: pointer;
+}
+.api-entry:hover { background: #e6eeff; }
+
+@media (max-width: 900px) {
+  .layout { flex-direction: column; height: auto; }
+  .doc-nav { width: auto; flex: none; border-right: none; border-bottom: 1px solid #e8e8e8; display: flex; flex-wrap: wrap; gap: 6px; height: auto; }
+  .doc-nav-title { width: 100%; }
+  .doc-main { height: auto; }
+  .md-doc, .md-doc.active { position: static; display: block; }
+  .doc-toc { width: auto; flex: none; height: auto; border-left: none; border-top: 1px solid #e8e8e8; }
+  .doc-body { padding: 24px 18px 48px; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+  <nav class="doc-nav">
+    <div class="doc-nav-title">文档</div>
+    <a data-doc="打印计划模块API定义" class="active">打印计划模块 接口定义（API）</a>
+<a data-doc="打印计划模块需求说明">打印计划模块 需求说明</a>
+  </nav>
+  <div class="doc-main">
+    <section class="md-doc active" data-doc="打印计划模块API定义">
+  <div class="doc-body md-body">
+<h1 id="打印计划模块-接口定义-api">打印计划模块 接口定义（API）</h1>
+<blockquote>
+<p>本文档定义打印计划模块的数据结构与接口契约，与《打印计划模块需求说明》配套使用：需求背景、功能交互、业务规则见需求说明文档；本文档聚焦数据模型与接口规范。
+字段命名对齐现有 <code>/mnmart</code> 接口体系（小驼峰）。凡现有接口已定义的字段（商品 <code>goods*</code>、门店 <code>shop*</code>、批次 <code>batchNo/productionDate</code> 等）一律沿用，不重新发明。</p>
+</blockquote>
+<hr />
+<h2 id="0-配套说明">0. 配套说明</h2>
+<ul>
+<li><strong>需求侧文档</strong>：《打印计划模块需求说明》（背景、用户场景、功能交互、业务规则、名词解释）。</li>
+<li><strong>演示态说明</strong>：当前 MVP 为前端演示态，采用前端内置浏览器端 Mock（无需后端）；同时提供 GitHub Pages 托管的线上静态 JSON Mock 供其他技术人员调试（详见 §14）。</li>
+<li><strong>字段命名映射</strong>：前端演示态为前端友好采用简化命名，与后端原生字段一一映射，详见 §6.5、§6.6 注。</li>
+</ul>
+<hr />
+<h2 id="6-数据结构">6. 数据结构</h2>
+<h3 id="6-1-实体关系">6.1 实体关系</h3>
+<pre><code>Shop(门店) 1─* PrintPlan(打印计划) 1─* PlanItem(计划项)
+Goods(商品主数据,mart体系) 1─* Batch(批次,复用库存批次)
+Template(价签模板,前端渲染概念) 1─* PlanItem(打印时引用)
+</code></pre>
+<h3 id="6-2-门店-shop-复用现有">6.2 门店 <code>Shop</code>（复用现有）</h3>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>类型</th>
+<th>说明</th>
+<th>来源</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>shopId</code></td>
+<td>string</td>
+<td>门店 ID</td>
+<td><code>POST /mnmart/shop/list</code></td>
+</tr>
+<tr>
+<td><code>shopName</code></td>
+<td>string</td>
+<td>门店名称</td>
+<td>同上</td>
+</tr>
+<tr>
+<td><code>companyId</code></td>
+<td>string</td>
+<td>所属企业 ID</td>
+<td>同上</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>int</td>
+<td>门店状态 0-启用 1-禁用 2-生效中 3-已过期</td>
+<td>同上</td>
+</tr>
+</tbody>
+</table>
+<h3 id="6-3-商品主数据-goods-复用现有-post-mnmart-goods-list">6.3 商品主数据 <code>Goods</code>（复用现有 <code>POST /mnmart/goods/list</code>）</h3>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>类型</th>
+<th>必填</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>goodsId</code></td>
+<td>string</td>
+<td>是</td>
+<td>商品 ID（唯一键，打码/计划关联用）</td>
+</tr>
+<tr>
+<td><code>goodsName</code></td>
+<td>string</td>
+<td>是</td>
+<td>商品名称</td>
+</tr>
+<tr>
+<td><code>goodsCode</code></td>
+<td>string</td>
+<td>是</td>
+<td>商品编码（价签条码展示用）</td>
+</tr>
+<tr>
+<td><code>goodsSpec</code></td>
+<td>string</td>
+<td>是</td>
+<td>规格，如 <code>500g/袋</code></td>
+</tr>
+<tr>
+<td><code>goodsUnitId</code></td>
+<td>string</td>
+<td>否</td>
+<td>单位 ID</td>
+</tr>
+<tr>
+<td><code>goodsUnitName</code></td>
+<td>string</td>
+<td>否</td>
+<td>计价单位名，如 <code>kg</code>/<code>份</code></td>
+</tr>
+<tr>
+<td><code>goodsListPrice</code></td>
+<td>decimal</td>
+<td>否</td>
+<td>原价/吊牌价（价签"原价"列）</td>
+</tr>
+<tr>
+<td><code>goodsPrice</code></td>
+<td>decimal</td>
+<td>是</td>
+<td>当前售价</td>
+</tr>
+<tr>
+<td><code>vipPrice</code></td>
+<td>decimal</td>
+<td>否</td>
+<td>会员价</td>
+</tr>
+<tr>
+<td><code>type</code></td>
+<td>int</td>
+<td>否</td>
+<td>商品类型 0-非标品 1-标品</td>
+</tr>
+<tr>
+<td><code>enable</code></td>
+<td>int</td>
+<td>否</td>
+<td>上下架 0-上架 1-下架</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>int</td>
+<td>否</td>
+<td>状态 0-启用 1-禁用</td>
+</tr>
+<tr>
+<td><code>saleType</code></td>
+<td>int</td>
+<td>否</td>
+<td>销售类型 0-非售品 1-售品</td>
+</tr>
+<tr>
+<td><code>imgUrl</code></td>
+<td>string</td>
+<td>否</td>
+<td>图片 URL</td>
+</tr>
+<tr>
+<td><code>shelfLifeType</code></td>
+<td>int</td>
+<td>否</td>
+<td>保质期类型 1-天 2-月 3-年</td>
+</tr>
+<tr>
+<td><code>shelfLife</code></td>
+<td>int</td>
+<td>否</td>
+<td>保质期</td>
+</tr>
+<tr>
+<td><code>storageMethod</code></td>
+<td>string</td>
+<td>否</td>
+<td>贮藏方式</td>
+</tr>
+<tr>
+<td><code>purchasePrice</code></td>
+<td>decimal</td>
+<td>否</td>
+<td>最新进货价</td>
+</tr>
+<tr>
+<td><code>goodsBrand</code></td>
+<td>string</td>
+<td>否</td>
+<td>品牌</td>
+</tr>
+<tr>
+<td><code>displayClassId</code></td>
+<td>string</td>
+<td>否</td>
+<td>显示分类 ID（添加商品筛选用）</td>
+</tr>
+</tbody>
+</table>
+<h3 id="6-4-批次-batch-复用现有-post-mnmart-inventory-batchlistbygoodsidcode">6.4 批次 <code>Batch</code>（复用现有 <code>POST /mnmart/inventory/batchListByGoodsIdCode</code>）</h3>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>类型</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>batchInventoryId</code></td>
+<td>string</td>
+<td>批次库存 ID</td>
+</tr>
+<tr>
+<td><code>goodsId</code></td>
+<td>string</td>
+<td>商品 ID</td>
+</tr>
+<tr>
+<td><code>goodsCode</code></td>
+<td>string</td>
+<td>商品编码</td>
+</tr>
+<tr>
+<td><code>batchNo</code></td>
+<td>string</td>
+<td>批次号</td>
+</tr>
+<tr>
+<td><code>productionDate</code></td>
+<td>string</td>
+<td>生产日期 <code>yyyy-MM-dd</code></td>
+</tr>
+<tr>
+<td><code>expirationDate</code></td>
+<td>string</td>
+<td>过期日期 <code>yyyy-MM-dd</code></td>
+</tr>
+<tr>
+<td><code>shelfLifeType</code></td>
+<td>int</td>
+<td>保质期类型</td>
+</tr>
+<tr>
+<td><code>shelfLife</code></td>
+<td>int</td>
+<td>保质期</td>
+</tr>
+<tr>
+<td><code>inventory</code></td>
+<td>decimal</td>
+<td>批次库存数量</td>
+</tr>
+<tr>
+<td><code>purchasePrice</code></td>
+<td>decimal</td>
+<td>进货单价</td>
+</tr>
+</tbody>
+</table>
+<h3 id="6-5-打印计划-printplan-新增">6.5 打印计划 <code>PrintPlan</code>（新增）</h3>
+<blockquote>
+<p><strong>字段命名说明（MVP 演示态）</strong>：前端与线上静态 Mock（<code>mock/</code>）为前端友好，采用简化命名；后端原生契约按字段语义一一映射，对接真实后端时由前端适配层转换。映射关系：<code>id</code> ↔ <code>printPlanId</code>、<code>name</code> ↔ <code>planName</code>、<code>store</code> ↔ <code>shopName</code>（含 <code>shopId</code>/<code>companyId</code> 租户隔离，演示态省略）、<code>type</code>（<code>manual</code>/<code>price-change</code>）↔ <code>type</code>（int <code>0</code>/<code>1</code>）、<code>status</code>（<code>pending</code>/<code>partial</code>/<code>done</code>）↔ <code>status</code>（int <code>0</code>/<code>1</code>/<code>2</code>）。以下以演示态命名为准。</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>类型</th>
+<th>必填</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td>string</td>
+<td>是</td>
+<td>计划唯一 ID（对应后端 <code>printPlanId</code>）</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td>string</td>
+<td>是</td>
+<td>计划名称（对应后端 <code>planName</code>）</td>
+</tr>
+<tr>
+<td><code>store</code></td>
+<td>string</td>
+<td>是</td>
+<td>门店名称（快照，对应后端 <code>shopName</code>；后端原生另有 <code>shopId</code>/<code>companyId</code> 租户字段）</td>
+</tr>
+<tr>
+<td><code>type</code></td>
+<td>string</td>
+<td>是</td>
+<td><code>manual</code> 手动创建 / <code>price-change</code> 调价自动（对应后端 int <code>0</code>/<code>1</code>）</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>string</td>
+<td>是</td>
+<td><code>pending</code> 待打印 / <code>partial</code> 部分打印 / <code>done</code> 已完成（对应后端 int <code>0</code>/<code>1</code>/<code>2</code>）</td>
+</tr>
+<tr>
+<td><code>totalCount</code></td>
+<td>int</td>
+<td>是</td>
+<td>商品总数</td>
+</tr>
+<tr>
+<td><code>pendingCount</code></td>
+<td>int</td>
+<td>是</td>
+<td>待打印数</td>
+</tr>
+<tr>
+<td><code>printedCount</code></td>
+<td>int</td>
+<td>是</td>
+<td>已打印数</td>
+</tr>
+<tr>
+<td><code>createdAt</code></td>
+<td>string</td>
+<td>是</td>
+<td>创建时间 <code>yyyy-MM-dd HH:mm:ss</code></td>
+</tr>
+<tr>
+<td><code>createdBy</code></td>
+<td>string</td>
+<td>否</td>
+<td>创建人</td>
+</tr>
+<tr>
+<td><code>text</code></td>
+<td>string</td>
+<td>否</td>
+<td>计划商品文本摘要（<strong>仅 <code>list</code> 列表接口返回</strong>）。取计划内<strong>前 10 个</strong>商品名称以逗号分隔拼接，如 <code>大白菜, 番茄, 黄瓜</code>；列表页「计划商品」列展示时由前端在其后追加 <code>等{totalCount}个商品</code>，最终形如 <code>大白菜, 番茄, 黄瓜等32个商品</code>（<code>totalCount</code> 见本表）。<code>detail</code> 接口不返回此字段（改用完整 <code>items</code>）。</td>
+</tr>
+<tr>
+<td><code>items</code></td>
+<td>PlanItem[]</td>
+<td>否</td>
+<td>计划内商品项（见 §6.6）。<strong>仅 <code>detail</code> 详情接口返回完整 <code>items</code></strong>；<code>list</code> 列表接口为减轻响应体积、避免列表铺开，改用 <code>text</code> 文本摘要（见上），<strong>不返回 <code>items</code></strong>。</td>
+</tr>
+</tbody>
+</table>
+<h3 id="6-6-计划项-planitem-新增">6.6 计划项 <code>PlanItem</code>（新增）</h3>
+<blockquote>
+<p><strong>字段命名说明（MVP 演示态）</strong>：<code>id</code> ↔ <code>itemId</code>、<code>name</code> ↔ <code>goodsName</code>、<code>barcode</code> ↔ <code>goodsCode</code>、<code>spec</code> ↔ <code>goodsSpec</code>、<code>unit</code> ↔ <code>goodsUnitName</code>、<code>price</code> ↔ <code>goodsPrice</code>、<code>origPrice</code> ↔ <code>goodsListPrice</code>、<code>memberPrice</code> ↔ <code>vipPrice</code>、<code>produceDate</code> ↔ <code>productionDate</code>。演示态无 <code>source</code> 字段（来源由 <code>type</code>=price-change 的计划隐含）。</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>类型</th>
+<th>必填</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td>string</td>
+<td>是</td>
+<td>项 ID（对应后端 <code>itemId</code>）</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td>string</td>
+<td>是</td>
+<td>商品名称（快照，加入时固化，对应后端 <code>goodsName</code>）</td>
+</tr>
+<tr>
+<td><code>barcode</code></td>
+<td>string</td>
+<td>是</td>
+<td>商品编码 / 价签条码（对应后端 <code>goodsCode</code>）</td>
+</tr>
+<tr>
+<td><code>price</code></td>
+<td>decimal</td>
+<td>是</td>
+<td>售价（快照，对应后端 <code>goodsPrice</code>）</td>
+</tr>
+<tr>
+<td><code>origPrice</code></td>
+<td>decimal</td>
+<td>否</td>
+<td>原价 / 吊牌价（快照，对应后端 <code>goodsListPrice</code>）</td>
+</tr>
+<tr>
+<td><code>memberPrice</code></td>
+<td>decimal</td>
+<td>否</td>
+<td>会员价（快照，对应后端 <code>vipPrice</code>）</td>
+</tr>
+<tr>
+<td><code>unit</code></td>
+<td>string</td>
+<td>否</td>
+<td>单位名（对应后端 <code>goodsUnitName</code>）</td>
+</tr>
+<tr>
+<td><code>spec</code></td>
+<td>string</td>
+<td>是</td>
+<td>规格（快照，对应后端 <code>goodsSpec</code>）</td>
+</tr>
+<tr>
+<td><code>origin</code></td>
+<td>string</td>
+<td>否</td>
+<td>产地</td>
+</tr>
+<tr>
+<td><code>produceDate</code></td>
+<td>string</td>
+<td>否</td>
+<td>生产日期 <code>yyyy-MM-dd</code>（FIFO 取最早批次，多批次时动态计算，对应后端 <code>productionDate</code>）</td>
+</tr>
+<tr>
+<td><code>batchCount</code></td>
+<td>int</td>
+<td>否</td>
+<td>批次数量（多批次角标；需求2 由 <code>addGoods</code> 响应返回）</td>
+</tr>
+<tr>
+<td><code>batches</code></td>
+<td>array</td>
+<td>否</td>
+<td>批次明细 <code>[{ "produceDate": "yyyy-MM-dd", "qty": int }]</code>（需求2 由 <code>addGoods</code> 响应返回）</td>
+</tr>
+<tr>
+<td><code>printQty</code></td>
+<td>int</td>
+<td>是</td>
+<td>打印份数，默认 1，下限 1</td>
+</tr>
+<tr>
+<td><code>printed</code></td>
+<td>boolean</td>
+<td>是</td>
+<td>是否已打印</td>
+</tr>
+<tr>
+<td><code>printedAt</code></td>
+<td>string|null</td>
+<td>否</td>
+<td>最近打印时间 <code>yyyy-MM-dd HH:mm</code>，无则 null</td>
+</tr>
+</tbody>
+</table>
+<h3 id="6-7-价签模板-template-前端渲染概念">6.7 价签模板 <code>Template</code>（前端渲染概念）</h3>
+<blockquote>
+<p>模板选择为前端价签渲染概念；价签由客户端直接基于计划项字段渲染并输出到打印机（与称重打码 <code>code/printCode</code> 无关），模板决定展示元素（<code>price</code>/<code>origPrice</code>/<code>memberPrice</code>/<code>barcode</code>/<code>name</code>/<code>spec</code>）。服务端不参与打印执行。</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>类型</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>templateId</code></td>
+<td>string</td>
+<td>模板 ID，如 <code>tpl-01</code> 标准价签</td>
+</tr>
+<tr>
+<td><code>templateName</code></td>
+<td>string</td>
+<td>模板名称</td>
+</tr>
+<tr>
+<td><code>elements</code></td>
+<td>string[]</td>
+<td>包含元素：<code>price</code> <code>origPrice</code> <code>memberPrice</code> <code>barcode</code> <code>name</code> <code>spec</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="6-8-完整-json-示例-printplan-视角">6.8 完整 JSON 示例（PrintPlan 视角）</h3>
+<pre><code class="language-json">{
+  &quot;id&quot;: &quot;plan-101&quot;,
+  &quot;name&quot;: &quot;崧泽大道中心店 调价打印&quot;,
+  &quot;store&quot;: &quot;崧泽大道中心店&quot;,
+  &quot;type&quot;: &quot;price-change&quot;,
+  &quot;status&quot;: &quot;partial&quot;,
+  &quot;totalCount&quot;: 2,
+  &quot;pendingCount&quot;: 1,
+  &quot;printedCount&quot;: 1,
+  &quot;createdAt&quot;: &quot;2026-07-20 09:30:00&quot;,
+  &quot;createdBy&quot;: &quot;系统自动&quot;,
+  &quot;items&quot;: [
+    {
+      &quot;id&quot;: &quot;item-1001&quot;,
+      &quot;name&quot;: &quot;大白菜&quot;,
+      &quot;barcode&quot;: &quot;6901234567012&quot;,
+      &quot;price&quot;: 3.5, &quot;origPrice&quot;: 5.0, &quot;memberPrice&quot;: 3.0,
+      &quot;unit&quot;: &quot;斤&quot;, &quot;spec&quot;: &quot;约500g&quot;, &quot;origin&quot;: &quot;山东寿光&quot;,
+      &quot;produceDate&quot;: &quot;2026-06-03&quot;, &quot;batchCount&quot;: 2,
+      &quot;batches&quot;: [ { &quot;produceDate&quot;: &quot;2026-06-03&quot;, &quot;qty&quot;: 12 }, { &quot;produceDate&quot;: &quot;2026-06-10&quot;, &quot;qty&quot;: 8 } ],
+      &quot;printQty&quot;: 2, &quot;printed&quot;: true, &quot;printedAt&quot;: &quot;2026-07-20 10:15:00&quot;
+    },
+    {
+      &quot;id&quot;: &quot;item-1002&quot;,
+      &quot;name&quot;: &quot;番茄&quot;,
+      &quot;barcode&quot;: &quot;6901234567036&quot;,
+      &quot;price&quot;: 5.8, &quot;origPrice&quot;: 8.0, &quot;memberPrice&quot;: 4.8,
+      &quot;unit&quot;: &quot;斤&quot;, &quot;spec&quot;: &quot;约500g&quot;, &quot;origin&quot;: &quot;云南昆明&quot;,
+      &quot;produceDate&quot;: &quot;2026-05-28&quot;, &quot;batchCount&quot;: 3,
+      &quot;batches&quot;: [ { &quot;produceDate&quot;: &quot;2026-05-28&quot;, &quot;qty&quot;: 5 }, { &quot;produceDate&quot;: &quot;2026-06-04&quot;, &quot;qty&quot;: 15 }, { &quot;produceDate&quot;: &quot;2026-06-11&quot;, &quot;qty&quot;: 10 } ],
+      &quot;printQty&quot;: 1, &quot;printed&quot;: false, &quot;printedAt&quot;: null
+    }
+  ]
+}
+</code></pre>
+<blockquote>
+<p>说明：商品主数据（含多批次 <code>produceDate</code>）来自 <code>POST /mnmart/goods/list</code> 与 <code>POST /mnmart/inventory/batchListByGoodsIdCode</code>；本示例省略 Goods/Batch 原文，以其现有返回为准。</p>
+</blockquote>
+<h3 id="6-9-演示态-mock-临时占位-非产品方案">6.9 演示态 Mock（临时占位，非产品方案）</h3>
+<blockquote>
+<p>说明：当前前端 MVP（最小可行产品）仅为<strong>演示/调试目的</strong>，采用<strong>前端内置浏览器端 Mock</strong>：所有 <code>printPlan/*</code> 读写由 <code>index.html</code> 中的 <code>PPApi</code> 适配层在浏览器内存中完成（默认模式），<strong>无需任何后端</strong>，GitHub Pages 静态托管下开箱即用。
+<strong>正式方案</strong>：数据持久化由服务端数据库负责（见 §9 接口契约），前端不落盘、以接口读写为准，确保多端一致与审计可追溯。前端人员联调真实接口时，可使用线上静态 Mock（<code>?api=1</code> 开启，数据来自 <code>mock/</code> 目录托管的 JSON，详见 §14）。</p>
+</blockquote>
+<hr />
+<h2 id="7-接口通用规范-统一约定">7. 接口通用规范（统一约定）</h2>
+<blockquote>
+<p>本章节为<strong>全模块统一约定</strong>，所有接口（含复用与新增）均遵守。规范取自现有 <code>/mnmart</code> 接口体系。</p>
+</blockquote>
+<ul>
+<li><strong>基础路径</strong>：<code>/mnmart</code>。</li>
+<li><strong>协议 / 编码</strong>：HTTPS，<code>Content-Type: application/json</code>，字符 UTF-8。</li>
+<li><strong>请求方法</strong>：<strong>统一 <code>POST</code></strong>（列表、查询、详情、写操作均用 POST，与现有体系一致）。</li>
+<li><strong>鉴权</strong>：<code>POST /mnmart/user/login</code> 登录后返回 <code>jwtToken</code>；后续请求在 Header 携带 <code>Authorization: Bearer {jwtToken}</code>（与现有 <code>/mnmart</code> 接口鉴权一致；具体 header 名以网关为准，统一走 JWT）。</li>
+<li><strong>请求包体（统一）</strong>：
+  <code>json
+  {
+    "data": { "...业务参数..." },
+    "requestPage": { "currentPage": 1, "pageSize": 10 }
+  }</code></li>
+<li>列表/分页接口带 <code>requestPage</code>；单条查询/写操作可省略 <code>requestPage</code>。</li>
+<li>通用上下文：几乎所有接口需携带 <code>companyId</code>、<code>shopId</code>（租户 + 门店隔离）；<code>shopId</code> 缺省表示跨门店/总部视角。</li>
+<li><strong>响应包体（统一）</strong>：
+  <code>json
+  {
+    "code": 0,
+    "message": "success",
+    "data": [ "...或对象..." ],
+    "pageInfo": { "pageSize": 10, "currentPage": 1, "totalPages": 1, "totalRecord": 1 }
+  }</code></li>
+<li>列表接口：<code>data</code> 为数组，<code>pageInfo</code> 返回分页信息（<code>pageSize</code>/<code>currentPage</code>/<code>totalPages</code>/<code>totalRecord</code>）。</li>
+<li>单条/对象接口：<code>data</code> 为对象，无 <code>pageInfo</code>。</li>
+<li><strong>成功判定</strong>：以 <code>code === 0</code> 为准；<code>message</code> 为提示文案（现有体系成功时可能为 <code>"success"</code> 或具体成功文案，仅作展示，不应用于逻辑分支）。</li>
+<li><strong>字段命名</strong>：小驼峰（camelCase），与现有 <code>goods*</code>、<code>shop*</code>、<code>batch*</code> 等保持一致。</li>
+<li><strong>时间格式</strong>：<code>yyyy-MM-dd HH:mm:ss</code>（字符串）；纯日期 <code>yyyy-MM-dd</code>。</li>
+<li><strong>金额</strong>：<code>decimal</code>（元，两位小数），JSON 数字（如 <code>3.99</code>）。</li>
+</ul>
+<hr />
+<h2 id="8-复用现有接口-不重新定义字段">8. 复用现有接口（不重新定义字段）</h2>
+<blockquote>
+<p>下列接口<strong>已存在于现有 <code>/mnmart</code> 体系</strong>，打印计划模块直接复用，字段以 YApi 导出定义为准，<strong>不重新定义</strong>。此处仅标注用途与本模块对应关系。</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>接口</th>
+<th>方法</th>
+<th>本模块用途</th>
+<th>关键入参 <code>data</code></th>
+<th>关键返回 <code>data</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/mnmart/goods/list</code></td>
+<td>POST</td>
+<td>添加商品数据源（§4.4）</td>
+<td><code>keyword</code>/<code>status</code>/<code>enable</code>/<code>saleType</code>/<code>shopId</code>/<code>companyId</code>/<code>displayClassId</code> + <code>requestPage</code></td>
+<td><code>goodsId</code>/<code>goodsName</code>/<code>goodsCode</code>/<code>goodsSpec</code>/<code>goodsUnitName</code>/<code>goodsListPrice</code>/<code>goodsPrice</code>/<code>vipPrice</code>/…</td>
+</tr>
+<tr>
+<td><code>/mnmart/goods/detail</code></td>
+<td>POST</td>
+<td>商品详情（必要时）</td>
+<td><code>goodsId</code></td>
+<td>商品完整字段</td>
+</tr>
+<tr>
+<td><code>/mnmart/goods/listGoodsPriceRecord</code></td>
+<td>POST</td>
+<td>改价日志数据源（§4.7）</td>
+<td><code>companyId</code>/<code>shopId</code>/<code>startTime</code>/<code>endTime</code>/<code>keyword</code> + <code>requestPage</code></td>
+<td><code>goodsId</code>/<code>goodsName</code>/<code>goodsCode</code>/<code>goodsSpec</code>/<code>goodsUnitName</code>/<code>goodsListPrice</code>(原价)/<code>goodsPrice</code>(改前价)/<code>goodsAfterPrice</code>(改后价)/<code>operator</code>/<code>recordTime</code></td>
+</tr>
+<tr>
+<td><code>/mnmart/shop/list</code></td>
+<td>POST</td>
+<td>门店列表（§4.1 门店 Picker）</td>
+<td><code>keyword</code>/<code>status</code>/<code>companyId</code> + <code>requestPage</code></td>
+<td><code>shopId</code>/<code>shopName</code>/<code>status</code>/<code>companyId</code>/…</td>
+</tr>
+<tr>
+<td><code>/mnmart/dropdown</code></td>
+<td>POST</td>
+<td>企业&amp;门店联动下拉（顶部筛选）</td>
+<td><code>type</code>(0企业&amp;门店 1企业 2门店)/<code>companyId</code></td>
+<td>树形 <code>id</code>/<code>name</code>/<code>status</code>/<code>children</code></td>
+</tr>
+<tr>
+<td><code>/mnmart/inventory/batchListByGoodsIdCode</code></td>
+<td>POST</td>
+<td>批次/生产日期（FIFO，§5.1）</td>
+<td><code>goodsCode</code>/<code>goodsIds[]</code></td>
+<td><code>batchInventoryId</code>/<code>goodsId</code>/<code>goodsCode</code>/<code>batchNo</code>/<code>productionDate</code>/<code>expirationDate</code>/<code>shelfLifeType</code>/<code>shelfLife</code>/<code>inventory</code></td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>注：<code>/mnmart/code/*</code>（如 <code>code/printCode</code>/<code>code/list</code>/<code>code/loadCodeInfo</code>）属于<strong>称重打码 / 秤端标签</strong>能力，与本文的「价格标签打印」是不同功能，打印计划模块<strong>不复用</strong>该系列接口。</p>
+</blockquote>
+<hr />
+<h2 id="9-新增打印计划接口">9. 新增打印计划接口</h2>
+<blockquote>
+<p>仅打印计划领域特有的接口需新增，统一置于 <code>/mnmart/printPlan/*</code>（建议归入「商品管理」分组或独立分组）。所有接口遵守 §7 通用规范（POST + <code>{data, requestPage?}</code> + <code>{code, message, data, pageInfo?}</code>）。字段命名沿用现有体系（小驼峰）。</p>
+</blockquote>
+<h3 id="9-1-通用说明">9.1 通用说明</h3>
+<ul>
+<li>所有写接口需在 <code>data</code> 中携带 <code>shopId</code>、<code>companyId</code>（与现有体系一致）。</li>
+<li>业务校验失败返回 <code>code ≠ 0</code> 并附 <code>message</code> 文案（见 §10）。</li>
+</ul>
+<h3 id="9-2-计划列表-post-mnmart-printplan-list">9.2 计划列表 <code>POST /mnmart/printPlan/list</code></h3>
+<p><strong>请求 <code>data</code></strong>
+| 参数 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| <code>shopId</code> | string | 否 | 门店 ID，缺省=全部 |
+| <code>companyId</code> | string | 否 | 企业 ID |
+| <code>type</code> | string | 否 | <code>manual</code> 手动 / <code>price-change</code> 调价，缺省=全部（MVP 演示态为字符串枚举；后端原生为 int <code>0</code>/<code>1</code>，见 §6.5 映射） |
+| <code>status</code> | string | 否 | <code>pending</code> 待打印 / <code>partial</code> 部分 / <code>done</code> 已完成，缺省=全部（后端原生 int <code>0</code>/<code>1</code>/<code>2</code>） |
+| <code>startTime</code> | string | 否 | 创建时间起始 <code>yyyy-MM-dd HH:mm:ss</code>，与 <code>endTime</code> 成对，缺省=全部（对应筛选栏「时间」Segment：今天/本周/本月由前端按当前日期算出后传入） |
+| <code>endTime</code> | string | 否 | 创建时间截止 <code>yyyy-MM-dd HH:mm:ss</code> |
+| <code>keyword</code> | string | 否 | 计划名称模糊匹配 |</p>
+<p><strong>响应 <code>data</code></strong>（数组，附 <code>pageInfo</code>）</p>
+<blockquote>
+<p>⚠️ <strong><code>list</code> 返回 <code>text</code> 文本摘要（不返回 <code>items</code>）</strong>：每个计划对象携带 <code>text</code>（前 10 个商品名拼接，见 §6.5）用于列表页「计划商品」列，前端追加 <code>等{totalCount}个商品</code> 渲染为 <code>大白菜, 番茄, 黄瓜等32个商品</code>；商品数/待打印/已打印计数由 <code>totalCount</code>/<code>pendingCount</code>/<code>printedCount</code> 提供，<strong>无需逐行调用 <code>detail</code></strong>（<code>detail</code> 才返回完整 <code>items</code>，用于查看单个计划明细）。</p>
+</blockquote>
+<pre><code class="language-json">[
+  {
+    &quot;id&quot;: &quot;plan-101&quot;,
+    &quot;name&quot;: &quot;崧泽大道中心店 调价打印&quot;,
+    &quot;store&quot;: &quot;崧泽大道中心店&quot;,
+    &quot;type&quot;: &quot;price-change&quot;,
+    &quot;status&quot;: &quot;partial&quot;,
+    &quot;totalCount&quot;: 3, &quot;pendingCount&quot;: 1, &quot;printedCount&quot;: 2,
+    &quot;createdAt&quot;: &quot;2026-07-20 09:30:00&quot;,
+    &quot;createdBy&quot;: &quot;系统自动&quot;,
+    &quot;text&quot;: &quot;大白菜, 番茄&quot;
+  }
+]
+</code></pre>
+<h3 id="9-3-新建计划-post-mnmart-printplan-add">9.3 新建计划 <code>POST /mnmart/printPlan/add</code></h3>
+<p><strong>请求 <code>data</code></strong>
+| 参数 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| <code>shopId</code> | string | 是 | 门店 ID |
+| <code>companyId</code> | string | 是 | 企业 ID |
+| <code>type</code> | int | 是 | <code>0</code> 手动 / <code>1</code> 调价 |
+| <code>planName</code> | string | 否 | 计划名称，缺省由服务端按"门店+类型+日期"生成 |</p>
+<p><strong>响应 <code>data</code></strong>：完整 <code>PrintPlan</code>（§6.5，含空 <code>items</code>）。</p>
+<h3 id="9-4-计划详情-post-mnmart-printplan-detail">9.4 计划详情 <code>POST /mnmart/printPlan/detail</code></h3>
+<p><strong>请求 <code>data</code></strong>：<code>{ "printPlanId": "pl_20260701_a1b2" }</code>
+<strong>响应 <code>data</code></strong>：完整 <code>PrintPlan</code>（含 <code>items</code>，字段见 §6.6）。</p>
+<h3 id="9-5-删除计划-post-mnmart-printplan-delete">9.5 删除计划 <code>POST /mnmart/printPlan/delete</code></h3>
+<p><strong>请求 <code>data</code></strong>：<code>{ "printPlanId": "pl_20260701_a1b2" }</code>
+<strong>业务说明</strong>：<strong>仅「待打印」（<code>status='pending'</code>）的计划允许删除</strong>。若计划已存在打印记录（<code>status='partial'</code> 部分打印 / <code>status='done'</code> 已完成），服务端拒绝删除并返回业务错误（见 §10 错误码，<code>code≠0</code> 并附 <code>message</code> 说明，如"仅待打印计划可删除"）；前端在列表操作列已对 <code>status≠'pending'</code> 隐藏/禁用删除按钮作为前置校验。
+<strong>响应 <code>data</code></strong>：<code>null</code>（需求3：以 <code>code === 0</code> 判定业务成功，<code>data</code> 内不含任何冗余字段，不再返回 <code>{ "deleted": true }</code> 之类的盘点参数）。</p>
+<h3 id="9-6-添加商品到计划-post-mnmart-printplan-addgoods">9.6 添加商品到计划 <code>POST /mnmart/printPlan/addGoods</code></h3>
+<p><strong>请求 <code>data</code></strong></p>
+<pre><code class="language-json">{
+  &quot;printPlanId&quot;: &quot;pl_20260701_a1b2&quot;,
+  &quot;shopId&quot;: &quot;1810933789769904128&quot;,
+  &quot;companyId&quot;: &quot;1810928032239439872&quot;,
+  &quot;goodsList&quot;: [
+    {
+      &quot;goodsId&quot;: &quot;1824610137569304576&quot;,
+      &quot;goodsName&quot;: &quot;有机小白菜&quot;,
+      &quot;goodsListPrice&quot;: 5.50,
+      &quot;goodsPrice&quot;: 3.99,
+      &quot;vipPrice&quot;: 3.59,
+      &quot;printQty&quot;: 1
+    }
+  ]
+}
+</code></pre>
+<ul>
+<li><code>goodsName</code>/<code>goodsListPrice</code>(原价)/<code>goodsPrice</code>(售价)/<code>vipPrice</code>(会员价) 为<strong>新增请求字段</strong>（需求2）：服务端据此落库商品快照信息，前端无需额外查询商品主数据。
+<strong>业务校验</strong>：</li>
+<li><code>goodsId</code> 不存在 → <code>code ≠ 0</code>（提示"商品无效"）。</li>
+<li>商品已在计划：按 §5.3 处理（同价不重复、异价更新），非错误。</li>
+</ul>
+<p><strong>响应 <code>data</code></strong>：更新后的完整 <code>PrintPlan</code>（<code>items</code> 中每项<strong>包含批次快照</strong>：<code>productionDate</code>（FIFO 最早批次）、<code>batchCount</code>（批次数）、<code>batches</code>（批次数组），需求2）——批次数据在此随响应返回，前端不再单独调用批次查询接口。</p>
+<h3 id="9-7-移除计划项-post-mnmart-printplan-removegoods">9.7 移除计划项 <code>POST /mnmart/printPlan/removeGoods</code></h3>
+<p><strong>请求 <code>data</code></strong>（二选一）</p>
+<pre><code class="language-json">{ &quot;printPlanId&quot;: &quot;pl_20260701_a1b2&quot;, &quot;itemIds&quot;: [&quot;it_001&quot;,&quot;it_002&quot;] }
+</code></pre>
+<p>或移除全部未打印：</p>
+<pre><code class="language-json">{ &quot;printPlanId&quot;: &quot;pl_20260701_a1b2&quot;, &quot;removeAllUnprinted&quot;: true }
+</code></pre>
+<p><strong>响应 <code>data</code></strong>：<code>null</code>（需求4：删除类接口精简，以 <code>code === 0</code> 判定成功，<code>data</code> 不含冗余字段）。</p>
+<h3 id="9-8-打印记录通知-客户端打印完成后上报-post-mnmart-printplan-print">9.8 打印记录通知（客户端打印完成后上报）<code>POST /mnmart/printPlan/print</code></h3>
+<blockquote>
+<p>⚠️ <strong>本接口不做打印执行</strong>：打印由客户端本地完成。本接口仅用于客户端在打印完成后<strong>通知服务端记录</strong>本次打印动作并回写计划项状态。</p>
+</blockquote>
+<p><strong>请求 <code>data</code></strong></p>
+<pre><code class="language-json">{
+  &quot;printPlanId&quot;: &quot;pl_20260701_a1b2&quot;,
+  &quot;itemIds&quot;: [&quot;it_001&quot;,&quot;it_002&quot;],
+  &quot;templateId&quot;: &quot;tpl-01&quot;,
+  &quot;copies&quot;: { &quot;it_001&quot;: 2, &quot;it_002&quot;: 1 }
+}
+</code></pre>
+<p><strong>业务说明</strong>：服务端按 <code>itemIds</code> 记录本次打印动作（打印项、份数、模板、时间、操作人），回写各计划项 <code>printed=true</code>、<code>printedAt=now</code>；<strong>不调用 <code>code/printCode</code>、不执行任何打印输出</strong>。</p>
+<p><strong>响应 <code>data</code></strong>：<code>null</code> 或最小对象（需求4：精简响应，以 <code>code === 0</code> 判定成功；如确需扩展可返回 <code>{ "recordedItems": [...] }</code>，但前端不依赖 <code>data</code> 内容）。</p>
+<h3 id="9-9-调价自动入计划-服务端内部接口-post-mnmart-printplan-autoaddfrompricechange">9.9 调价自动入计划（服务端内部接口）<code>POST /mnmart/printPlan/autoAddFromPriceChange</code></h3>
+<blockquote>
+<p>⚠️ <strong>调用方</strong>：仅服务端在改价事件完成时调用，<strong>前端不直接暴露、无用户入口</strong>（对应 §4.6）。用户侧主动/自动加入请使用 §9.10。</p>
+</blockquote>
+<p><strong>请求 <code>data</code></strong></p>
+<pre><code class="language-json">{
+  &quot;shopId&quot;: &quot;1810933789769904128&quot;,
+  &quot;companyId&quot;: &quot;1810928032239439872&quot;,
+  &quot;goodsList&quot;: [
+    { &quot;goodsId&quot;: &quot;1824610137569304576&quot;, &quot;goodsPrice&quot;: 3.99, &quot;goodsListPrice&quot;: 5.50, &quot;vipPrice&quot;: 3.59 }
+  ]
+}
+</code></pre>
+<p><strong>业务规则</strong>：执行 §5.3 调价归集逻辑（三层决策树：优选当天「调价自动」计划，次选当天未完成计划，否则新建「调价自动」计划；同商品比对价格，异价更新并视情况重置已打印）。</p>
+<p><strong>响应 <code>data</code></strong></p>
+<pre><code class="language-json">{ &quot;planId&quot;: &quot;pl_20260701_a1b2&quot;, &quot;added&quot;: 0, &quot;updated&quot;: 1, &quot;resetPrinted&quot;: 1 }
+</code></pre>
+<ul>
+<li><code>added</code>：新增商品数；<code>updated</code>：价格更新数；<code>resetPrinted</code>：已打印被重置为待打印数。</li>
+</ul>
+<h3 id="9-10-从改价日志加入-用户侧-开关自动触发-post-mnmart-printplan-addfrompricechanges">9.10 从改价日志加入（用户侧 / 开关自动触发）<code>POST /mnmart/printPlan/addFromPriceChanges</code></h3>
+<blockquote>
+<p>✅ <strong>v1.5 恢复</strong>（对应 §4.7 用户主动操作已重新上架）；<strong>v1.7 改为开关自动触发</strong>（§4.7）：开关打开时本接口由前端自动调用，归集已变更调价商品。调价归集同时可由服务端自动（§9.9）或本接口（用户主动 / 开关自动）触发，两者执行同一套 §5.3 归集逻辑。数据源为 <code>POST /mnmart/goods/listGoodsPriceRecord</code>（§8）。</p>
+</blockquote>
+<p><strong>请求 <code>data</code></strong></p>
+<pre><code class="language-json">{
+  &quot;target&quot;: &quot;latest&quot;,
+  &quot;shopId&quot;: &quot;1810933789769904128&quot;,
+  &quot;companyId&quot;: &quot;1810928032239439872&quot;,
+  &quot;goodsList&quot;: [
+    { &quot;goodsId&quot;: &quot;1824610137569304576&quot;, &quot;goodsAfterPrice&quot;: 3.99, &quot;goodsListPrice&quot;: 5.50, &quot;vipPrice&quot;: 3.59, &quot;recordTime&quot;: &quot;2026-07-17 11:20:00&quot; }
+  ]
+}
+</code></pre>
+<p><strong><code>target</code> 取值</strong>：
+- <code>latest</code>：加入当天最新调价计划，无则自动新建（类型 <code>price-change</code>，<code>type=1</code>）。
+- <code>new</code>：新建当天调价计划再加入。
+- <code>{printPlanId}</code>：加入指定计划 ID。</p>
+<p><strong>业务规则</strong>：执行 §5.3 调价归集逻辑（默认归属当天「调价自动」计划，或按 <code>target</code> 指定计划；同商品比对价格，异价更新并视情况重置已打印）。</p>
+<p><strong>响应 <code>data</code></strong></p>
+<pre><code class="language-json">{ &quot;planId&quot;: &quot;pl_20260701_a1b2&quot;, &quot;added&quot;: 0, &quot;updated&quot;: 1, &quot;resetPrinted&quot;: 1 }
+</code></pre>
+<hr />
+<h2 id="10-错误码约定">10. 错误码约定</h2>
+<ul>
+<li>与现有 <code>/mnmart</code> 体系一致：<strong><code>code === 0</code> 成功</strong>；<code>code ≠ 0</code> 为业务/系统错误，<code>message</code> 带回可读文案（前端直接提示 <code>message</code>）。</li>
+<li>具体业务码值（如计划不存在、商品已在计划、已打印不可改份数等）<strong>以服务端定义为准</strong>，前端按 <code>message</code> 提示，必要时刷新列表/详情。</li>
+<li>建议业务码分段（与现有风格对齐，非强制）：<code>1xxx</code> 参数类、<code>2xxx</code> 业务校验类、<code>5xxx</code> 服务端异常。示例：</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>code</th>
+<th>含义</th>
+<th>处理建议</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>成功</td>
+<td>—</td>
+</tr>
+<tr>
+<td>（业务码）</td>
+<td>计划不存在</td>
+<td>提示并刷新列表</td>
+</tr>
+<tr>
+<td>（业务码）</td>
+<td>商品/条码不存在</td>
+<td>提示商品无效</td>
+</tr>
+<tr>
+<td>（业务码）</td>
+<td>商品已在计划（手动场景）</td>
+<td>提示或自动定位</td>
+</tr>
+<tr>
+<td>（业务码）</td>
+<td>已打印项不可改份数</td>
+<td>禁用控件</td>
+</tr>
+<tr>
+<td>（非 0）</td>
+<td>服务端异常</td>
+<td>重试 / 上报</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="14-接口-mock-服务-前端调试">14. 接口 Mock 服务（前端调试）</h2>
+<blockquote>
+<p>本章节说明打印计划新增接口（<code>/mnmart/printPlan/*</code>）的 Mock 方案，满足前端人员接口调试需求（需求5）。无需任何本地服务或后端，全部以静态文件托管。</p>
+</blockquote>
+<h3 id="14-1-两种模式">14.1 两种模式</h3>
+<table>
+<thead>
+<tr>
+<th>模式</th>
+<th>触发</th>
+<th>数据来源</th>
+<th>适用场景</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>前端内置 Mock（默认）</strong></td>
+<td>访问静态页（不带 <code>?api=1</code>）</td>
+<td><code>index.html</code> 内 <code>PPApi</code> 适配层的浏览器内存</td>
+<td><strong>静态托管站点演示/生产</strong>，开箱即用，无需任何后端；「自动加入」开关等页面交互即用此模式</td>
+</tr>
+<tr>
+<td><strong>线上静态 Mock 联调</strong></td>
+<td>URL 加 <code>?api=1</code></td>
+<td>站点托管的静态 JSON（<code>mock/</code> 目录）</td>
+<td><strong>给其他技术人员调试页面与参数</strong>：直接打开页面即可看到接口返回并核对入参，无需安装任何运行环境</td>
+</tr>
+</tbody>
+</table>
+<h3 id="14-2-前端内置-mock-静态托管默认可用">14.2 前端内置 Mock（静态托管默认可用）</h3>
+<ul>
+<li>部署在静态托管站点（纯静态托管，无法运行后端）时，<strong>默认即走前端内置 Mock</strong>：所有读写由 <code>index.html</code> 的 <code>PPApi</code> 适配层在浏览器内存完成，请求/响应契约与 §9 完全一致，前端功能完整可演示。</li>
+<li>该模式下前端<strong>不依赖任何服务器</strong>，刷新即重置为初始演示数据。</li>
+</ul>
+<h3 id="14-3-线上静态-mock-站点托管-json-无需起服务">14.3 线上静态 Mock（站点托管 JSON，无需起服务）</h3>
+<blockquote>
+<p>全部接口响应以静态 JSON 文件随站点一起托管，其他技术人员<strong>无需安装任何运行环境、无需起服务</strong>，直接用浏览器打开即可调试。</p>
+</blockquote>
+<ul>
+<li>文件位置：项目根 <code>mock/</code> 目录，部署后位于站点 <code>mock/</code> 下（相对站点根目录）。结构与接口路径一一对应：</li>
+<li><code>mock/mnmart/printPlan/list.json</code>、<code>add.json</code>、<code>detail.json</code>、<code>delete.json</code>、<code>addGoods.json</code>、<code>removeGoods.json</code>、<code>print.json</code>、<code>autoAddFromPriceChange.json</code>、<code>addFromPriceChanges.json</code></li>
+<li><code>mock/mnmart/goods/list.json</code>、<code>mock/mnmart/inventory/batchListByGoodsIdCode.json</code></li>
+<li>调试方式（给其他开发人员）：
+  1. <strong>直接查看响应</strong>：浏览器打开 <code>mock/mnmart/printPlan/list.json</code>（相对站点根目录）等，即可看到规范 JSON 响应（list 返回 <code>text</code> 文本摘要、不返回 <code>items</code>；addGoods 含批次，delete/print 的 <code>data</code> 为 <code>null</code>）。
+  2. <strong>页面联调</strong>：打开 <code>index.html?api=1</code>（与 <code>mock/</code> 同站点根目录），前端 <code>PPApi</code> 会 <code>GET</code> 上述静态 JSON 填充页面；<strong>每次请求的参数会 <code>console.log</code> 输出</strong>（前缀 <code>[PPApi mock]</code>），便于核对入参。</li>
+<li>契约要点（与 §9 对齐）：</li>
+<li>响应统一 <code>{ "code": 0, "message": "success", "data": ... }</code>（删除类 <code>data</code> 为 <code>null</code>，以 <code>code===0</code> 判成功，需求3/4）。</li>
+<li><strong><code>addGoods</code></strong>：响应 <code>PrintPlan.items</code> 含批次快照 <code>productionDate</code>/<code>batchCount</code>/<code>batches</code>（需求2）。</li>
+<li><strong><code>list</code></strong>：响应 <code>data</code> 为 <code>PrintPlan</code> 数组，<strong>每项携带 <code>text</code> 计划商品文本摘要</strong>（前 10 个商品名，见 §6.5/§9.2），列表页渲染为「{text}等{totalCount}个商品」；不返回 <code>items</code>，无需逐行调 <code>detail</code>（§9.2）。</li>
+<li><strong><code>print</code></strong>：响应 <code>data</code> 可空（需求4）。</li>
+<li><strong>参数化动态响应（可选）</strong>：静态 JSON 为固定样例，无法随参数变化。如需按参数返回不同数据，将 <code>index.html</code> 中 <code>PPApi.MOCK_BASE</code> 改为目标 mock 服务基址（相对路径或任意在线 mock 服务如 Beeceptor / Apifox / Postman Mock Server 均可），并保证其按 <code>/mnmart/printPlan/{接口}.json</code> 路径返回上述结构即可，前端无需其它改动。</li>
+</ul>
+  </div>
+  <aside class="doc-toc"><div class="doc-toc-title">目录</div><div class="toc">
+<ul>
+<li><a href="#打印计划模块-接口定义-api">打印计划模块 接口定义（API）</a><ul>
+<li><a href="#0-配套说明">0. 配套说明</a></li>
+<li><a href="#6-数据结构">6. 数据结构</a><ul>
+<li><a href="#6-1-实体关系">6.1 实体关系</a></li>
+<li><a href="#6-2-门店-shop-复用现有">6.2 门店 Shop（复用现有）</a></li>
+<li><a href="#6-3-商品主数据-goods-复用现有-post-mnmart-goods-list">6.3 商品主数据 Goods（复用现有 POST /mnmart/goods/list）</a></li>
+<li><a href="#6-4-批次-batch-复用现有-post-mnmart-inventory-batchlistbygoodsidcode">6.4 批次 Batch（复用现有 POST /mnmart/inventory/batchListByGoodsIdCode）</a></li>
+<li><a href="#6-5-打印计划-printplan-新增">6.5 打印计划 PrintPlan（新增）</a></li>
+<li><a href="#6-6-计划项-planitem-新增">6.6 计划项 PlanItem（新增）</a></li>
+<li><a href="#6-7-价签模板-template-前端渲染概念">6.7 价签模板 Template（前端渲染概念）</a></li>
+<li><a href="#6-8-完整-json-示例-printplan-视角">6.8 完整 JSON 示例（PrintPlan 视角）</a></li>
+<li><a href="#6-9-演示态-mock-临时占位-非产品方案">6.9 演示态 Mock（临时占位，非产品方案）</a></li>
+</ul>
+</li>
+<li><a href="#7-接口通用规范-统一约定">7. 接口通用规范（统一约定）</a></li>
+<li><a href="#8-复用现有接口-不重新定义字段">8. 复用现有接口（不重新定义字段）</a></li>
+<li><a href="#9-新增打印计划接口">9. 新增打印计划接口</a><ul>
+<li><a href="#9-1-通用说明">9.1 通用说明</a></li>
+<li><a href="#9-2-计划列表-post-mnmart-printplan-list">9.2 计划列表 POST /mnmart/printPlan/list</a></li>
+<li><a href="#9-3-新建计划-post-mnmart-printplan-add">9.3 新建计划 POST /mnmart/printPlan/add</a></li>
+<li><a href="#9-4-计划详情-post-mnmart-printplan-detail">9.4 计划详情 POST /mnmart/printPlan/detail</a></li>
+<li><a href="#9-5-删除计划-post-mnmart-printplan-delete">9.5 删除计划 POST /mnmart/printPlan/delete</a></li>
+<li><a href="#9-6-添加商品到计划-post-mnmart-printplan-addgoods">9.6 添加商品到计划 POST /mnmart/printPlan/addGoods</a></li>
+<li><a href="#9-7-移除计划项-post-mnmart-printplan-removegoods">9.7 移除计划项 POST /mnmart/printPlan/removeGoods</a></li>
+<li><a href="#9-8-打印记录通知-客户端打印完成后上报-post-mnmart-printplan-print">9.8 打印记录通知（客户端打印完成后上报）POST /mnmart/printPlan/print</a></li>
+<li><a href="#9-9-调价自动入计划-服务端内部接口-post-mnmart-printplan-autoaddfrompricechange">9.9 调价自动入计划（服务端内部接口）POST /mnmart/printPlan/autoAddFromPriceChange</a></li>
+<li><a href="#9-10-从改价日志加入-用户侧-开关自动触发-post-mnmart-printplan-addfrompricechanges">9.10 从改价日志加入（用户侧 / 开关自动触发）POST /mnmart/printPlan/addFromPriceChanges</a></li>
+</ul>
+</li>
+<li><a href="#10-错误码约定">10. 错误码约定</a></li>
+<li><a href="#14-接口-mock-服务-前端调试">14. 接口 Mock 服务（前端调试）</a><ul>
+<li><a href="#14-1-两种模式">14.1 两种模式</a></li>
+<li><a href="#14-2-前端内置-mock-静态托管默认可用">14.2 前端内置 Mock（静态托管默认可用）</a></li>
+<li><a href="#14-3-线上静态-mock-站点托管-json-无需起服务">14.3 线上静态 Mock（站点托管 JSON，无需起服务）</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</aside>
+</section>
+<section class="md-doc" data-doc="打印计划模块需求说明">
+  <div class="doc-body md-body">
+<h1 id="打印计划模块-需求说明">打印计划模块 需求说明</h1>
+<blockquote>
+<p>本文档与《打印计划模块接口定义》配套使用：需求背景、功能交互、业务规则见本文档；数据结构、接口契约、Mock 调试见接口定义文档。本文档由《打印计划模块PRD》拆分而来，章节号沿用原文档，便于交叉引用。</p>
+</blockquote>
+<p>📡 <strong>API 接口定义文档</strong>：<a class="api-entry" href="#" data-doc="打印计划模块API定义">点击查看《打印计划模块接口定义》</a>（数据结构、接口契约、Mock 调试）</p>
+<table>
+<thead>
+<tr>
+<th>项</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>文档版本</td>
+<td>v1.7</td>
+</tr>
+<tr>
+<td>创建日期</td>
+<td>2026-07-17</td>
+</tr>
+<tr>
+<td>模块</td>
+<td>打印计划（print-plan）</td>
+</tr>
+<tr>
+<td>状态</td>
+<td>已实现（MVP，即 Minimum Viable Product 最小可行产品）</td>
+</tr>
+<tr>
+<td>读者</td>
+<td>产品、前端、后端、测试、门店运营</td>
+</tr>
+<tr>
+<td>接口定义文档</td>
+<td>《打印计划模块接口定义》</td>
+</tr>
+<tr>
+<td>接口规范来源</td>
+<td>参照现有 <code>/mnmart</code> 接口体系（YApi 导出 <code>yapi.taocaimall.com/data.json</code>）</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="0-版本更新记录">0. 版本更新记录</h2>
+<table>
+<thead>
+<tr>
+<th>版本</th>
+<th>日期</th>
+<th>更新摘要</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>v1.7</td>
+<td>2026-07-20</td>
+<td>① 改价日志页由「勾选+加入按钮」改为<strong>「自动加入调价打印计划」开关</strong>——开关打开后商品名称/现价/原价/会员价/产地等变更自动加入调价计划，关闭则完全不自动加入（§4.7）；② 移除本地 Mock 服务，改为站点托管的线上静态 JSON Mock，供其他技术人员直接调试页面与参数（接口与 Mock 说明见《接口定义》§14）；③ 文档拆分为「需求说明」与「接口定义」两份，去除本地服务相关描述。</td>
+</tr>
+<tr>
+<td>v1.8</td>
+<td>2026-07-20</td>
+<td>列表列新增「计划商品」文本摘要列：取前 10 个商品名，前端渲染为「{text}等{totalCount}个商品」（接口字段与契约见《接口定义》§6.5/§9.2）；列表接口（<code>list</code>）不再返回完整 <code>items</code>，仅返回 <code>text</code> 摘要，<code>detail</code> 详情接口仍返回完整 <code>items</code>。</td>
+</tr>
+<tr>
+<td>v1.6</td>
+<td>2026-07-20</td>
+<td>契约对齐与 list 响应补全（接口层，详见《接口定义》§9.2）：<code>printPlan/list</code> 响应补全计划商品 <code>items</code>，列表页可直接渲染「计划商品」列与计数，无需逐行调 <code>detail</code>。</td>
+</tr>
+<tr>
+<td>v1.5</td>
+<td>2026-07-20</td>
+<td>① 改价日志页恢复「加入打印计划」入口，并新增「自动调价打印计划」勾选（决定归入调价自动/手动计划，§4.7）；② 批次数据改由 <code>printPlan/addGoods</code> <strong>响应返回</strong>（详见《接口定义》§9.6），请求新增 <code>goodsName</code>/<code>goodsListPrice</code>/<code>goodsPrice</code>/<code>vipPrice</code>，不再单独查批次接口；③ 删除类接口（<code>delete</code>/<code>removeGoods</code>）以 <code>code===0</code> 判成功、<code>data</code> 为 <code>null</code> 无冗余；④ 写接口响应精简（<code>print</code> 响应 <code>data</code> 可空）。</td>
+</tr>
+<tr>
+<td>v1.4</td>
+<td>2026-07-20</td>
+<td>精确化 §5.3 第二层「已打印项价格变动」处理：明确状态重置取决于<strong>目标计划类型与状态</strong>——价格相同则任何信息都不动（含打印状态，规则1）；价格不同则仅当目标计划为「调价自动（<code>type=1</code>，无论是否完成）」或「用户新增（<code>type=0</code>）且计划未完成（按计划 <code>status</code>，非商品打印状态）」时才更新信息并重置为待打印；用户新增且已完成的计划即便价格不同也保持原状。消解原 §12 待确认项。</td>
+</tr>
+<tr>
+<td>v1.3</td>
+<td>2026-07-20</td>
+<td>调价归集逻辑升级为「三层决策树」（§4.6 / §5.3 / 《接口定义》§9.9 / §9.10）：明确「调价自动计划」优先（规则4）、当天未完成计划次之（规则2）、否则新建「调价自动」计划（规则3）；补充调价行为定义（规则5）与打印进度计数规则（规则6）。</td>
+</tr>
+<tr>
+<td>v1.2</td>
+<td>2026-07-17</td>
+<td>初版（MVP）：计划列表 / 详情 / 添加 / 打印、调价自动入计划、改价日志一键加入，含数据结构与接口契约。</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="1-背景与目标">1. 背景与目标</h2>
+<p>价签打印是门店日常高频操作。当前改价、上新、补货均需重新打印价签，但缺乏"批量组织 + 按计划打印"的能力，操作员常逐张打印、易漏打、易与旧价签混淆（货签价不符存在合规风险）。</p>
+<p><strong>目标</strong>：提供"打印计划"管理能力，支持把待打印商品按门店/类型组织成计划，统一预览价签并批量打印；调价场景自动归集到当天计划，确保价签及时、准确更新。</p>
+<hr />
+<h2 id="2-用户与场景">2. 用户与场景</h2>
+<table>
+<thead>
+<tr>
+<th>角色</th>
+<th>职责</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>店长 / 运营</td>
+<td>创建打印计划、查看计划状态、安排打印、核对价签准确性</td>
+</tr>
+<tr>
+<td>收银 / 理货员</td>
+<td>按计划加入/移除商品、设置打印份数、执行打印</td>
+</tr>
+</tbody>
+</table>
+<p><strong>典型场景</strong>
+1. 每日巡检发现需换签 → 手动新建计划，加入商品，批量打印。
+2. 后台改价（服务端事件）→ 商品由服务端<strong>自动</strong>归集进入当天"调价"计划，计划内比对价格，旧已打印价签自动重置为待打印。<strong>用户无操作</strong>。
+3. 用户在「改价日志」页开启「自动加入调价打印计划」开关 → 商品信息变更（名称/价格/会员价/产地等）<strong>自动</strong>归集进当天调价计划；开关关闭则完全不自动加入（§4.7）。<strong>用户侧自动触发</strong>。</p>
+<hr />
+<h2 id="3-功能概览">3. 功能概览</h2>
+<table>
+<thead>
+<tr>
+<th>功能</th>
+<th>说明</th>
+<th>主要接口</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>计划列表</td>
+<td>查看全部打印计划，支持按门店、类型、状态、时间筛选与关键字搜索</td>
+<td><code>POST /mnmart/printPlan/list</code>（新增，详见《接口定义》§9.2）</td>
+</tr>
+<tr>
+<td>新建计划</td>
+<td>弹窗选择门店、类型，创建空计划</td>
+<td><code>POST /mnmart/printPlan/add</code>（新增，详见《接口定义》§9.3）</td>
+</tr>
+<tr>
+<td>计划详情</td>
+<td>查看/编辑计划内商品，管理打印份数、移除、全选、打印</td>
+<td><code>POST /mnmart/printPlan/detail</code>（新增，详见《接口定义》§9.4）</td>
+</tr>
+<tr>
+<td>添加商品</td>
+<td>从商品库按分类/关键字筛选<strong>展示</strong>，勾选<strong>加入计划</strong></td>
+<td>展示复用 <code>POST /mnmart/goods/list</code>（详见《接口定义》§8）；加入提交 <code>POST /mnmart/printPlan/addGoods</code>（新增，详见《接口定义》§9.6）</td>
+</tr>
+<tr>
+<td>价签打印</td>
+<td>客户端本地渲染并打印价签，完成后通知服务端记录</td>
+<td>记录通知 <code>POST /mnmart/printPlan/print</code>（详见《接口定义》§9.8）</td>
+</tr>
+<tr>
+<td>调价自动入计划</td>
+<td>服务端在改价完成时<strong>自动</strong>归集到当天最新调价计划（用户无操作，见 §4.6）</td>
+<td><code>POST /mnmart/printPlan/autoAddFromPriceChange</code>（新增，仅服务端，详见《接口定义》§9.9）</td>
+</tr>
+<tr>
+<td>改价日志自动加入</td>
+<td>「改价日志」页开关开启后，商品信息变更自动归集进调价计划；亦可手动勾选「加入选中项」（§4.7）</td>
+<td><code>POST /mnmart/printPlan/addFromPriceChanges</code>（详见《接口定义》§9.10）</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="4-详细功能需求">4. 详细功能需求</h2>
+<h3 id="4-1-计划列表">4.1 计划列表</h3>
+<p><strong>前置条件</strong>：进入「打印计划」页面。
+<strong>交互流程</strong>：
+1. 页面加载即拉取计划列表（接口 <code>POST /mnmart/printPlan/list</code>，见《接口定义》§9.2）。
+2. 筛选栏（左→右）：
+   - <strong>门店 Picker</strong>：单选，默认"全部门店"，复用企业&amp;门店下拉 <code>POST /mnmart/dropdown</code>（详见《接口定义》§8）。
+   - <strong>类型 Segment</strong>：全部 / 手动创建 / 调价自动（对应 <code>type</code> <code>manual</code>/<code>price-change</code>）。
+   - <strong>状态 Segment</strong>：全部 / 待打印 / 部分打印 / 已完成（对应 <code>status</code> <code>pending</code>/<code>partial</code>/<code>done</code>）。
+   - <strong>时间 Segment</strong>：全部 / 今天 / 本周 / 本月（对应 <code>startTime</code>/<code>endTime</code> 按当前日期计算后传给 <code>POST /mnmart/printPlan/list</code>，见《接口定义》§9.2），默认"全部"。
+   - <strong>关键字搜索</strong>：按 <code>name</code> 模糊匹配。
+   - 最右侧 <strong>「产品需求说明」</strong> 入口按钮（非正式功能占位）。
+3. 列表列：序号、计划名称、门店（<code>store</code>）、类型、计划商品（文本摘要：取前 10 个商品名称，前端渲染为「{text}等{totalCount}个商品」）、商品数、待打印、已打印、状态（标签）、创建时间、操作（查看 / 删除）。
+4. 点击「查看」→ 打开计划详情（§4.3）；点击「删除」→ 二次确认后调用 <code>POST /mnmart/printPlan/delete</code>（详见《接口定义》§9.5）。<strong>仅「待打印」状态的计划允许删除</strong>；「部分打印」「已完成」计划的操作列不显示删除按钮（或置灰禁用），前端按 <code>status==='pending'</code> 控制。</p>
+<p><strong>状态标签配色</strong>：待打印（橙 <code>#fa8c16</code>）、部分打印（蓝 <code>#005cf5</code>）、已完成（绿 <code>#52c41a</code>）。</p>
+<h3 id="4-2-新建计划">4.2 新建计划</h3>
+<p><strong>前置条件</strong>：点击「新建计划」或某商品触发自动建计划。
+<strong>交互流程</strong>：
+1. 弹窗字段：门店（<code>shopId</code>，预选当前筛选门店）、类型（<code>type</code> <code>manual</code>-手动 / <code>price-change</code>-调价）。
+2. 校验：<code>shopId</code> 必选；计划名称 <code>name</code> 按"门店 + 类型 + 日期"自动生成（如 <code>崧泽大道中心店-调价-0701</code>），也可由前端传入。
+3. 提交 <code>POST /mnmart/printPlan/add</code>（详见《接口定义》§9.3），创建后进入空计划详情，提示「点击「添加商品」」。</p>
+<h3 id="4-3-计划详情-核心">4.3 计划详情（核心）</h3>
+<p><strong>信息栏</strong>：门店（<code>store</code>）、类型、商品数、待打印、创建时间（<code>createdAt</code>）。
+<strong>备注条</strong>：说明生产日期取值规则（FIFO，见 §5.1）。</p>
+<p><strong>商品表格列（顺序与固定宽度）</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>列</th>
+<th>宽度</th>
+<th>对齐</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>复选框</td>
+<td>40</td>
+<td>居中</td>
+<td>用于「打印选中」收集</td>
+</tr>
+<tr>
+<td>序号</td>
+<td>50</td>
+<td>居中</td>
+<td>行号</td>
+</tr>
+<tr>
+<td>商品名称</td>
+<td>220</td>
+<td>左</td>
+<td>超长省略号截断</td>
+</tr>
+<tr>
+<td>编码</td>
+<td>150</td>
+<td>左</td>
+<td>商品编码（<code>barcode</code>）</td>
+</tr>
+<tr>
+<td>规格</td>
+<td>120</td>
+<td>左</td>
+<td>规格（如 500g/袋，<code>spec</code>）</td>
+</tr>
+<tr>
+<td>价格</td>
+<td>118</td>
+<td>居中</td>
+<td>当前售价 <code>¥x.xx/单位</code>（<code>price</code>）</td>
+</tr>
+<tr>
+<td>原价</td>
+<td>112</td>
+<td>居中</td>
+<td>普通文本显示（<strong>不划线</strong>） <code>¥x.xx</code>（<code>origPrice</code>）</td>
+</tr>
+<tr>
+<td>生产日期</td>
+<td>130</td>
+<td>左</td>
+<td>FIFO 取最早批次（<code>produceDate</code>）；多批次标角标（如"3批"，取自 <code>batchCount</code> 批次数）</td>
+</tr>
+<tr>
+<td>状态</td>
+<td>100</td>
+<td>居中</td>
+<td>待打印 / 已打印 标签</td>
+</tr>
+<tr>
+<td>打印份数</td>
+<td>110</td>
+<td>居中</td>
+<td>未打印可 ±（下限1）；已打印显示份数不可改（<code>printQty</code>）</td>
+</tr>
+<tr>
+<td>操作</td>
+<td>100</td>
+<td>居中</td>
+<td>未打印：<code>+份</code> <code>-份</code> <code>移除</code>；已打印：无操作</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>表头对齐方式与数据列严格一致，避免视觉偏移。表格 <code>min-width:1260px</code>，窄屏横向滚动。</p>
+</blockquote>
+<p><strong>按钮栏</strong>：<code>+ 添加商品</code>、<code>全选未打印</code>（仅勾未打印项）、<code>移除未打印</code>（移除所有未打印项）。
+<strong>Footer</strong>：<code>取消</code>、<code>打印选中</code>（提交 <code>POST /mnmart/printPlan/print</code>，详见《接口定义》§9.8，已打印项亦可勾选二次打印）。</p>
+<p><strong>实时同步</strong>：加入/删除/修改份数/打印后，底层计划列表的状态、待打印数、已打印数立即重算刷新（前端按《接口定义》§9.4/<code>§9.2</code> 重新拉取或本地重算）。</p>
+<h3 id="4-4-添加商品">4.4 添加商品</h3>
+<p><strong>前置条件</strong>：在计划详情点击「+ 添加商品」。
+<strong>窗口规范</strong>：宽度 <code>760px</code>，列表区固定高度 <code>380px</code>（切换分类不抖动），表格 <code>width:100%</code> 铺满。</p>
+<p><strong>筛选</strong>：分类下拉（全部分类 + 动态分类，来源 <code>POST /mnmart/class/display/list</code> 或商品 <code>displayClassId</code>）、关键字搜索（名称/编码，调用 <code>POST /mnmart/goods/list</code> 的 <code>keyword</code>）。
+<strong>数据来源</strong>：复用 <code>POST /mnmart/goods/list</code>（详见《接口定义》§8），返回商品列表（<code>goodsId</code>/<code>goodsName</code>/<code>goodsCode</code>/<code>goodsSpec</code>/<code>goodsUnitName</code>/<code>goodsListPrice</code>/<code>goodsPrice</code>/<code>vipPrice</code> 等）。</p>
+<p><strong>表格列</strong>：复选框(40) · 商品名称(240, 省略) · 编码(130) · 规格(96) · 价格(110) · 状态(100, 已存在计划则显"已添加"且禁用勾选)。</p>
+<p><strong>交互流程</strong>：
+1. 勾选商品 → 点「确定加入」→ 提交 <code>POST /mnmart/printPlan/addGoods</code>（详见《接口定义》§9.6），状态重算。
+2. 已存在于计划的商品禁用勾选并标记「已添加」，避免重复。
+3. 分类切换仅过滤列表，不改变窗口高度。</p>
+<h3 id="4-5-价签打印">4.5 价签打印</h3>
+<p><strong>架构说明</strong>：打印为<strong>客户端行为</strong>——客户端直接基于计划项字段本地渲染价签并完成物理打印输出；服务端<strong>不执行打印</strong>，仅接收客户端上报的打印动作并持久化记录。价签打印与称重打码（<code>code/printCode</code> 系列）是<strong>不同功能</strong>，本模块不依赖称重打码接口。</p>
+<p><strong>交互流程</strong>：
+1. 详情点「打印选中」→ 客户端弹出价签预览：可选价签模板（标准价签 / 促销价签等），直接使用计划项字段（商品名称、价格、原价、会员价、条码、规格、生产日期等）在客户端渲染价签。
+2. 客户端本地执行物理打印（如浏览器 <code>window.print()</code> 或客户端打印通道），按每项 <code>printQty</code> 循环生成对应张数。
+3. 打印完成后，客户端调用 <code>POST /mnmart/printPlan/print</code>（详见《接口定义》§9.8）<strong>通知服务端记录</strong>本次打印（打印项、份数、模板、时间、操作人）。服务端仅落盘打印记录，<strong>不执行打印</strong>。
+4. <strong>已打印商品</strong>可手动勾选进行二次打印（旧价签作废场景），打印后同样上报记录。</p>
+<p><strong>打印份数</strong>：每项按 <code>printQty</code> 循环打印；上报记录成功后该项 <code>printed=true</code>、<code>printedAt=当前时间</code>。</p>
+<blockquote>
+<p>价签打印为纯客户端渲染 + 输出，所需字段均来自计划项（详见《接口定义》§6.5 <code>PlanItem</code>），无需服务端打码接口；服务端仅通过 <code>printPlan/print</code> 记录打印动作。</p>
+</blockquote>
+<h3 id="4-6-调价自动入计划-服务端驱动-用户无操作">4.6 调价自动入计划（服务端驱动，用户无操作）</h3>
+<p><strong>定位</strong>：本能力由<strong>服务端</strong>完成，前端<strong>无入口、用户无感知</strong>。与 §4.7「改价日志自动加入」（用户侧开关触发）是两类独立能力，勿混淆；现调价归集仅由本能力（服务端自动）与规则5 引擎（§5.5）承担。</p>
+<p><strong>触发方</strong>：后台改价、总部调价下发等商品价格变更事件<strong>完成</strong>时，由服务端自动执行归集。</p>
+<p><strong>交互流程（服务端）</strong>：
+1. 服务端接收到商品改价事件（携带 <code>shopId</code>/<code>companyId</code>/最新 <code>goodsPrice</code>/<code>goodsListPrice</code>/<code>vipPrice</code>）。
+2. 调用内部归集接口 <code>POST /mnmart/printPlan/autoAddFromPriceChange</code>（详见《接口定义》§9.9，仅服务端调用，前端不可见）。
+3. 执行 §5.3 调价归集逻辑（三层决策树）：按「当天调价自动计划 → 当天未完成计划 → 新建调价自动计划」选定目标计划，再对商品做价格比对（同价不重复、异价更新并视情况重置已打印）。
+4. 前端仅在「打印计划」列表/详情中<strong>被动看到</strong>结果（计划出现或商品更新）。</p>
+<p><strong>说明</strong>：当前 MVP（最小可行产品）采用前端内置浏览器端 Mock（无真实服务端），故该能力未实际触发；对接后端后由后端实现。详见《接口定义》§14 接口 Mock 说明。</p>
+<h3 id="4-7-改价日志-自动加入调价打印计划-开关">4.7 改价日志 · 自动加入调价打印计划（开关）</h3>
+<blockquote>
+<p>✅ <strong>v1.7 调整</strong>：由 v1.5 的「勾选 + 加入按钮」改为<strong>开关（toggle）</strong>模式。开关打开后，商品信息变更<strong>自动</strong>加入调价打印计划；开关关闭后，商品信息变更<strong>不会</strong>自动加入。与服务端自动归集（§4.6）/规则5 引擎（§5.5）并行不悖。</p>
+</blockquote>
+<p><strong>定位</strong>：「改价日志」页提供全局开关「自动加入调价打印计划」，控制<strong>商品信息变更是否自动归集到调价打印计划</strong>。属于用户侧自动触发机制，区别于 §4.6 的服务端事件触发。</p>
+<p><strong>开关语义</strong>：
+- <strong>开关打开（ON）</strong>：当商品发生以下信息变更时，系统<strong>自动</strong>将商品归集进当天「调价自动」计划（<code>price-change</code>）：
+  - 商品名称变更；
+  - 价格变更：<strong>现价</strong>（<code>price</code> / 改后价）、<strong>原价</strong>（<code>origPrice</code>）；
+  - 其他扩展字段变更：<strong>会员价</strong>（<code>memberPrice</code>）、<strong>产地</strong>（<code>origin</code>）等（监控字段可扩展，见前端 <code>PP_AUTO_FIELDS</code>）。
+  - 入计划遵循 §5.3 P1→P2→P3 三层决策树；同条码商品按价格比对，异价更新并重置已打印（规则2/4）。
+- <strong>开关关闭（OFF）</strong>：商品信息变更<strong>不会</strong>自动加入任何打印计划（仍可在日志页手动勾选「加入选中项」显式加入）。</p>
+<p><strong>交互流程</strong>：
+1. 操作栏提供开关「<strong>自动加入调价打印计划</strong>」（状态持久化于 <code>localStorage</code>，默认关闭）+ 状态指示 + 按钮「<strong>模拟新改价</strong>」（演示用，模拟一次商品信息变更）+ 按钮「<strong>加入选中项</strong>」（手动，始终加入调价自动计划）。
+2. 开关<strong>打开</strong>后：进入页面时静默同步（确保已变更商品已在计划中）；之后每次商品信息变更（含点击「模拟新改价」）即自动归集，并轻提示「已自动加入调价打印计划」；如开关关闭则仅记录变更、不加入。
+3. 开关状态变化即时生效并持久化；打开时立即对当前全部已变更商品执行一次归集。</p>
+<p><strong>前置条件</strong>：进入「改价日志」页（独立页面），可按门店、日期筛选当日改价记录。</p>
+<p><strong>数据来源</strong>：复用 <code>POST /mnmart/goods/listGoodsPriceRecord</code>（详见《接口定义》§8），入参 <code>data.companyId</code>/<code>data.shopId</code>/<code>data.startTime</code>/<code>data.endTime</code>/<code>data.keyword</code> + <code>requestPage</code>，返回改价记录（<code>goodsId</code>/<code>goodsName</code>/<code>goodsCode</code>/<code>goodsSpec</code>/<code>goodsUnitName</code>/<code>goodsListPrice</code> 原价/<code>goodsPrice</code> 改前价/<code>goodsAfterPrice</code> 改后价/<code>operator</code>/<code>recordTime</code>）。</p>
+<hr />
+<h2 id="5-业务规则">5. 业务规则</h2>
+<h3 id="5-1-生产日期-fifo">5.1 生产日期（FIFO）</h3>
+<ul>
+<li>商品存在多批次时，价签生产日期取<strong>最早批次</strong>（最临近过期）。</li>
+<li>多批次共存时，详情表格生产日期旁标注批次数（如「3批」），hover 提示规则。</li>
+<li>批次数据来源：<strong><code>POST /mnmart/printPlan/addGoods</code> 响应中随计划项一并返回</strong>（详见《接口定义》§9.6，含 <code>produceDate</code>/<code>batchCount</code>/<code>batches</code>）；FIFO 取最早 <code>produceDate</code>，批次数 = <code>batchCount</code>（= <code>batches</code> 数组长度）。原独立批次查询接口 <code>POST /mnmart/inventory/batchListByGoodsIdCode</code>（详见《接口定义》§8）<strong>兼容保留</strong>，但打印计划场景不再单独调用，避免冗余请求（需求2）。</li>
+</ul>
+<h3 id="5-2-计划状态">5.2 计划状态</h3>
+<pre><code>空计划(无商品) ──► 待打印(pending)
+存在未打印商品 ──► 部分打印(partial)
+全部商品已打印 ──► 已完成(done)
+</code></pre>
+<ul>
+<li>计划无商品 → <strong>待打印(pending)</strong></li>
+<li>存在未打印商品 → <strong>部分打印(partial)</strong></li>
+<li>全部商品已打印 → <strong>已完成(done)</strong></li>
+</ul>
+<h3 id="5-3-调价归集逻辑-三层决策树-两端共用">5.3 调价归集逻辑（三层决策树，两端共用）</h3>
+<blockquote>
+<p>本逻辑为「调价归集」的<strong>共用业务规则</strong>，被两类触发方复用：
+- <strong>A. 服务端自动入计划</strong>（§4.6）：后端改价事件自动调用 <code>autoAddFromPriceChange</code>，或销售改价 / 商品编辑等永久调价行为触发（§5.5）。
+- <strong>B. 调价归集引擎（规则5 统一入口）</strong>：前端 <code>ppAddPriceChangeProducts(products)</code>（index.html）提供，供销售改价 / 商品编辑等永久调价行为调用（§5.5），亦被 §4.7 开关自动触发复用。
+触发方不同，但归集、价格比对与状态重置规则一致。字段以现有商品体系为准：<code>price</code>(售价) / <code>origPrice</code>(原价) / <code>memberPrice</code>(会员价)。</p>
+</blockquote>
+<p><strong>第一层：选定目标计划（按优先级）</strong>
+1. <strong>P1（规则4）</strong> 当天已存在「调价自动」计划（<code>type=price-change</code>，无论待打印 / 部分打印 / 已完成）→ 直接作为目标计划。
+2. <strong>P2（规则2）</strong> 否则，当天存在<strong>未完成</strong>计划（<code>status≠done</code>，即待打印 / 部分打印）→ 以该未完成计划为目标。
+3. <strong>P3（规则3）</strong> 否则（当天仅有已完成计划，或当天无任何计划）→ <strong>新建</strong>「调价自动」计划（<code>type=price-change</code>），作为目标。</p>
+<blockquote>
+<p>说明：P1 优先于 P2 / P3，确保「调价自动计划」是调价商品的统一归集入口；仅当当天无调价自动计划时，才退而用未完成计划或新建。</p>
+</blockquote>
+<p><strong>第二层：商品加入 / 更新（目标计划内）</strong>
+  - 计划中无同条码商品 → <strong>新增</strong>（待打印，写入最新价）。
+  - 计划中有同条码商品，且价格（售价 / 原价 / 会员价）<strong>完全相同</strong> → 不重复加入、不修改<strong>任何信息（含打印状态）</strong>（对应规则1：价格没变则不更新、不重置）。
+  - 计划中有同条码商品，且价格<strong>不同</strong> → 是否更新取决于<strong>目标计划类型与状态</strong>（二者共同前提均为「价格变更且与计划中价格不同」）：
+    - 目标计划为「调价自动」（<code>type=price-change</code>，<strong>无论是否完成</strong>）→ 更新商品信息（最新价）并重置为<strong>待打印</strong>（旧价签作废，需重打）。
+    - 目标计划为「用户新增」（<code>type=manual</code>）且<strong>计划未完成</strong>（<code>status≠done</code>，<strong>以计划状态为准，非商品状态</strong>）→ 更新商品信息并重置为<strong>待打印</strong>。
+    - 目标计划为「用户新增」且<strong>计划已完成</strong>（<code>status=done</code>）→ 即便价格不同，也<strong>不更新信息、不重置打印状态</strong>。</p>
+<blockquote>
+<p>说明：规则1「已打印数据不进行更新」与规则2 / 4「已打印项更新价格并标记待打印」的张力，已由本规则消解——<strong>价格相同则任何信息都不动（规则1）；价格不同则仅当目标计划为「调价自动」或「用户新增且未完成」时才更新信息并重置待打印（规则2 / 4），用户新增且已完成的计划即便价格不同也保持原状</strong>。该判定以「防止打印过期价格」为总目标，且以计划状态（而非商品打印状态）作为用户新增计划的判定依据。</p>
+</blockquote>
+<h3 id="5-4-打印份数">5.4 打印份数</h3>
+<ul>
+<li>每项默认 1 份；未打印项可调增减（下限 1）；已打印项显示份数、不可调。</li>
+<li>打印时按 <code>printQty</code> 循环生成价签。</li>
+</ul>
+<h3 id="5-5-调价行为定义-规则5">5.5 调价行为定义（规则5）</h3>
+<p>所有<strong>永久性价格调整</strong>行为，均视为调价行为，相关商品须归集进入打印计划（经 §5.3 三层决策树），以确保价签与最新售价一致：
+- 后台改价 / 总部调价下发（服务端事件，§4.6）。
+- <strong>销售改价</strong>：前台销售环节发生的价格变更。
+- <strong>商品编辑</strong>：商品主数据维护中修改了 <code>price</code> / <code>origPrice</code> / <code>memberPrice</code>。
+- 其他导致商品售价永久变化的操作（以产品定义为准）。</p>
+<blockquote>
+<p>判定标准：是否<strong>写回商品主数据售价</strong>。仅当价格变更持久化到商品主数据时才计入；临时挂牌、未落库的价格试算不在此列。</p>
+</blockquote>
+<h3 id="5-6-打印进度计数-规则6">5.6 打印进度计数（规则6）</h3>
+<ul>
+<li>计划打印进度 = <strong>已打印商品数 / 总商品数</strong>（与 §5.2 状态联动：<code>pendingCount = totalCount - printedCount</code>）。</li>
+<li>商品状态翻转时计数同步变化：</li>
+<li>待打印 → 已打印：该计划 <code>printedCount +1</code>（进度 +1）。</li>
+<li>已打印 → 待打印（如 §5.3 价格变动重置）：<code>printedCount -1</code>（进度 -1）。</li>
+<li>计数由打印 / 重置动作触发即时重算，不依赖异步对账。</li>
+</ul>
+<hr />
+<h2 id="11-非功能需求">11. 非功能需求</h2>
+<ul>
+<li><strong>持久化</strong>：生产环境数据持久化由服务端负责（见《接口定义》§9），前端不本地落盘；演示态以《接口定义》§6.9 的本地缓存为临时占位。</li>
+<li><strong>统一与通用</strong>：接口严格遵循《接口定义》§7 通用规范（POST + 统一包体/响应 + 小驼峰 + JWT），并最大化复用《接口定义》§8 现有接口，避免重复定义字段。</li>
+<li><strong>层级</strong>：打印预览弹窗层级高于计划详情弹窗，避免被遮挡。</li>
+<li><strong>响应式</strong>：弹窗窄屏按比例缩放（94vw 上限）。</li>
+<li><strong>性能</strong>：计划项 &lt; 500 条时列表渲染 &lt; 200ms（纯前端）。</li>
+<li><strong>可观测</strong>：关键操作（打印、删除）建议埋点统计。</li>
+</ul>
+<hr />
+<h2 id="12-待确认-后续">12. 待确认 / 后续</h2>
+<ul>
+<li>会员价是否需在计划详情展示（当前仅价签模板使用）。</li>
+<li>批量导入计划（Excel / 后台推送）待评估。</li>
+<li><code>printPlan/*</code> 接口分组归属（建议「商品管理」或独立分组），以服务端路由规划为准。</li>
+<li>已打印项价格变动时的处理（§5.3）：已明确规则（v1.4 消解）——价格相同则任何信息都不动（含打印状态，规则1）；价格不同则仅当目标计划为「调价自动」或「用户新增且未完成（按计划 <code>status</code>，非商品打印状态）」时才更新信息并重置待打印，用户新增且已完成的计划即便价格不同也保持原状。已在 index.html <code>ppAddPriceChangeProducts</code> 落实（含 <code>planUpdatable</code> 判定，规则5 统一入口）。</li>
+</ul>
+<h2 id="13-名词解释">13. 名词解释</h2>
+<ul>
+<li><strong>原价（<code>origPrice</code>）</strong>：商品吊牌/指导价，价签上以普通文本展示（非划线）。</li>
+<li><strong>FIFO</strong>：先进先出，此处指按批次生产日期（<code>produceDate</code>）取最早批次。</li>
+<li><strong>二次打印</strong>：已打印商品因调价/破损需重打，手动勾选后重新出签。</li>
+<li><strong>调价自动入计划</strong>：服务端在商品改价完成时<strong>自动</strong>归集到当天最新调价计划，<strong>用户无操作</strong>（见 §4.6 / 《接口定义》§9.9）。</li>
+<li><strong>改价日志自动加入</strong>：「改价日志」页开关开启后，商品信息变更<strong>自动</strong>归集进调价计划；关闭则不自动加入（见 §4.7 / 《接口定义》§9.10）。</li>
+<li><strong>调价自动计划</strong>：由 §4.6 服务端自动归集、类型 <code>type=price-change</code> 的计划。</li>
+</ul>
+  </div>
+  <aside class="doc-toc"><div class="doc-toc-title">目录</div><div class="toc">
+<ul>
+<li><a href="#打印计划模块-需求说明">打印计划模块 需求说明</a><ul>
+<li><a href="#0-版本更新记录">0. 版本更新记录</a></li>
+<li><a href="#1-背景与目标">1. 背景与目标</a></li>
+<li><a href="#2-用户与场景">2. 用户与场景</a></li>
+<li><a href="#3-功能概览">3. 功能概览</a></li>
+<li><a href="#4-详细功能需求">4. 详细功能需求</a><ul>
+<li><a href="#4-1-计划列表">4.1 计划列表</a></li>
+<li><a href="#4-2-新建计划">4.2 新建计划</a></li>
+<li><a href="#4-3-计划详情-核心">4.3 计划详情（核心）</a></li>
+<li><a href="#4-4-添加商品">4.4 添加商品</a></li>
+<li><a href="#4-5-价签打印">4.5 价签打印</a></li>
+<li><a href="#4-6-调价自动入计划-服务端驱动-用户无操作">4.6 调价自动入计划（服务端驱动，用户无操作）</a></li>
+<li><a href="#4-7-改价日志-自动加入调价打印计划-开关">4.7 改价日志 · 自动加入调价打印计划（开关）</a></li>
+</ul>
+</li>
+<li><a href="#5-业务规则">5. 业务规则</a><ul>
+<li><a href="#5-1-生产日期-fifo">5.1 生产日期（FIFO）</a></li>
+<li><a href="#5-2-计划状态">5.2 计划状态</a></li>
+<li><a href="#5-3-调价归集逻辑-三层决策树-两端共用">5.3 调价归集逻辑（三层决策树，两端共用）</a></li>
+<li><a href="#5-4-打印份数">5.4 打印份数</a></li>
+<li><a href="#5-5-调价行为定义-规则5">5.5 调价行为定义（规则5）</a></li>
+<li><a href="#5-6-打印进度计数-规则6">5.6 打印进度计数（规则6）</a></li>
+</ul>
+</li>
+<li><a href="#11-非功能需求">11. 非功能需求</a></li>
+<li><a href="#12-待确认-后续">12. 待确认 / 后续</a></li>
+<li><a href="#13-名词解释">13. 名词解释</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</aside>
+</section>
+  </div>
+</div>
+<script>
+(function() {
+  var navLinks = Array.prototype.slice.call(document.querySelectorAll('.doc-nav a'));
+  var sections = Array.prototype.slice.call(document.querySelectorAll('.md-doc'));
+  function show(name) {
+    navLinks.forEach(function(a){ a.classList.toggle('active', a.getAttribute('data-doc') === name); });
+    sections.forEach(function(s){ s.classList.toggle('active', s.getAttribute('data-doc') === name); });
+    var active = document.querySelector('.md-doc.active .doc-body');
+    if (active) active.scrollTop = 0;
+    if (location.hash !== '#' + name) history.replaceState(null, '', '#' + name);
+  }
+  navLinks.forEach(function(a){ a.addEventListener('click', function(){ show(a.getAttribute('data-doc')); }); });
+  // PRD 页内的 API 入口（doc: 链接）
+  document.addEventListener('click', function(e) {
+    var el = e.target.closest('a[data-doc]');
+    if (el) { e.preventDefault(); show(el.getAttribute('data-doc')); }
+  });
+  // 初始：优先 hash，其次 ?doc=，否则第一篇
+  var initial = (location.hash || '').replace('#', '');
+  var q = new URLSearchParams(location.search).get('doc');
+  initial = initial || q || (sections[0] && sections[0].getAttribute('data-doc'));
+  show(initial);
+})();
+</script>
+</body>
+</html>

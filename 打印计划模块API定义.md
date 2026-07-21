@@ -86,7 +86,8 @@ Template(价签模板,前端渲染概念) 1─* PlanItem(打印时引用)
 | `printedCount` | int | 是 | 已打印数 |
 | `createdAt` | string | 是 | 创建时间 `yyyy-MM-dd HH:mm:ss` |
 | `createdBy` | string | 否 | 创建人 |
-| `items` | PlanItem[] | 是 | 计划内商品项（见 §6.6；**`printPlan/list` 列表接口亦返回完整 `items`**，供列表页直接渲染「计划商品」列与计数） |
+| `text` | string | 否 | 计划商品文本摘要（**仅 `list` 列表接口返回**）。取计划内**前 10 个**商品名称以逗号分隔拼接，如 `大白菜, 番茄, 黄瓜`；列表页「计划商品」列展示时由前端在其后追加 `等{totalCount}个商品`，最终形如 `大白菜, 番茄, 黄瓜等32个商品`（`totalCount` 见本表）。`detail` 接口不返回此字段（改用完整 `items`）。 |
+| `items` | PlanItem[] | 否 | 计划内商品项（见 §6.6）。**仅 `detail` 详情接口返回完整 `items`**；`list` 列表接口为减轻响应体积、避免列表铺开，改用 `text` 文本摘要（见上），**不返回 `items`**。 |
 
 ### 6.6 计划项 `PlanItem`（新增）
 
@@ -241,7 +242,7 @@ Template(价签模板,前端渲染概念) 1─* PlanItem(打印时引用)
 
 **响应 `data`**（数组，附 `pageInfo`）
 
-> ⚠️ **`list` 返回完整 `PrintPlan`（含 `items`）**：每个计划对象直接携带其 `items` 计划商品数组（字段见 §6.6），列表页据此渲染「计划商品」列、商品数、待打印/已打印计数，**无需逐行调用 `detail`**（`detail` 仅用于查看单个计划明细或后端分页超大数据量场景）。
+> ⚠️ **`list` 返回 `text` 文本摘要（不返回 `items`）**：每个计划对象携带 `text`（前 10 个商品名拼接，见 §6.5）用于列表页「计划商品」列，前端追加 `等{totalCount}个商品` 渲染为 `大白菜, 番茄, 黄瓜等32个商品`；商品数/待打印/已打印计数由 `totalCount`/`pendingCount`/`printedCount` 提供，**无需逐行调用 `detail`**（`detail` 才返回完整 `items`，用于查看单个计划明细）。
 
 ```json
 [
@@ -254,28 +255,7 @@ Template(价签模板,前端渲染概念) 1─* PlanItem(打印时引用)
     "totalCount": 3, "pendingCount": 1, "printedCount": 2,
     "createdAt": "2026-07-20 09:30:00",
     "createdBy": "系统自动",
-    "items": [
-      {
-        "id": "item-1001",
-        "name": "大白菜",
-        "barcode": "6901234567012",
-        "price": 3.5, "origPrice": 5.0, "memberPrice": 3.0,
-        "unit": "斤", "spec": "约500g", "origin": "山东寿光",
-        "produceDate": "2026-06-03", "batchCount": 2,
-        "batches": [ { "produceDate": "2026-06-03", "qty": 12 }, { "produceDate": "2026-06-10", "qty": 8 } ],
-        "printQty": 2, "printed": true, "printedAt": "2026-07-20 10:15:00"
-      },
-      {
-        "id": "item-1002",
-        "name": "番茄",
-        "barcode": "6901234567036",
-        "price": 5.8, "origPrice": 8.0, "memberPrice": 4.8,
-        "unit": "斤", "spec": "约500g", "origin": "云南昆明",
-        "produceDate": "2026-05-28", "batchCount": 3,
-        "batches": [ { "produceDate": "2026-05-28", "qty": 5 }, { "produceDate": "2026-06-04", "qty": 15 }, { "produceDate": "2026-06-11", "qty": 10 } ],
-        "printQty": 1, "printed": false, "printedAt": null
-      }
-    ]
+    "text": "大白菜, 番茄"
   }
 ]
 ```
@@ -435,27 +415,27 @@ Template(价签模板,前端渲染概念) 1─* PlanItem(打印时引用)
 
 | 模式 | 触发 | 数据来源 | 适用场景 |
 | --- | --- | --- | --- |
-| **前端内置 Mock（默认）** | 访问静态页（不带 `?api=1`） | `index.html` 内 `PPApi` 适配层的浏览器内存 | **GitHub Pages 静态托管演示/生产**，开箱即用，无需任何后端；「自动加入」开关等页面交互即用此模式 |
-| **线上静态 Mock 联调** | URL 加 `?api=1` | GitHub Pages 托管的静态 JSON（`mock/` 目录） | **给其他技术人员调试页面与参数**：直接打开页面即可看到接口返回并核对入参，无需安装任何运行环境 |
+| **前端内置 Mock（默认）** | 访问静态页（不带 `?api=1`） | `index.html` 内 `PPApi` 适配层的浏览器内存 | **静态托管站点演示/生产**，开箱即用，无需任何后端；「自动加入」开关等页面交互即用此模式 |
+| **线上静态 Mock 联调** | URL 加 `?api=1` | 站点托管的静态 JSON（`mock/` 目录） | **给其他技术人员调试页面与参数**：直接打开页面即可看到接口返回并核对入参，无需安装任何运行环境 |
 
-### 14.2 前端内置 Mock（GitHub Pages 默认可用）
+### 14.2 前端内置 Mock（静态托管默认可用）
 
-- 部署在 GitHub Pages（纯静态托管，无法运行后端）时，**默认即走前端内置 Mock**：所有读写由 `index.html` 的 `PPApi` 适配层在浏览器内存完成，请求/响应契约与 §9 完全一致，前端功能完整可演示。
+- 部署在静态托管站点（纯静态托管，无法运行后端）时，**默认即走前端内置 Mock**：所有读写由 `index.html` 的 `PPApi` 适配层在浏览器内存完成，请求/响应契约与 §9 完全一致，前端功能完整可演示。
 - 该模式下前端**不依赖任何服务器**，刷新即重置为初始演示数据。
 
-### 14.3 线上静态 Mock（GitHub Pages 托管 JSON，无需起服务）
+### 14.3 线上静态 Mock（站点托管 JSON，无需起服务）
 
-> 全部接口响应以静态 JSON 文件随站点一起托管在 GitHub Pages，其他技术人员**无需安装任何运行环境、无需起服务**，直接用浏览器打开即可调试。
+> 全部接口响应以静态 JSON 文件随站点一起托管，其他技术人员**无需安装任何运行环境、无需起服务**，直接用浏览器打开即可调试。
 
-- 文件位置：项目根 `mock/` 目录，部署后位于站点 `/mock/` 下。结构与接口路径一一对应：
+- 文件位置：项目根 `mock/` 目录，部署后位于站点 `mock/` 下（相对站点根目录）。结构与接口路径一一对应：
   - `mock/mnmart/printPlan/list.json`、`add.json`、`detail.json`、`delete.json`、`addGoods.json`、`removeGoods.json`、`print.json`、`autoAddFromPriceChange.json`、`addFromPriceChanges.json`
   - `mock/mnmart/goods/list.json`、`mock/mnmart/inventory/batchListByGoodsIdCode.json`
 - 调试方式（给其他开发人员）：
-  1. **直接查看响应**：浏览器打开 `https://tcm-demo.github.io/tcm-analytics/mock/mnmart/printPlan/list.json` 等，即可看到规范 JSON 响应（list 含完整 `items`，addGoods 含批次，delete/print 的 `data` 为 `null`）。
-  2. **页面联调**：打开 `https://tcm-demo.github.io/tcm-analytics/index.html?api=1`，前端 `PPApi` 会 `GET` 上述静态 JSON 填充页面；**每次请求的参数会 `console.log` 输出**（前缀 `[PPApi mock]`），便于核对入参。
+  1. **直接查看响应**：浏览器打开 `mock/mnmart/printPlan/list.json`（相对站点根目录）等，即可看到规范 JSON 响应（list 返回 `text` 文本摘要、不返回 `items`；addGoods 含批次，delete/print 的 `data` 为 `null`）。
+  2. **页面联调**：打开 `index.html?api=1`（与 `mock/` 同站点根目录），前端 `PPApi` 会 `GET` 上述静态 JSON 填充页面；**每次请求的参数会 `console.log` 输出**（前缀 `[PPApi mock]`），便于核对入参。
 - 契约要点（与 §9 对齐）：
   - 响应统一 `{ "code": 0, "message": "success", "data": ... }`（删除类 `data` 为 `null`，以 `code===0` 判成功，需求3/4）。
   - **`addGoods`**：响应 `PrintPlan.items` 含批次快照 `productionDate`/`batchCount`/`batches`（需求2）。
-  - **`list`**：响应 `data` 为完整 `PrintPlan` 数组，**每项直接携带 `items` 计划商品**（字段同 §6.6），列表页据此渲染「计划商品」列与计数，无需逐行调 `detail`（§9.2）。
+  - **`list`**：响应 `data` 为 `PrintPlan` 数组，**每项携带 `text` 计划商品文本摘要**（前 10 个商品名，见 §6.5/§9.2），列表页渲染为「{text}等{totalCount}个商品」；不返回 `items`，无需逐行调 `detail`（§9.2）。
   - **`print`**：响应 `data` 可空（需求4）。
-- **参数化动态响应（可选）**：静态 JSON 为固定样例，无法随参数变化。如需按参数返回不同数据，将 `index.html` 中 `PPApi.MOCK_BASE` 改为任意在线 mock 服务基址（如 Beeceptor / Apifox / Postman Mock Server），并保证其按 `/mnmart/printPlan/{接口}.json` 路径返回上述结构即可，前端无需其它改动。
+- **参数化动态响应（可选）**：静态 JSON 为固定样例，无法随参数变化。如需按参数返回不同数据，将 `index.html` 中 `PPApi.MOCK_BASE` 改为目标 mock 服务基址（相对路径或任意在线 mock 服务如 Beeceptor / Apifox / Postman Mock Server 均可），并保证其按 `/mnmart/printPlan/{接口}.json` 路径返回上述结构即可，前端无需其它改动。

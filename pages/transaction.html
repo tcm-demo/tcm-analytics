@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>菜猫智店 · 交易分析</title>
+  <link rel="stylesheet" href="../shared/layout.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+</head>
+<body>
+  <div class="toast" id="toast"></div>
+  <div id="sidebarRoot"></div>
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+  <div class="main">
+    <div id="headerRoot"></div>
+    <div class="content">
+    <!-- ========== PAGE: 交易分析 ========== -->
+    <div class="page" id="page-transaction">
+      <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr)">
+        <div class="kpi-card" style="--card-color:#F0F6FF">
+          <div class="kpi-label" id="tx1-lbl">本周交易额(原价)</div>
+          <div class="kpi-value" id="tx1-val"><span>¥</span>3.84<span>万</span></div>
+          <div class="kpi-change up" id="tx1-chg">▲ 10.6% 较上周同期</div>
+          <div class="kpi-icon">💳</div>
+        </div>
+        <div class="kpi-card" style="--card-color:#c8e6c9">
+          <div class="kpi-label" id="tx2-lbl">本周营业额</div>
+          <div class="kpi-value" id="tx2-val"><span>¥</span>3.42<span>万</span></div>
+          <div class="kpi-change up" id="tx2-chg">▲ 9.8% 较上周同期</div>
+          <div class="kpi-icon">💰</div>
+        </div>
+        <div class="kpi-card" style="--card-color:#a5d6a7">
+          <div class="kpi-label" id="tx3-lbl">本周营收</div>
+          <div class="kpi-value" id="tx3-val"><span>¥</span>3.31<span>万</span></div>
+          <div class="kpi-change up" id="tx3-chg">▲ 8.4% 较上周同期</div>
+          <div class="kpi-icon">💵</div>
+        </div>
+        <div class="kpi-card" style="--card-color:#fff3e0">
+          <div class="kpi-label" id="tx4-lbl">本周优惠金额</div>
+          <div class="kpi-value" id="tx4-val"><span>¥</span>3,521</div>
+          <div class="kpi-change down" id="tx4-chg">▼ 1.2% 收窄</div>
+          <div class="kpi-icon">🏷️</div>
+        </div>
+      </div>
+      <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:8px">
+        <div class="kpi-card" style="--card-color:#e3f2fd">
+          <div class="kpi-label">优惠率</div>
+          <div class="kpi-value" id="tx5-val">9.2<span>%</span></div>
+          <div class="kpi-change down" id="tx5-chg">▼ 0.3% 收窄</div>
+          <div class="kpi-icon">📊</div>
+        </div>
+        <div class="kpi-card" style="--card-color:#fce4ec">
+          <div class="kpi-label">当期退款率</div>
+          <div class="kpi-value" id="tx6-val">1.8<span>%</span></div>
+          <div class="kpi-change down" id="tx6-chg">▼ 0.2% 改善</div>
+          <div class="kpi-icon">↩️</div>
+        </div>
+        <div class="kpi-card" style="--card-color:#ffe0b2">
+          <div class="kpi-label" id="tx7-lbl">跨期退款金额</div>
+          <div class="kpi-value" id="tx7-val"><span>¥</span>1,110</div>
+          <div class="kpi-change down" id="tx7-chg">▲ 较上周+5.6%</div>
+          <div class="kpi-icon">⏪</div>
+        </div>
+        <div class="kpi-card" style="--card-color:#e0f2f1">
+          <div class="kpi-label">营收/营业额比</div>
+          <div class="kpi-value" id="tx8-val">96.8<span>%</span></div>
+          <div class="kpi-change down" id="tx8-chg">▼ 较上周−0.5%</div>
+          <div class="kpi-icon">📈</div>
+        </div>
+      </div>
+
+      <div class="chart-grid-2">
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title" id="tx-trend-title">交易额 → 营收 全链路</div>
+              <div class="chart-sub" id="tx-trend-sub">本周每日：原价交易额、营业额、营收、优惠四线对比</div>
+            </div>
+          </div>
+          <div class="chart-wrap"><canvas id="txTrendChart" height="280"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">支付方式占比</div>
+            </div>
+          </div>
+          <div class="chart-wrap"><canvas id="payMethodChart" height="280"></canvas></div>
+        </div>
+      </div>
+
+      <div class="chart-grid-2-eq">
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">交易额 → 营业额 → 营收 结构拆解</div>
+              <div class="chart-sub" id="tx-stack-sub">每日：营收 + 跨期退款 + 当期退款 + 优惠 = 交易额(原价)</div>
+            </div>
+          </div>
+          <div class="chart-wrap"><canvas id="txVsRevenueChart" height="240"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header">
+            <div class="chart-title">近期交易明细</div>
+          </div>
+          <div class="table-wrap" style="max-height:260px;overflow-y:auto">
+            <table id="txTable">
+              <thead><tr><th>时间</th><th>订单号</th><th>原价</th><th>优惠</th><th>成交价</th><th>支付方式</th><th>状态</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- 优惠分析板块 -->
+      <div class="chart-grid-2-eq" style="margin-top:8px">
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">优惠类型构成</div>
+              <div class="chart-sub">会员价差 / 优惠券 / 积分抵扣 / 价格优惠 占比</div>
+            </div>
+          </div>
+          <div class="chart-wrap"><canvas id="discountTypeChart" height="240"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">原价 → 销售价 → 成交价 价格链</div>
+              <div class="chart-sub">原价→实售价（含会员折扣等）→成交价（优惠券/积分），不同品类折扣率不同</div>
+            </div>
+          </div>
+          <div class="chart-wrap" style="max-width:520px; margin:0 auto; width:100%;"><canvas id="priceChainChart" height="240"></canvas></div>
+        </div>
+      </div>
+    </div>
+    </div>
+  </div>
+  <div id="modalRoot"></div>
+
+  <script>var CURRENT_PAGE='transaction';</script>
+  <script src="../shared/sidebar.js"></script>
+  <script src="../shared/header.js"></script>
+  <script src="../shared/modals.js"></script>
+  <script src="../shared/layout.js" data-page="transaction"></script>
+  <script>
+    initMultiPage(CURRENT_PAGE);
+    if (typeof initTicker === 'function') initTicker();
+    (function() { var el = document.getElementById('updateTime'); if (el) el.textContent = '更新 2026-07-01 23:05'; })();
+  </script>
+</body>
+</html>

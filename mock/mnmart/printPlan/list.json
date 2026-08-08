@@ -1,0 +1,109 @@
+{
+  "code": 0,
+  "message": "success",
+  "data": [
+    {
+      "id": "plan-20260720-001",
+      "name": "2026-07-20 调价打印",
+      "type": "price-change",
+      "status": "partial",
+      "store": "崧泽大道中心店",
+      "createdAt": "2026-07-20 08:30:12",
+      "createdBy": "系统自动",
+      "totalCount": 3,
+      "pendingCount": 2,
+      "printedCount": 1,
+      "items": [
+        {
+          "id": "item-001",
+          "name": "有机小白菜",
+          "barcode": "6901234567012",
+          "price": 3.99,
+          "origPrice": 5.50,
+          "memberPrice": 3.59,
+          "unit": "斤",
+          "spec": "约500g",
+          "origin": "山东寿光",
+          "produceDate": "2026-06-28",
+          "batchCount": 2,
+          "batches": [
+            { "produceDate": "2026-06-28", "qty": 12 },
+            { "produceDate": "2026-07-05", "qty": 8 }
+          ],
+          "printQty": 1,
+          "printed": true,
+          "printedAt": "2026-07-20 09:10:00"
+        },
+        {
+          "id": "item-002",
+          "name": "土鸡蛋",
+          "barcode": "6901234567043",
+          "price": 1.35,
+          "origPrice": 2.00,
+          "memberPrice": 1.20,
+          "unit": "枚",
+          "spec": "约55g/枚",
+          "origin": "安徽阜阳",
+          "produceDate": "2026-05-30",
+          "batchCount": 1,
+          "batches": [],
+          "printQty": 1,
+          "printed": false,
+          "printedAt": null
+        },
+        {
+          "id": "item-003",
+          "name": "五花肉",
+          "barcode": "6901234567050",
+          "price": 18.50,
+          "origPrice": 24.00,
+          "memberPrice": 16.00,
+          "unit": "斤",
+          "spec": "约500g",
+          "origin": "河南双汇",
+          "produceDate": "2026-06-04",
+          "batchCount": 1,
+          "batches": [],
+          "printQty": 2,
+          "printed": false,
+          "printedAt": null
+        }
+      ]
+    },
+    {
+      "id": "plan-20260720-002",
+      "name": "2026-07-20 手动计划",
+      "type": "manual",
+      "status": "pending",
+      "store": "华科东路店",
+      "createdAt": "2026-07-20 10:05:33",
+      "createdBy": "当前用户",
+      "totalCount": 1,
+      "pendingCount": 1,
+      "printedCount": 0,
+      "items": [
+        {
+          "id": "item-004",
+          "name": "鲜牛奶",
+          "barcode": "6901234567067",
+          "price": 12.90,
+          "origPrice": 16.90,
+          "memberPrice": 11.50,
+          "unit": "瓶",
+          "spec": "950ml",
+          "origin": "内蒙古伊利",
+          "produceDate": "2026-06-03",
+          "batchCount": 2,
+          "batches": [
+            { "produceDate": "2026-06-03", "qty": 30 },
+            { "produceDate": "2026-06-12", "qty": 20 }
+          ],
+          "printQty": 1,
+          "printed": false,
+          "printedAt": null
+        }
+      ]
+    }
+  ],
+  "pageInfo": { "pageNum": 1, "pageSize": 20, "total": 2, "pages": 1 }
+}

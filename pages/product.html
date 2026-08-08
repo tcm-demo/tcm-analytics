@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>菜猫智店 · 商品销售</title>
+  <link rel="stylesheet" href="../shared/layout.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+</head>
+<body>
+  <div class="toast" id="toast"></div>
+  <div id="sidebarRoot"></div>
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+  <div class="main">
+    <div id="headerRoot"></div>
+    <div class="content">
+    <!-- ========== PAGE: 商品销售 ========== -->
+    <div class="page" id="page-product">
+      <div class="kpi-grid">
+        <div class="kpi-card" id="kpiSku" style="--card-color:#F0F6FF">
+          <div class="kpi-label">在售SKU数</div>
+          <div class="kpi-value">428<span>个</span></div>
+          <div class="kpi-change up">▲ 新增 15 个</div>
+          <div class="kpi-icon">🛒</div>
+        </div>
+        <div class="kpi-card" id="kpiKind" style="--card-color:#e3f2fd">
+          <div class="kpi-label">销售商品种类</div>
+          <div class="kpi-value">203<span>种</span></div>
+          <div class="kpi-change up">▲ 今日已售</div>
+          <div class="kpi-icon">📦</div>
+        </div>
+        <div class="kpi-card" id="kpiDead" style="--card-color:#fff3e0">
+          <div class="kpi-label">滞销SKU</div>
+          <div class="kpi-value">23<span>个</span></div>
+          <div class="kpi-change down">⚠️ 需关注</div>
+          <div class="kpi-desc">近30天无销售记录的商品数</div>
+          <div class="kpi-icon">📊</div>
+        </div>
+        <div class="kpi-card" id="kpiTurn" style="--card-color:#fce4ec">
+          <div class="kpi-label">平均库存周转</div>
+          <div class="kpi-value">4.2<span>天</span></div>
+          <div class="kpi-change up">▲ 效率提升</div>
+          <div class="kpi-desc">商品从入库到售出的平均天数</div>
+          <div class="kpi-icon">🔄</div>
+        </div>
+      </div>
+
+      <div class="chart-grid-2">
+        <div class="chart-card">
+          <div class="chart-header">
+            <div class="chart-title">Top 10 热销商品</div>
+            <div class="chart-sub">按营业额排名</div>
+          </div>
+          <div class="chart-wrap"><canvas id="productTopChart" height="240"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header">
+            <div class="chart-title">商品销量 vs 利润率</div>
+            <div class="chart-sub">气泡大小 = 营业额</div>
+          </div>
+          <div class="chart-wrap"><canvas id="productBubbleChart" height="240"></canvas></div>
+        </div>
+      </div>
+
+      <div class="chart-card" style="margin-bottom:8px">
+        <div class="chart-header">
+          <div class="chart-title">商品销售明细</div>
+          <a class="chart-header-link" href="#product-detail">查看更多 &gt;</a>
+        </div>
+        <div class="table-wrap">
+          <table id="productTable">
+            <thead><tr><th>排名</th><th>商品名称</th><th>品类</th><th>原价</th><th>会员价</th><th>成交价</th><th>销量</th><th>营业额</th><th>毛利率</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    </div>
+  </div>
+  <div id="modalRoot"></div>
+
+  <script>var CURRENT_PAGE='product';</script>
+  <script src="../shared/sidebar.js"></script>
+  <script src="../shared/header.js"></script>
+  <script src="../shared/modals.js"></script>
+  <script src="../shared/layout.js" data-page="product"></script>
+  <script>
+    initMultiPage(CURRENT_PAGE);
+    if (typeof initTicker === 'function') initTicker();
+    (function() { var el = document.getElementById('updateTime'); if (el) el.textContent = '更新 2026-07-01 23:05'; })();
+  </script>
+</body>
+</html>

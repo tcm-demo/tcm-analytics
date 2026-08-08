@@ -1,0 +1,17 @@
+{
+  "code": 0,
+  "message": "success",
+  "data": {
+    "id": "plan-20260720-003",
+    "name": "2026-07-20 新建计划",
+    "type": "manual",
+    "status": "pending",
+    "store": "盈港路店",
+    "createdAt": "2026-07-20 11:00:00",
+    "createdBy": "当前用户",
+    "totalCount": 0,
+    "pendingCount": 0,
+    "printedCount": 0,
+    "items": []
+  }
+}

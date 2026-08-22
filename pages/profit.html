@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>菜猫智店 · 利润分析</title>
+  <link rel="stylesheet" href="../shared/layout.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+</head>
+<body>
+  <div class="toast" id="toast"></div>
+  <div id="sidebarRoot"></div>
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+  <div class="main">
+    <div id="headerRoot"></div>
+    <div class="content">
+    <!-- ========== PAGE: 利润分析 ========== -->
+    <div class="page" id="page-profit">
+      <div class="kpi-grid" style="grid-template-columns:repeat(5,1fr)">
+        <div class="kpi-card" style="--card-color:#F0F6FF">
+          <div class="kpi-label" id="pf1-lbl">本周交易额(原价)</div>
+          <div class="kpi-value" id="pf1-val"><span>¥</span>3.84<span>万</span></div>
+          <div class="kpi-change up" id="pf1-chg">▲ 10.6% 较上周同期</div>
+          <div class="kpi-icon">💳</div>
+        </div>
+        <div class="kpi-card" style="--card-color:#c8e6c9">
+          <div class="kpi-label" id="pf2-lbl">本周营业额</div>
+          <div class="kpi-value" id="pf2-val"><span>¥</span>3.42<span>万</span></div>
+          <div class="kpi-change up" id="pf2-chg">▲ 9.8% 较上周同期</div>
+          <div class="kpi-icon">💰</div>
+        </div>
+        <div class="kpi-card" style="--card-color:#a5d6a7">
+          <div class="kpi-label" id="pf3-lbl">本周营收</div>
+          <div class="kpi-value" id="pf3-val"><span>¥</span>3.31<span>万</span></div>
+          <div class="kpi-change up" id="pf3-chg">▲ 8.4% 较上周同期</div>
+          <div class="kpi-icon">💵</div>
+        </div>
+        <div class="kpi-card" style="--card-color:#fff3e0">
+          <div class="kpi-label" id="pf4-lbl">本周毛利润</div>
+          <div class="kpi-value" id="pf4-val"><span>¥</span>1.01<span>万</span></div>
+          <div class="kpi-change up" id="pf4-chg">▲ 9.5% 较上周同期</div>
+          <div class="kpi-icon">💵</div>
+        </div>
+        <div class="kpi-card" style="--card-color:#e0f2f1">
+          <div class="kpi-label">综合毛利率</div>
+          <div class="kpi-value" id="pf5-val">30.5<span>%</span></div>
+          <div class="kpi-change up" id="pf5-chg">▲ 0.8% 提升</div>
+          <div class="kpi-icon">📊</div>
+        </div>
+      </div>
+
+      <div class="chart-grid-2">
+        <div class="chart-card">
+          <div class="chart-header">
+            <div class="chart-title">月度利润走势</div>
+            <div class="chart-sub">毛利润 vs 净利润</div>
+          </div>
+          <div class="chart-wrap"><canvas id="profitTrendChart" height="220"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header">
+            <div class="chart-title">品类毛利率对比</div>
+          </div>
+          <div class="chart-wrap"><canvas id="profitCatChart" height="220"></canvas></div>
+        </div>
+      </div>
+
+      <div class="chart-grid-2-eq">
+        <div class="chart-card">
+          <div class="chart-header">
+            <div class="chart-title">利润结构瀑布图</div>
+            <div class="chart-sub">交易额 → −当期退款 → −优惠 → =营业额 → −跨期退款 → =营收 → −成本 → =毛利 → −费用 → =净利润</div>
+          </div>
+          <div class="chart-wrap"><canvas id="profitWaterfallChart" height="180"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header">
+            <div class="chart-title">各品类利润贡献</div>
+            <div class="chart-sub">按毛利额排序</div>
+          </div>
+          <ul class="rank-list" id="profitRankList"></ul>
+        </div>
+      </div>
+    </div>
+    </div>
+  </div>
+  <div id="modalRoot"></div>
+
+  <script>var CURRENT_PAGE='profit';</script>
+  <script src="../shared/sidebar.js"></script>
+  <script src="../shared/header.js"></script>
+  <script src="../shared/modals.js"></script>
+  <script src="../shared/layout.js" data-page="profit"></script>
+  <script>
+    initMultiPage(CURRENT_PAGE);
+    if (typeof initTicker === 'function') initTicker();
+    (function() { var el = document.getElementById('updateTime'); if (el) el.textContent = '更新 2026-07-01 23:05'; })();
+  </script>
+</body>
+</html>

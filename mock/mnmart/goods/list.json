@@ -1,0 +1,17 @@
+{
+  "code": 0,
+  "message": "success",
+  "data": {
+    "list": [
+      { "id": "p01", "name": "大白菜", "barcode": "6901234567012", "price": 3.50, "origPrice": 5.00, "memberPrice": 3.00, "unit": "斤", "spec": "约500g", "origin": "山东寿光", "cat": "蔬菜" },
+      { "id": "p02", "name": "黄瓜", "barcode": "6901234567029", "price": 4.20, "origPrice": 6.50, "memberPrice": 3.60, "unit": "斤", "spec": "约400g", "origin": "山东兰陵", "cat": "蔬菜" },
+      { "id": "p03", "name": "番茄", "barcode": "6901234567036", "price": 5.80, "origPrice": 8.00, "memberPrice": 4.80, "unit": "斤", "spec": "约500g", "origin": "云南昆明", "cat": "蔬菜" },
+      { "id": "p04", "name": "土鸡蛋", "barcode": "6901234567043", "price": 1.50, "origPrice": 2.00, "memberPrice": 1.20, "unit": "枚", "spec": "约55g/枚", "origin": "安徽阜阳", "cat": "禽蛋" },
+      { "id": "p05", "name": "五花肉", "barcode": "6901234567050", "price": 18.50, "origPrice": 24.00, "memberPrice": 16.00, "unit": "斤", "spec": "约500g", "origin": "河南双汇", "cat": "猪肉" },
+      { "id": "p06", "name": "鲜牛奶", "barcode": "6901234567067", "price": 12.90, "origPrice": 16.90, "memberPrice": 11.50, "unit": "瓶", "spec": "950ml", "origin": "内蒙古伊利", "cat": "乳品" },
+      { "id": "p09", "name": "红富士苹果", "barcode": "6901234567098", "price": 8.80, "origPrice": 12.00, "memberPrice": 7.50, "unit": "斤", "spec": "约200g/个", "origin": "陕西洛川", "cat": "水果" },
+      { "id": "p10", "name": "进口车厘子", "barcode": "6901234567104", "price": 58.00, "origPrice": 78.00, "memberPrice": 49.00, "unit": "盒", "spec": "约500g", "origin": "智利进口", "cat": "水果" }
+    ]
+  },
+  "pageInfo": { "pageNum": 1, "pageSize": 20, "total": 8, "pages": 1 }
+}

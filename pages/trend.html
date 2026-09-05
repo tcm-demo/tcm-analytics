@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>菜猫智店 · 销售趋势</title>
+  <link rel="stylesheet" href="../shared/layout.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+  <style>
+    .trend-view-panel { display:none; }
+    .trend-view-panel.active { display:block; }
+  </style>
+</head>
+<body>
+<div id="sidebarRoot"></div>
+<div class="main">
+  <div id="headerRoot"></div>
+  <div class="content">
+    <div class="page page-fill active" id="page-trend">
+
+    <!-- KPI -->
+    <div class="kpi-grid" id="trendKPI" style="grid-template-columns:repeat(5,1fr);">
+      <div class="kpi-card"><div class="kpi-label" id="kpi0Label">本月交易额（原价）</div><div class="kpi-val" id="kpi0Val"><span>¥</span>15.82<span>万</span></div><div class="kpi-change" id="kpi0Chg">▲ 10.6% 较上月</div></div>
+      <div class="kpi-card"><div class="kpi-label" id="kpi1Label">本月营业额</div><div class="kpi-val" id="kpi1Val"><span>¥</span>14.21<span>万</span></div><div class="kpi-change" id="kpi1Chg">▲ 9.8% 较上月</div></div>
+      <div class="kpi-card"><div class="kpi-label" id="kpi2Label">客单价</div><div class="kpi-val" id="kpi2Val"><span>¥</span>18.65</div><div class="kpi-change" id="kpi2Chg">▲ 3.2% 较上月</div></div>
+      <div class="kpi-card"><div class="kpi-label" id="kpi3Label">本月订单量</div><div class="kpi-val" id="kpi3Val">7,623<span> 单</span></div><div class="kpi-change" id="kpi3Chg">▲ 7.5% 较上月</div></div>
+      <div class="kpi-card"><div class="kpi-label" id="kpi4Label">日均营业额</div><div class="kpi-val" id="kpi4Val"><span>¥</span>4,587</div><div class="kpi-change" id="kpi4Chg">▲ 5.8% 较上月</div></div>
+    </div>
+
+    <!-- ===== 本月（默认）===== -->
+    <div class="trend-view-panel active" id="trend-month">
+      <div class="chart-card" style="margin-bottom:8px">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">本月每日营业额趋势（vs 上月）</div>
+            <div class="chart-sub">2026年5月每日营业额，虚线为上月均值</div>
+          </div>
+        </div>
+        <div class="chart-wrap chart-wrap-lg"><canvas id="trendMonthMain" height="280"></canvas></div>
+      </div>
+      <div class="chart-grid-2-eq">
+        <div class="chart-card">
+          <div class="chart-header"><div class="chart-title">近6月趋势</div><div class="chart-sub">月营业额 + 订单量双轴</div></div>
+          <div class="chart-wrap"><canvas id="trendMonth6M" height="240"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header"><div class="chart-title">月度同比变化</div><div class="chart-sub">2026各月 vs 2025同期</div></div>
+          <div class="chart-wrap"><canvas id="trendMonthYoY" height="240"></canvas></div>
+        </div>
+      </div>
+      <div class="chart-card" style="margin-bottom:8px">
+        <div class="chart-header"><div class="chart-title">月度经营数据明细</div><div class="chart-sub">2026年各月 vs 2025年同期</div></div>
+        <div style="overflow-x:auto">
+          <table class="ps-table">
+            <thead><tr><th>月份</th><th style="text-align:right">2026营业额</th><th style="text-align:right">2025营业额</th><th style="text-align:right">同比</th><th style="text-align:right">2026订单</th><th style="text-align:right">2025订单</th><th style="text-align:right">订单同比</th><th style="width:100px">状态</th></tr></thead>
+            <tbody>
+              <tr><td>1月</td><td style="text-align:right">¥20.12万</td><td style="text-align:right">¥17.52万</td><td style="text-align:right;color:#fc4b52">▲ 14.8%</td><td style="text-align:right">8,520</td><td style="text-align:right">7,430</td><td style="text-align:right;color:#fc4b52">▲ 14.7%</td><td><span style="display:inline-block;padding:2px 10px;border-radius:10px;font-size:11px;background:#e8f5e9;color:#2e7d32">双增</span></td></tr>
+              <tr><td>2月</td><td style="text-align:right">¥18.45万</td><td style="text-align:right">¥17.06万</td><td style="text-align:right;color:#fc4b52">▲ 8.1%</td><td style="text-align:right">7,980</td><td style="text-align:right">7,210</td><td style="text-align:right;color:#fc4b52">▲ 10.7%</td><td><span style="display:inline-block;padding:2px 10px;border-radius:10px;font-size:11px;background:#e8f5e9;color:#2e7d32">双增</span></td></tr>
+              <tr><td>3月</td><td style="text-align:right">¥22.38万</td><td style="text-align:right">¥20.12万</td><td style="text-align:right;color:#fc4b52">▲ 11.2%</td><td style="text-align:right">10,120</td><td style="text-align:right">8,950</td><td style="text-align:right;color:#fc4b52">▲ 13.1%</td><td><span style="display:inline-block;padding:2px 10px;border-radius:10px;font-size:11px;background:#e8f5e9;color:#2e7d32">双增</span></td></tr>
+              <tr><td>4月</td><td style="text-align:right">¥24.15万</td><td style="text-align:right">¥22.68万</td><td style="text-align:right;color:#fc4b52">▲ 6.5%</td><td style="text-align:right">11,050</td><td style="text-align:right">10,120</td><td style="text-align:right;color:#fc4b52">▲ 9.2%</td><td><span style="display:inline-block;padding:2px 10px;border-radius:10px;font-size:11px;background:#e8f5e9;color:#2e7d32">双增</span></td></tr>
+              <tr><td>5月</td><td style="text-align:right;font-weight:500">¥14.21万</td><td style="text-align:right">¥13.10万</td><td style="text-align:right;color:#fc4b52">▲ 8.5%</td><td style="text-align:right">7,623</td><td style="text-align:right">7,085</td><td style="text-align:right;color:#fc4b52">▲ 7.6%</td><td><span style="display:inline-block;padding:2px 10px;border-radius:10px;font-size:11px;background:#e8f5e9;color:#2e7d32">双增</span></td></tr>
+              <tr><td>6月</td><td style="text-align:right">—</td><td style="text-align:right">¥12.85万</td><td style="text-align:right">—</td><td style="text-align:right">—</td><td style="text-align:right">6,890</td><td style="text-align:right">—</td><td><span style="display:inline-block;padding:2px 10px;border-radius:10px;font-size:11px;background:#f3f4f7;color:#909399">待更新</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 今日 ===== -->
+    <div class="trend-view-panel" id="trend-day">
+      <div class="chart-card" style="margin-bottom:8px">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">今日交易时段分布</div>
+            <div class="chart-sub">各时段营业额 + 订单量（截至 18:00）</div>
+          </div>
+        </div>
+        <div class="chart-wrap chart-wrap-lg"><canvas id="trendDayMain" height="280"></canvas></div>
+      </div>
+      <div class="chart-grid-2-eq">
+        <div class="chart-card">
+          <div class="chart-header"><div class="chart-title">昨日同期对比</div><div class="chart-sub">今日 vs 昨日各时段营业额</div></div>
+          <div class="chart-wrap"><canvas id="trendDayYesterday" height="240"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header"><div class="chart-title">近7日趋势</div><div class="chart-sub">每日营业额 + 订单量</div></div>
+          <div class="chart-wrap"><canvas id="trendDay7D" height="240"></canvas></div>
+        </div>
+      </div>
+      <div class="chart-card" style="margin-bottom:8px">
+        <div class="chart-header"><div class="chart-title">今日各时段销售明细</div><div class="chart-sub">截至18:00实时数据</div></div>
+        <div style="overflow-x:auto">
+          <table class="ps-table">
+            <thead><tr><th>时段</th><th style="text-align:right">营业额</th><th style="text-align:right">订单量</th><th style="text-align:right">客单价</th><th style="text-align:right">占比</th><th style="text-align:right">昨日同期</th><th style="text-align:right">时段环比</th></tr></thead>
+            <tbody>
+              <tr><td>06-08</td><td style="text-align:right">¥886</td><td style="text-align:right">52</td><td style="text-align:right">¥17.04</td><td style="text-align:right">8.2%</td><td style="text-align:right">¥812</td><td style="text-align:right;color:#fc4b52">▲ 9.1%</td></tr>
+              <tr><td>08-10</td><td style="text-align:right;font-weight:500">¥2,316</td><td style="text-align:right">142</td><td style="text-align:right">¥16.31</td><td style="text-align:right">21.4%</td><td style="text-align:right">¥2,105</td><td style="text-align:right;color:#fc4b52">▲ 10.0%</td></tr>
+              <tr><td>10-12</td><td style="text-align:right;font-weight:500">¥2,854</td><td style="text-align:right">168</td><td style="text-align:right">¥16.99</td><td style="text-align:right">26.4%</td><td style="text-align:right">¥2,620</td><td style="text-align:right;color:#fc4b52">▲ 8.9%</td></tr>
+              <tr><td>12-14</td><td style="text-align:right">¥1,523</td><td style="text-align:right">98</td><td style="text-align:right">¥15.54</td><td style="text-align:right">14.1%</td><td style="text-align:right">¥1,430</td><td style="text-align:right;color:#fc4b52">▲ 6.5%</td></tr>
+              <tr><td>14-16</td><td style="text-align:right">¥1,287</td><td style="text-align:right">74</td><td style="text-align:right">¥17.39</td><td style="text-align:right">11.9%</td><td style="text-align:right">¥1,180</td><td style="text-align:right;color:#fc4b52">▲ 9.1%</td></tr>
+              <tr><td>16-18</td><td style="text-align:right">¥1,952</td><td style="text-align:right">118</td><td style="text-align:right">¥16.54</td><td style="text-align:right">18.1%</td><td style="text-align:right">¥1,845</td><td style="text-align:right;color:#fc4b52">▲ 5.8%</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 本周 ===== -->
+    <div class="trend-view-panel" id="trend-week">
+      <div class="chart-card" style="margin-bottom:8px">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">本周每日营业额（vs 上周）</div>
+            <div class="chart-sub">2026年第22周（5.25-5.31），虚线为上周均值</div>
+          </div>
+        </div>
+        <div class="chart-wrap chart-wrap-lg"><canvas id="trendWeekMain" height="280"></canvas></div>
+      </div>
+      <div class="chart-grid-2-eq">
+        <div class="chart-card">
+          <div class="chart-header"><div class="chart-title">周环比趋势</div><div class="chart-sub">最近13周营业额变化</div></div>
+          <div class="chart-wrap"><canvas id="trendWeekRing" height="240"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header"><div class="chart-title">月度同比变化</div><div class="chart-sub">2026各月 vs 2025同期</div></div>
+          <div class="chart-wrap"><canvas id="trendWeekYoY" height="240"></canvas></div>
+        </div>
+      </div>
+      <div class="chart-card" style="margin-bottom:8px">
+        <div class="chart-header"><div class="chart-title">本周每日销售明细</div><div class="chart-sub">第22周各日经营数据</div></div>
+        <div style="overflow-x:auto">
+          <table class="ps-table">
+            <thead><tr><th>日期</th><th>星期</th><th style="text-align:right">营业额</th><th style="text-align:right">订单量</th><th style="text-align:right">客单价</th><th style="text-align:right">上周同天</th><th style="text-align:right">周环比</th></tr></thead>
+            <tbody>
+              <tr><td>5.25</td><td>周一</td><td style="text-align:right">¥4,328</td><td style="text-align:right">238</td><td style="text-align:right">¥18.18</td><td style="text-align:right">¥3,920</td><td style="text-align:right;color:#fc4b52">▲ 10.4%</td></tr>
+              <tr><td>5.26</td><td>周二</td><td style="text-align:right">¥4,156</td><td style="text-align:right">225</td><td style="text-align:right">¥18.47</td><td style="text-align:right">¥3,850</td><td style="text-align:right;color:#fc4b52">▲ 7.9%</td></tr>
+              <tr><td>5.27</td><td>周三</td><td style="text-align:right;font-weight:500">¥5,210</td><td style="text-align:right">287</td><td style="text-align:right">¥18.15</td><td style="text-align:right">¥4,730</td><td style="text-align:right;color:#fc4b52">▲ 10.1%</td></tr>
+              <tr><td>5.28</td><td>周四</td><td style="text-align:right">¥4,892</td><td style="text-align:right">265</td><td style="text-align:right">¥18.46</td><td style="text-align:right">¥4,520</td><td style="text-align:right;color:#fc4b52">▲ 8.2%</td></tr>
+              <tr><td>5.29</td><td>周五</td><td style="text-align:right;font-weight:500">¥5,645</td><td style="text-align:right">312</td><td style="text-align:right">¥18.09</td><td style="text-align:right">¥5,120</td><td style="text-align:right;color:#fc4b52">▲ 10.3%</td></tr>
+              <tr><td>5.30</td><td>周六</td><td style="text-align:right;font-weight:500">¥6,320</td><td style="text-align:right">348</td><td style="text-align:right">¥18.16</td><td style="text-align:right">¥5,860</td><td style="text-align:right;color:#fc4b52">▲ 7.8%</td></tr>
+              <tr><td>5.31</td><td>周日</td><td style="text-align:right">¥3,845</td><td style="text-align:right">206</td><td style="text-align:right">¥18.67</td><td style="text-align:right">¥3,610</td><td style="text-align:right;color:#fc4b52">▲ 6.5%</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 本年 ===== -->
+    <div class="trend-view-panel" id="trend-year">
+      <div class="chart-card" style="margin-bottom:8px">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">全年月度营业额趋势（2025 vs 2026）</div>
+            <div class="chart-sub">1-5月实际 + 6-12月预测</div>
+          </div>
+        </div>
+        <div class="chart-wrap chart-wrap-lg"><canvas id="trendYearChart" height="280"></canvas></div>
+      </div>
+      <div class="chart-grid-2-eq">
+        <div class="chart-card">
+          <div class="chart-header"><div class="chart-title">节假日效应分析</div><div class="chart-sub">特殊时段销售倍数</div></div>
+          <div class="chart-wrap"><canvas id="trendHolidayChart" height="240"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header"><div class="chart-title">月度同比变化</div><div class="chart-sub">2026各月 vs 2025同期增幅</div></div>
+          <div class="chart-wrap"><canvas id="trendYearYoY" height="240"></canvas></div>
+        </div>
+      </div>
+      <div class="chart-card" style="margin-bottom:8px">
+        <div class="chart-header"><div class="chart-title">月度经营数据明细</div><div class="chart-sub">2026年各月 vs 2025年同期</div></div>
+        <div style="overflow-x:auto">
+          <table class="ps-table">
+            <thead><tr><th>月份</th><th style="text-align:right">2026营业额</th><th style="text-align:right">2025营业额</th><th style="text-align:right">同比</th><th style="text-align:right">2026订单</th><th style="text-align:right">2025订单</th><th style="text-align:right">订单同比</th><th style="width:100px">状态</th></tr></thead>
+            <tbody>
+              <tr><td>1月</td><td style="text-align:right">¥20.12万</td><td style="text-align:right">¥17.52万</td><td style="text-align:right;color:#fc4b52">▲ 14.8%</td><td style="text-align:right">8,520</td><td style="text-align:right">7,430</td><td style="text-align:right;color:#fc4b52">▲ 14.7%</td><td><span style="display:inline-block;padding:2px 10px;border-radius:10px;font-size:11px;background:#e8f5e9;color:#2e7d32">双增</span></td></tr>
+              <tr><td>2月</td><td style="text-align:right">¥18.45万</td><td style="text-align:right">¥17.06万</td><td style="text-align:right;color:#fc4b52">▲ 8.1%</td><td style="text-align:right">7,980</td><td style="text-align:right">7,210</td><td style="text-align:right;color:#fc4b52">▲ 10.7%</td><td><span style="display:inline-block;padding:2px 10px;border-radius:10px;font-size:11px;background:#e8f5e9;color:#2e7d32">双增</span></td></tr>
+              <tr><td>3月</td><td style="text-align:right">¥22.38万</td><td style="text-align:right">¥20.12万</td><td style="text-align:right;color:#fc4b52">▲ 11.2%</td><td style="text-align:right">10,120</td><td style="text-align:right">8,950</td><td style="text-align:right;color:#fc4b52">▲ 13.1%</td><td><span style="display:inline-block;padding:2px 10px;border-radius:10px;font-size:11px;background:#e8f5e9;color:#2e7d32">双增</span></td></tr>
+              <tr><td>4月</td><td style="text-align:right">¥24.15万</td><td style="text-align:right">¥22.68万</td><td style="text-align:right;color:#fc4b52">▲ 6.5%</td><td style="text-align:right">11,050</td><td style="text-align:right">10,120</td><td style="text-align:right;color:#fc4b52">▲ 9.2%</td><td><span style="display:inline-block;padding:2px 10px;border-radius:10px;font-size:11px;background:#e8f5e9;color:#2e7d32">双增</span></td></tr>
+              <tr><td>5月</td><td style="text-align:right;font-weight:500">¥14.21万</td><td style="text-align:right">¥13.10万</td><td style="text-align:right;color:#fc4b52">▲ 8.5%</td><td style="text-align:right">7,623</td><td style="text-align:right">7,085</td><td style="text-align:right;color:#fc4b52">▲ 7.6%</td><td><span style="display:inline-block;padding:2px 10px;border-radius:10px;font-size:11px;background:#e8f5e9;color:#2e7d32">双增</span></td></tr>
+              <tr><td>6月</td><td style="text-align:right">—</td><td style="text-align:right">¥12.85万</td><td style="text-align:right">—</td><td style="text-align:right">—</td><td style="text-align:right">6,890</td><td style="text-align:right">—</td><td><span style="display:inline-block;padding:2px 10px;border-radius:10px;font-size:11px;background:#f3f4f7;color:#909399">待更新</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    </div><!-- /page -->
+  </div>
+</div>
+<div id="modalRoot"></div>
+
+<script src="../shared/sidebar.js"></script>
+<script src="../shared/header.js"></script>
+<script src="../shared/modals.js"></script>
+<script src="../shared/layout.js" data-page="trend"></script>
+
+<script>
+function switchTrendView(view) {
+  var scopeMap = { today: 'day', week: 'week', month: 'month', year: 'year', day: 'day' };
+  view = scopeMap[view] || view;
+
+  // Hide all panels, show target
+  document.querySelectorAll('.trend-view-panel').forEach(function(p) { p.classList.remove('active'); });
+  var panel = document.getElementById('trend-' + view);
+  if (panel) panel.classList.add('active');
+
+  // Update KPI labels
+  var kpiMaps = {
+    day:   ['今日交易额(原价)','今日营业额','客单价','今日订单量','今日客流量'],
+    week:  ['本周交易额(原价)','本周营业额','客单价','本周订单量','日均营业额'],
+    month: ['本月交易额(原价)','本月营业额','客单价','本月订单量','日均营业额'],
+    year:  ['本年交易额(原价)','本年营业额','客单价','本年订单量','月均营业额']
+  };
+  var kpiVals = {
+    day:   ['¥1,245','¥1,108','¥16.32','321','298'],
+    week:  ['¥3.84万','¥3.42万','¥18.05','1,803','¥4,886'],
+    month: ['¥15.82万','¥14.21万','¥18.65','7,623','¥4,587'],
+    year:  ['¥142.5万','¥127.8万','¥20.15','68,500','¥10.65万']
+  };
+  var kpiChgs = {
+    day:   ['▲ 12.3% 较昨日','▲ 10.2% 较昨日','▲ 5.1% 较昨日','▲ 8.6% 较昨日','▲ 3.4% 较昨日'],
+    week:  ['▲ 10.6% 较上周','▲ 9.8% 较上周','▲ 2.8% 较上周','▲ 7.5% 较上周','▲ 5.4% 较上周'],
+    month: ['▲ 10.6% 较上月','▲ 9.8% 较上月','▲ 3.2% 较上月','▲ 7.5% 较上月','▲ 5.8% 较上月'],
+    year:  ['▲ 14.2% 较去年','▲ 12.8% 较去年','▲ 4.5% 较去年','▲ 9.3% 较去年','▲ 8.9% 较去年']
+  };
+
+  var v = kpiMaps[view], vv = kpiVals[view], vc = kpiChgs[view];
+  for (var i = 0; i < 5; i++) {
+    var lbl = document.getElementById('kpi'+i+'Label');
+    var val = document.getElementById('kpi'+i+'Val');
+    var chg = document.getElementById('kpi'+i+'Chg');
+    if (lbl) lbl.textContent = v[i];
+    if (val) {
+      var h = vv[i];
+      if (h.indexOf('¥') !== -1) {
+        var parts = h.split(/([0-9.,]+)([万亿]*)/);
+        h = '<span>¥</span>' + parts[1] + (parts[2] ? '<span>' + parts[2] + '</span>' : '');
+      }
+      val.innerHTML = h;
+    }
+    if (chg) chg.textContent = vc[i];
+  }
+
+  // Resize visible charts
+  setTimeout(function() {
+    if (typeof chartMap !== 'undefined') {
+      Object.keys(chartMap).forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el && el.offsetParent !== null) {
+          try { chartMap[id].resize(); } catch(e) {}
+        }
+      });
+    }
+  }, 100);
+}
+
+// Init using global currentRange
+initMultiPage(CURRENT_PAGE);
+if (typeof initTicker === 'function') initTicker();
+(function() { var el = document.getElementById('updateTime'); if (el) el.textContent = '更新 2026-07-01 23:05'; })();
+
+window.initTrend = function() {
+  switchTrendView(currentRange);
+};
+
+setTimeout(function() {
+  // 本月主图
+  makeChart('trendMonthMain', {
+    type:'line',
+    data:{
+      labels:['1日','2日','3日','4日','5日','6日','7日','8日','9日','10日','11日','12日','13日','14日','15日','16日','17日','18日','19日','20日','21日','22日','23日','24日','25日','26日','27日','28日','29日','30日','31日'],
+      datasets:[
+        {label:'本月营业额',data:[4280,4156,5210,4892,5645,6320,3845,4523,4180,5287,4753,5430,6215,3952,4678,4215,5390,4856,5567,6320,4153,4780,4226,5492,4918,5635,5120,4623,3915,4512,4010],borderColor:'#005CF5',tension:0.3,fill:false,pointRadius:3},
+        {label:'上月均值',data:Array(31).fill(4587),borderColor:'#d9dbde',borderDash:[6,3],fill:false,pointRadius:0}
+      ]
+    },
+    options:{responsive:true,plugins:{legend:{position:'top'}},scales:{y:{ticks:{callback:function(v){return v/1000+'k'}},grid:{color:'#f5f5f5'}}}}
+  });
+
+  // 近6月趋势
+  makeChart('trendMonth6M', {
+    type:'bar',
+    data:{
+      labels:['12月','1月','2月','3月','4月','5月'],
+      datasets:[
+        {label:'营业额',data:[16.85,20.12,18.45,22.38,24.15,14.21],backgroundColor:'#005CF5',borderRadius:6,yAxisID:'y'},
+        {label:'订单量',data:[8230,8520,7980,10120,11050,7623],type:'line',borderColor:'#fc4b52',yAxisID:'y1',tension:0.3,fill:false}
+      ]
+    },
+    options:{responsive:true,plugins:{legend:{position:'top'}},scales:{y:{type:'linear',position:'left',ticks:{callback:function(v){return v+'万'}},grid:{color:'#f5f5f5'}},y1:{type:'linear',position:'right',grid:{drawOnChartArea:false},ticks:{callback:function(v){return v/1000+'k'}}}}}
+  });
+
+  // 月度同比
+  makeChart('trendMonthYoY', {
+    type:'bar',
+    data:{
+      labels:['1月','2月','3月','4月','5月','6月','7月'],
+      datasets:[
+        {label:'2026年',data:[20.12,18.45,22.38,24.15,14.21,null,null],backgroundColor:'#005CF5',borderRadius:6},
+        {label:'2025年',data:[17.52,17.06,20.12,22.68,13.10,null,null],backgroundColor:'#d9dbde',borderRadius:6}
+      ]
+    },
+    options:{responsive:true,plugins:{legend:{position:'top'}},scales:{y:{ticks:{callback:function(v){return v+'万'}},grid:{color:'#f5f5f5'}}}}
+  });
+
+  // 今日时段
+  makeChart('trendDayMain', {
+    type:'bar',
+    data:{
+      labels:['06-08','08-10','10-12','12-14','14-16','16-18'],
+      datasets:[
+        {label:'营业额',data:[886,2316,2854,1523,1287,1952],backgroundColor:'#005CF5',borderRadius:6,yAxisID:'y'},
+        {label:'订单量',data:[52,142,168,98,74,118],type:'line',borderColor:'#fc4b52',yAxisID:'y1',tension:0.3,fill:false}
+      ]
+    },
+    options:{responsive:true,plugins:{legend:{position:'top'}},scales:{y:{type:'linear',position:'left',ticks:{callback:function(v){return '¥'+v}},grid:{color:'#f5f5f5'}},y1:{type:'linear',position:'right',grid:{drawOnChartArea:false}}}}
+  });
+
+  // 昨日对比
+  makeChart('trendDayYesterday', {
+    type:'bar',
+    data:{
+      labels:['06-08','08-10','10-12','12-14','14-16','16-18'],
+      datasets:[
+        {label:'今日',data:[886,2316,2854,1523,1287,1952],backgroundColor:'#005CF5',borderRadius:6},
+        {label:'昨日',data:[812,2105,2620,1430,1180,1845],backgroundColor:'#d9dbde',borderRadius:6}
+      ]
+    },
+    options:{responsive:true,plugins:{legend:{position:'top'}},scales:{y:{ticks:{callback:function(v){return '¥'+v}},grid:{color:'#f5f5f5'}}}}
+  });
+
+  // 近7日
+  makeChart('trendDay7D', {
+    type:'bar',
+    data:{
+      labels:['5.21','5.22','5.23','5.24','5.25','5.26','5.27'],
+      datasets:[
+        {label:'营业额',data:[4120,3890,5210,4832,4328,4156,5210],backgroundColor:'#005CF5',borderRadius:6,yAxisID:'y'},
+        {label:'订单量',data:[218,205,287,265,238,225,287],type:'line',borderColor:'#fc4b52',yAxisID:'y1',tension:0.3,fill:false}
+      ]
+    },
+    options:{responsive:true,plugins:{legend:{position:'top'}},scales:{y:{type:'linear',position:'left',ticks:{callback:function(v){return '¥'+v}},grid:{color:'#f5f5f5'}},y1:{type:'linear',position:'right',grid:{drawOnChartArea:false}}}}
+  });
+
+  // 本周主图
+  makeChart('trendWeekMain', {
+    type:'line',
+    data:{
+      labels:['周一\n5.25','周二\n5.26','周三\n5.27','周四\n5.28','周五\n5.29','周六\n5.30','周日\n5.31'],
+      datasets:[
+        {label:'本周',data:[4328,4156,5210,4892,5645,6320,3845],borderColor:'#005CF5',tension:0.3,fill:false,pointRadius:4},
+        {label:'上周均值',data:Array(7).fill(4658),borderColor:'#d9dbde',borderDash:[6,3],fill:false,pointRadius:0}
+      ]
+    },
+    options:{responsive:true,plugins:{legend:{position:'top'}},scales:{y:{ticks:{callback:function(v){return v/1000+'k'}},grid:{color:'#f5f5f5'}}}}
+  });
+
+  // 周环比
+  makeChart('trendWeekRing', {
+    type:'line',
+    data:{
+      labels:['W10','W11','W12','W13','W14','W15','W16','W17','W18','W19','W20','W21','W22'],
+      datasets:[
+        {label:'营业额',data:[31200,29800,33500,34200,31800,35600,37200,34500,33800,36100,35800,34200,34396],borderColor:'#005CF5',tension:0.3,fill:true,backgroundColor:'rgba(0,92,245,0.05)',pointRadius:3}
+      ]
+    },
+    options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:function(v){return (v/10000).toFixed(1)+'万'}},grid:{color:'#f5f5f5'}}}}
+  });
+
+  // 本周月度同比
+  makeChart('trendWeekYoY', {
+    type:'bar',
+    data:{
+      labels:['1月','2月','3月','4月','5月','6月','7月'],
+      datasets:[
+        {label:'2026年',data:[20.12,18.45,22.38,24.15,14.21,null,null],backgroundColor:'#005CF5',borderRadius:6},
+        {label:'2025年',data:[17.52,17.06,20.12,22.68,13.10,null,null],backgroundColor:'#d9dbde',borderRadius:6}
+      ]
+    },
+    options:{responsive:true,plugins:{legend:{position:'top'}},scales:{y:{ticks:{callback:function(v){return v+'万'}},grid:{color:'#f5f5f5'}}}}
+  });
+
+  // 本年年度同比
+  makeChart('trendYearYoY', {
+    type:'bar',
+    data:{
+      labels:['1月','2月','3月','4月','5月','6月','7月'],
+      datasets:[
+        {label:'2026年',data:[20.12,18.45,22.38,24.15,14.21,null,null],backgroundColor:'#005CF5',borderRadius:6},
+        {label:'2025年',data:[17.52,17.06,20.12,22.68,13.10,null,null],backgroundColor:'#d9dbde',borderRadius:6}
+      ]
+    },
+    options:{responsive:true,plugins:{legend:{position:'top'}},scales:{y:{ticks:{callback:function(v){return v+'万'}},grid:{color:'#f5f5f5'}}}}
+  });
+
+  // Show panel for current global range
+  switchTrendView(currentRange);
+}, 250);
+</script>
+</body>
+</html>

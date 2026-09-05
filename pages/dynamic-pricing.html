@@ -1,0 +1,2834 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>菜猫智店 · 动态调价</title>
+  <link rel="stylesheet" href="../shared/layout.css?v=2">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/zh.js"></script>
+  <style>
+    /* ===== 动态调价页（规划）专属样式 ===== */
+    .pr-chip { display:inline-flex; align-items:center; justify-content:center; min-width:26px; height:26px; padding:0 6px; margin:3px; border:1px solid #d9dbde; border-radius:4px; background:#fff; font-size:12px; color:#0b1019; cursor:pointer; user-select:none; transition:all .15s; }
+    .pr-chip:hover { border-color:#005cf5; color:#005cf5; }
+    .pr-goods-row { display:flex; align-items:center; gap:8px; padding:7px 12px; font-size:12px; color:#0b1019; cursor:pointer; border-radius:3px; }
+    .pr-goods-row:hover { background:#f5f7fa; }
+    .pr-goods-row input[type=checkbox] { accent-color:#005cf5; cursor:pointer; }
+    .pr-goods-row .name { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#0b1019; }
+    .pr-goods-row .code { color:#c0c4cc; font-size:12px; min-width:72px; text-align:right; }
+    .pr-goods-row .price { color:#005CF5; font-size:12px; font-weight:500; min-width:52px; text-align:right; }
+    .pr-goods-row .cat { background:#e6f0ff; color:#005cf5; font-size:11px; padding:2px 6px; border-radius:3px; min-width:48px; text-align:center; }
+    #prGoodsList { max-height:150px; overflow-y:auto; padding:4px 6px; }
+    #prCategoryList { max-height:150px; overflow-y:auto; padding:4px 6px; }
+    .pr-scope-empty { padding:24px; text-align:center; color:#c0c4cc; font-size:12px; }
+    .pr-chip.active { background:#005cf5; border-color:#005cf5; color:#fff; }
+    .pr-date-row { display:flex; align-items:center; gap:8px; background:#f7f9fc; border:1px solid #e9eef7; border-radius:4px; padding:8px 10px; margin-bottom:8px; flex-wrap:wrap; }
+    .pr-date-row .pr-mode { width:110px; height:32px; padding:0 8px; border:1px solid #d9dbde; border-radius:4px; font-size:12px; background:#fff; outline:none; color:#0b1019; }
+    .pr-date-row .pr-val { display:flex; align-items:center; gap:4px; flex-wrap:wrap; flex:1; min-width:200px; }
+    .pr-date-row select, .pr-date-row input[type=date] { height:32px; border:1px solid #d9dbde; border-radius:4px; font-size:12px; background:#fff; outline:none; color:#0b1019; padding:0 8px; }
+    .pr-hint { font-size:12px; color:#8a94a6; }
+    .pr-del-row { border:none; background:none; color:#fc4b52; font-size:14px; cursor:pointer; padding:2px 6px; border-radius:4px; }
+    .pr-del-row:hover { background:#fdecec; }
+    .pr-time-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; flex-wrap:wrap; }
+    .pr-time-row input[type=time] { height:32px; width:120px; border:1px solid #d9dbde; border-radius:4px; font-size:12px; padding:0 8px; background:#fff; outline:none; color:#0b1019; }
+    .pr-time-row .pr-act-sel { height:32px; border:1px solid #d9dbde; border-radius:4px; font-size:12px; padding:0 8px; background:#fff; outline:none; color:#0b1019; }
+    .pr-time-row .pr-act-val { height:32px; width:84px; border:1px solid #d9dbde; border-radius:4px; font-size:12px; padding:0 8px; background:#fff; outline:none; color:#0b1019; }
+    .pr-time-row .pr-act-unit { color:#8a94a6; font-size:12px; min-width:14px; }
+    .pr-time-row .pr-tip { color:#8a94a6; font-size:11px; }
+    .pr-sec-label { font-size:13px; font-weight:600; color:#0b1019; margin:20px 0 12px; display:flex; align-items:center; gap:6px; }
+    .pr-sec-label .n { display:inline-flex; align-items:center; justify-content:center; width:16px; height:16px; border-radius:50%; background:#005cf5; color:#fff; font-size:11px; }
+    .pr-add-btn { height:30px; padding:0 12px; border:1px dashed #b6c2d4; border-radius:4px; background:#fff; color:#4a5568; font-size:12px; cursor:pointer; transition:all .15s; }
+    .pr-add-btn:hover { border-color:#005cf5; color:#005cf5; background:#f0f6ff; }
+    .pr-stage { border:1px solid #e3e8f0; border-radius:6px; padding:10px 12px; margin-bottom:10px; background:#fbfcfe; }
+    .pr-stage-head { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+    .pr-stage-name { flex:1; height:32px; padding:0 10px; border:1px solid #d9dbde; border-radius:4px; font-size:12px; outline:none; color:#0b1019; box-sizing:border-box; }
+    .pr-del-stage { border:none; background:none; color:#fc4b52; font-size:12px; cursor:pointer; }
+    .pr-stage-line { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+    .pr-stage-line .pr-s-validfrom, .pr-stage-line .pr-s-validto { height:32px; border:1px solid #d9dbde; border-radius:4px; font-size:12px; padding:0 8px; color:#0b1019; background:#fff; }
+    .pr-stage .pr-sub { font-size:11px; color:#4a5568; font-weight:600; margin:8px 0 4px; }
+    .pr-add-btn.sm { height:32px; padding:0 10px; font-size:12px; margin:4px 0 8px; }
+    .pr-status { display:inline-flex; align-items:center; gap:4px; font-size:12px; }
+    .pr-status .dot { width:6px; height:6px; border-radius:50%; display:inline-block; }
+    .pr-status.on { color:#1a7f37; } .pr-status.on .dot { background:#2da44e; }
+    .pr-status.off { color:#8a94a6; } .pr-status.off .dot { background:#b6c2d4; }
+    .pr-status.pause { color:#f57316; } .pr-status.pause .dot { background:#f57316; }
+    .pr-status-btn { background:none; border:none; padding:0; margin:0; cursor:pointer; font:inherit; line-height:1; border-radius:4px; }
+    .pr-status-btn:hover { text-decoration:underline; }
+    .pr-status-btn:active { opacity:.7; }
+    .pr-holi-picker { display:flex;flex-direction:column;gap:10px; }
+    .pr-holi-group { display:flex;flex-direction:column;gap:6px; }
+    .pr-holi-group-label { font-size:11px;color:#8a94a6;font-weight:600; }
+    .pr-holi-group-chips { display:flex;flex-wrap:wrap;gap:6px; }
+    .pr-holi-chip { font-size:12px;color:#0b1019;background:#f3f5f9;border:1px solid #dfe3ed;border-radius:14px;padding:5px 12px;cursor:pointer;user-select:none; }
+    .pr-holi-chip:hover { border-color:#005cf5; }
+    .pr-holi-chip.active { background:#e8f1ff;border-color:#005cf5;color:#005cf5;font-weight:600; }
+    .pr-holi-chip.disabled { color:#a0a8b8;background:#f7f8fa;border-color:#e6e8ed;cursor:not-allowed;pointer-events:none; }
+    /* 优惠分段（活动期间） */
+    .pr-sub { font-size:11px; color:#4a5568; font-weight:600; margin:10px 0 4px; }
+    .pr-seg { border:1px solid #e3e8f0; border-radius:6px; padding:10px 12px; margin-bottom:12px; background:#fbfcfe; }
+    .pr-seg-head { display:flex; align-items:center; gap:10px; margin-bottom:4px; }
+    .pr-seg-name { font-size:13px; font-weight:600; color:#0b1019; }
+    .pr-seg-tag { font-size:11px; color:#8a94a6; padding:2px 8px; border:1px solid #e3e8f0; border-radius:10px; background:#fff; }
+    .pr-seg-tag.pri { color:#005cf5; border-color:#bcd4ff; background:#eef4ff; }
+    .pr-seg-times { display:flex; flex-direction:column; gap:6px; }
+    .pr-preview { margin-top:12px; background:#f0f6ff; border:1px solid #cfe0ff; border-radius:4px; padding:8px 12px; font-size:12px; color:#1a56c4; line-height:1.7; }
+    .pr-holi-card { background:#fff; border:1px solid #e9eef7; border-radius:8px; margin-bottom:14px; overflow:hidden; }
+    .pr-holi-card .hd { padding:10px 16px; border-bottom:1px solid #e9eef7; font-size:13px; font-weight:600; color:#0b1019; display:flex; align-items:center; gap:8px; }
+    .pr-holi-card .ps-table tbody tr:last-child td { border-bottom: none; }
+    .pr-legal-tag { display:inline-block; padding:1px 6px; border-radius:3px; font-size:10px; font-weight:600; background:#e7f0ff; color:#1a56c4; border:1px solid #bcd4ff; }
+    .pr-tag-note { font-size:11px; color:#8a94a6; font-weight:400; margin-left:auto; }
+    /* 给开发看的规则：橙色文字，不包框 */
+    .pr-dev-rule { font-size:12px; color:#d9480f; line-height:1.7; }
+    .pr-dev-rule b { color:#f5730a; }
+    /* 活动状态徽标 */
+    .pr-astatus { display:inline-block; padding:2px 9px; border-radius:11px; font-size:11px; font-weight:600; }
+    .pr-astatus.up { background:#eef4ff; color:#005cf5; }
+    .pr-astatus.ac { background:#e9f8ee; color:#1a7f37; }
+    .pr-astatus.ed { background:#f1f2f4; color:#8a94a6; }
+    /* 进行中/已结束锁定说明 */
+    .pr-lock-note { font-size:12px; color:#f57316; background:none; border:none; padding:0; line-height:1.6; margin:4px 0 8px; }
+    .pr-lock-note.ended { color:#8a94a6; background:none; border:none; padding:0; }
+    /* 进行中/已结束弹窗锁定区域置灰 */
+    .pr-locked { opacity:0.55; pointer-events:none; filter:grayscale(0.45); transition:opacity .2s; }
+    .pr-locked .pr-holi-chip.disabled { opacity:0.5; }
+    /* 修改记录 */
+    .pr-changelog { margin-top:8px; background:#fbfcfe; border:1px solid #e9eef7; border-radius:6px; padding:10px 12px; }
+    .pr-changelog .pr-cl-item { display:flex; gap:10px; padding:6px 0; border-bottom:1px dashed #eef1f5; font-size:12px; }
+    .pr-changelog .pr-cl-item:last-child { border-bottom:none; }
+    .pr-changelog .pr-cl-ts { color:#8a94a6; white-space:nowrap; flex:0 0 auto; }
+    .pr-changelog .pr-cl-desc { color:#0b1019; }
+    /* 活动周期：连选日期控件（flatpickr 双月范围选择器） */
+    .pr-daterange { display:inline-flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .pr-daterange .pr-date-trigger { position:relative; display:inline-flex; align-items:center; width:260px; height:32px; border:1px solid #d9dbde; border-radius:4px; background:#fff; padding:0 10px; box-sizing:border-box; }
+    .pr-daterange .pr-date-trigger input { flex:1; border:none; background:transparent; font-size:12px; color:#0b1019; outline:none; padding:0; cursor:pointer; }
+    .pr-daterange .pr-date-trigger .pr-date-icon { flex:0 0 auto; color:#8a94a6; margin-right:6px; }
+    .pr-daterange .pr-date-trigger .pr-date-clear { flex:0 0 auto; color:#8a94a6; cursor:pointer; font-size:12px; margin-left:6px; display:none; }
+    .pr-daterange .pr-date-trigger .pr-date-clear:hover { color:#005cf5; }
+    /* flatpickr 视觉微调，贴近 Element 风格 */
+    .flatpickr-calendar { border:1px solid #e4e7ed; box-shadow:0 4px 12px rgba(0,0,0,.08); border-radius:4px; font-size:12px; }
+    .flatpickr-months .flatpickr-month { height:40px; }
+    .flatpickr-current-month { padding-top:8px; font-size:13px; }
+    .flatpickr-current-month .flatpickr-monthDropdown-months { font-weight:600; }
+    .flatpickr-weekday { font-size:11px; color:#606266; }
+    .flatpickr-day { color:#0b1019; height:30px; line-height:30px; }
+    .flatpickr-day.today { border-color:#005cf5; color:#005cf5; }
+    .flatpickr-day.selected, .flatpickr-day.startRange, .flatpickr-day.endRange { background:#005cf5; border-color:#005cf5; color:#fff; }
+    .flatpickr-day.inRange { background:#e6f0ff; border-color:#e6f0ff; color:#0b1019; }
+    .flatpickr-day:hover { background:#f5f7fa; }
+
+    .pr-selected-row td { background:#e6f7ff !important; }
+    .pr-batch-bar { flex-shrink:0; padding:8px 16px; background:#fff; border-bottom:1px solid #f0f0f0; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .pr-batch-bar .ic-btn[disabled] { opacity:0.45; cursor:not-allowed; }
+    .pr-op-link { border:none; background:none; color:#005cf5; font-size:12px; cursor:pointer; padding:2px 6px; border-radius:3px; }
+    .pr-op-link:hover { background:#eef4ff; }
+    .pr-op-link.danger { color:#fc4b52; }
+    .pr-op-link.danger:hover { background:#fdecec; }
+    /* 编辑动态调价弹框：内容多 → 全页面弹框，透明遮罩 + 内缩 + 居中表单列 */
+    #prRuleModal.ps-overlay {
+      background: rgba(0,0,0,0.45);       /* 半透明遮罩，与项目统一 */
+      padding: 16px;                      /* 内缩，卡片不贴边 */
+    }
+    #prRuleModal .ps-dialog {
+      width: min(880px, 94vw);
+      max-width: none;
+      height: auto;
+      max-height: calc(100vh - 96px);
+      margin: 0;
+      border-radius: 6px;
+      box-shadow: 0 10px 34px rgba(15, 23, 42, 0.18);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    /* 表单内容随弹窗宽度自然撑满 */
+    #prRuleModal .ps-dialog .pr-form {
+      margin: 0;
+      width: 100%;
+      box-sizing: border-box;
+    }
+  </style>
+</head>
+<body>
+  <div class="toast" id="toast"></div>
+  <div id="sidebarRoot"></div>
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+  <div class="main">
+    <div id="headerRoot"></div>
+    <div class="content">
+    <!-- ========== PAGE: 动态调价 ========== -->
+    <div class="page page-fill" id="page-dynamic-pricing">
+      <div id="prContent" style="display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden;background:#F1F2F5">
+
+        <!-- 顶部标题栏 -->
+        <div id="prTabBar" style="flex-shrink:0;padding:0 16px;background:#fff;border-bottom:1px solid #dfe3ed;display:flex;align-items:center;gap:8px">
+          <span style="font-size:14px;font-weight:600;color:#0b1019">动态调价</span>
+          <span style="flex:1"></span>
+          <button class="ps-op-btn" onclick="prRestoreDemo()" style="color:#8a94a6;border-color:#e4e7ec">恢复示例</button>
+        </div>
+
+        <!-- 筛选栏（仅活动视图显示） -->
+        <div id="prFilterBar" style="flex-shrink:0;padding:10px 16px;background:#fff;border-bottom:1px solid #dfe3ed;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <select id="prFilterStore" onchange="prSetStore(this.value)" title="按门店筛选" style="height:32px;border:1px solid #d9dbde;border-radius:4px;font-size:12px;padding:0 8px;outline:none;background:#fff;max-width:180px">
+          </select>
+          <div class="gl-radio-group" id="prFilterStatusTabs">
+            <span class="gl-radio-btn active" data-val="all" onclick="prFilterStatusClick(this)">全部</span>
+            <span class="gl-radio-btn" data-val="on" onclick="prFilterStatusClick(this)">启用</span>
+            <span class="gl-radio-btn" data-val="off" onclick="prFilterStatusClick(this)">禁用</span>
+          </div>
+          <span style="font-size:12px;color:#4a5568;margin-left:4px">时间</span>
+          <div class="pr-daterange">
+            <div class="pr-date-trigger" id="prFilterDateTrigger">
+              <span class="pr-date-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg></span>
+              <input type="text" id="prFilterDateRange" placeholder="开始日期 - 结束日期" readonly>
+              <span class="pr-date-clear" id="prFilterDateClear" title="清空">×</span>
+            </div>
+            <input type="hidden" id="prFilterFrom">
+            <input type="hidden" id="prFilterTo">
+          </div>
+          <input type="text" id="prFilterKeyword" style="flex:0 1 200px;height:32px;padding:0 12px;border:1px solid #d9dbde;border-radius:4px;font-size:12px;outline:none;color:#0b1019" placeholder="活动名称 / 范围关键字" onkeydown="if(event.key==='Enter')prSearch()" onfocus="this.style.borderColor='#005cf5'" onblur="this.style.borderColor='#d9dbde'">
+          <button class="ps-op-btn" onclick="prReset()">重置</button>
+          <button class="ps-op-btn ps-op-pri" onclick="prSearch()">查询</button>
+          <button class="hd-req-spec" style="margin-left:auto" onclick="window.open('../prd.html?doc='+encodeURIComponent('动态调价模块需求说明'))" title="查看动态调价模块需求说明">📄 需求说明</button>
+        </div>
+        <!-- 批量操作栏（参考商品列表） -->
+        <div id="prBatchBar" class="pr-batch-bar">
+          <button class="ic-btn ic-btn-pri" onclick="prOpenRuleModal()">＋ 新建活动</button>
+          <button class="ic-btn" id="prBatchEdit" onclick="prBatchEdit()">编辑</button>
+          <button class="ic-btn" id="prBatchCopy" onclick="prBatchCopy()">复制</button>
+          <button class="ic-btn" id="prBatchEnable" onclick="prBatchEnable()">启用</button>
+          <button class="ic-btn" id="prBatchDisable" onclick="prBatchDisable()">停用</button>
+          <button class="ic-btn" style="color:#fc4b52;border-color:#fc4b52" id="prBatchDelete" onclick="prBatchDelete()">删除</button>
+      <button class="ic-btn" id="prHolidayManageBtn" onclick="prOpenHolidayManage()" style="margin-left:auto">节假日管理</button>
+        </div>
+
+        <!-- 活动表格卡片 -->
+        <div id="prRulesView" style="flex:1;min-height:0;margin:10px 8px 8px;padding:1px;background:linear-gradient(180deg,#e0e3e8,#f0f2f5);border-radius:4px;display:flex;flex-direction:column">
+          <div style="flex:1;min-height:0;background:#fff;border-radius:3px;overflow:hidden;display:flex;flex-direction:column">
+            <div class="table-wrap" style="flex:1;overflow-y:auto;min-height:0">
+              <table class="ps-table">
+                <thead>
+                  <tr>
+                    <th style="width:48px;text-align:center"></th>
+                    <th style="width:150px">活动名称</th>
+                    <th style="width:130px">生效范围</th>
+                    <th style="width:130px;cursor:pointer;user-select:none" onclick="prToggleSort()">作用优先级 <span id="prSortInd" style="color:#005cf5;font-size:10px"></span></th>
+                    <th style="width:200px">生效日期</th>
+                    <th style="width:240px">时段与优惠（逐时段）</th>
+                    <th style="width:120px">适用门店</th>
+                    <th style="width:80px">状态</th>
+                    <th style="width:96px">活动状态</th>
+                  </tr>
+                </thead>
+                <tbody id="prRulesBody"></tbody>
+              </table>
+            </div>
+            <div style="flex-shrink:0;padding:8px 16px;border-top:1px solid #e9eef7;font-size:11px;color:#8a94a6;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+              <span>活动优先级（高 → 低）：先比<b>时间</b>，时间同档再比<b>商品</b>。　① 时间档：节假日·单次 ＞ 节假日·每年(自定义) ＞ 节假日·每年(法定) ＞ 节假日·每月 ＞ 节假日·每周 ＞ 普通日期　② 商品档：单品 ＞ 分类 ＞ 全店。　列表「作用优先级」编码「周期序·商品档」（如 2·高），点击表头可直接排序。</span>
+              <span>同级重叠才硬冲突，跨优先级由高者自动生效 · 折扣锚定<b>基础价格</b> · 会员价取 min(动态价, 会员价)</span>
+            </div>
+          </div>
+        </div>
+
+
+      </div>
+    </div>
+    </div>
+  </div>
+  <div id="modalRoot"></div>
+
+  <!-- ===== 活动编辑弹窗 ===== -->
+  <div class="ps-overlay" id="prRuleModal" style="display:none" onclick="if(event.target===this)prCloseRuleModal()">
+    <div class="ps-dialog">
+      <div style="padding:16px 24px;border-bottom:1px solid #e9eef7;display:flex;align-items:center">
+        <span style="font-size:15px;font-weight:600;color:#0b1019" id="prRuleModalTitle">新建动态调价</span>
+        <span style="flex:1"></span>
+        <button style="border:none;background:none;font-size:18px;color:#8a94a6;cursor:pointer" onclick="prCloseRuleModal()">×</button>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:0px 24px 28px"><div class="pr-form">
+
+        <div class="pr-sec-label">基本信息</div>
+        <div id="prStoreSelectWrap" style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+          <div style="font-size:12px;color:#4a5568;white-space:nowrap;line-height:32px"><span style="color:#fc4b52">*</span> 适用门店</div>
+          <select id="prStoreSelect" style="flex:1;max-width:460px;height:32px;padding:0 8px;border:1px solid #d9dbde;border-radius:4px;font-size:12px;outline:none;color:#0b1019;background:#fff" onfocus="this.style.borderColor='#005cf5'" onblur="this.style.borderColor='#d9dbde'">
+            <option value="">请选择适用门店</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="font-size:12px;color:#4a5568;white-space:nowrap;line-height:32px"><span style="color:#fc4b52">*</span> 活动名称</div>
+            <input type="text" id="prName" style="width:460px;flex:none;height:32px;padding:0 12px;border:1px solid #d9dbde;border-radius:4px;font-size:12px;outline:none;color:#0b1019;box-sizing:border-box" placeholder="如：晚市清货折扣" onfocus="this.style.borderColor='#005cf5'" onblur="this.style.borderColor='#d9dbde'">
+          </div>
+          <div style="flex:1;min-width:200px">
+            <div style="display:flex;align-items:center;gap:12px">
+              <div style="font-size:12px;color:#4a5568;white-space:nowrap;line-height:32px">状态</div>
+              <label style="display:flex;align-items:center;gap:6px;height:32px;font-size:12px;color:#0b1019;cursor:pointer"><input type="checkbox" id="prEnabled" checked style="accent-color:#005cf5"> 启用</label>
+            </div>
+            <div id="prPauseNote" style="display:none;margin-top:4px;font-size:11px;color:#f57316;line-height:1.4"></div>
+          </div>
+        </div>
+        <div id="prStatusLockNote" class="pr-lock-note" style="display:none"></div>
+
+        <div class="pr-sec-label">活动周期</div>
+        <div id="prFixedPeriodRow" class="pr-daterange" style="gap:12px">
+          <div style="font-size:12px;color:#4a5568;white-space:nowrap;line-height:32px">
+            <span style="color:#fc4b52">*</span> 活动日期
+          </div>
+          <div class="pr-date-trigger" id="prDateTrigger" style="width:100%;max-width:460px">
+            <span class="pr-date-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg></span>
+            <input type="text" id="prDateRange" placeholder="开始日期 - 结束日期" readonly>
+            <span class="pr-date-clear" id="prDateClear" title="清空">×</span>
+          </div>
+          <input type="hidden" id="prValidFrom">
+          <input type="hidden" id="prValidTo">
+          <span style="font-size:11px;color:#8a94a6">活动周期为整体日期区间</span>
+        </div>
+        <div id="prHolidayPeriodHint" style="display:none;margin-top:6px;font-size:12px;color:#0b1019;background:#f3f7ff;border:1px solid #d6e4ff;border-radius:4px;padding:8px 10px;line-height:1.6"></div>
+
+        <div style="font-size:13px;color:#0b1019;margin:14px 0 8px">限定节日生效（可选 · 单选）</div>
+        <div class="pr-dev-rule" style="margin-bottom:6px">限定节日与活动周期<b>不再互斥</b>：勾选节日后，本活动仅在上方「活动周期」窗口内的该节日日期生效；节日之间<b>互斥</b>，只能选 1 个。留空 = 按上方活动周期每天生效。</div>
+        <div class="pr-holi-picker" id="prHolidayPicker"></div>
+
+        <div class="pr-sec-label">生效范围（单品 / 分类）</div>
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:8px">
+          <div class="gl-radio-group" id="prScopeTypeTabs">
+            <span class="gl-radio-btn active" data-val="category" onclick="prScopeTypeClick(this)">按分类</span>
+            <span class="gl-radio-btn" data-val="goods" onclick="prScopeTypeClick(this)">按单品</span>
+          </div>
+          <span style="font-size:11px;color:#f57316" id="prScopeTip">同一时间内，相同商品或相同分类不可重复出现在多个活动中</span>
+        </div>
+        <div id="prScopeCategory" style="display:block;border:1px solid #e9eef7;border-radius:4px;background:#fafbfd;overflow:hidden">
+          <div style="padding:8px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #e9eef7;background:#fff">
+            <div style="position:relative;flex:0 1 260px">
+              <span style="position:absolute;left:9px;top:50%;transform:translateY(-50%);color:#bbb;font-size:12px">🔍</span>
+              <input type="text" id="prCategorySearch" placeholder="搜索分类名称" style="width:100%;height:32px;padding:0 10px 0 26px;border:1px solid #e8e8e8;border-radius:4px;font-size:12px;outline:none;box-sizing:border-box;color:#0b1019">
+            </div>
+            <span id="prCategoryTotal" style="font-size:12px;color:#909399">共 0 个分类</span>
+            <span style="flex:1"></span>
+            <span id="prCategoryCount" style="font-size:12px;color:#005CF5;font-weight:600">已选 0 项</span>
+          </div>
+          <div id="prCategoryList" style="max-height:150px;overflow-y:auto;padding:4px 6px"></div>
+        </div>
+        <div id="prScopeGoods" style="display:none;border:1px solid #e9eef7;border-radius:4px;background:#fafbfd;overflow:hidden">
+          <div style="padding:8px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #e9eef7;background:#fff">
+            <div style="position:relative;flex:0 1 260px">
+              <span style="position:absolute;left:9px;top:50%;transform:translateY(-50%);color:#bbb;font-size:12px">🔍</span>
+              <input type="text" id="prGoodsSearch" placeholder="搜索商品名称或编码" style="width:100%;height:32px;padding:0 10px 0 26px;border:1px solid #e8e8e8;border-radius:4px;font-size:12px;outline:none;box-sizing:border-box;color:#0b1019">
+            </div>
+            <span id="prGoodsTotal" style="font-size:12px;color:#909399">共 0 个商品</span>
+            <span style="flex:1"></span>
+            <span id="prGoodsCount" style="font-size:12px;color:#005CF5;font-weight:600">已选 0 项</span>
+          </div>
+          <div id="prGoodsList" style="max-height:150px;overflow-y:auto;padding:4px 6px"></div>
+        </div>
+
+        <div class="pr-sec-label">优惠设置（按时段，每个时段独立优惠）</div>
+        <div style="font-size:11px;color:#f57316;margin-bottom:8px" id="prPeriodNote">在「活动周期」或所选「节假日」的日期内，按时段分别设置优惠（同一时段一个优惠）。不同日期档期请单独创建活动。</div>
+
+        <div class="pr-seg">
+          <div class="pr-seg-head"><span class="pr-seg-name">活动期间</span><span class="pr-seg-tag pri">主优惠 · 必填</span></div>
+          <div class="pr-sub" id="prSegDateHint">生效日期：沿用上方「活动周期」</div>
+          <div class="pr-sub">时段与优惠（每个时段独立设置，可多个）</div>
+          <div class="pr-seg-times" data-seg="main"></div>
+          <button class="pr-add-btn sm" onclick="prAddTimeRow(this.closest('.pr-seg').querySelector('.pr-seg-times'), null)">＋ 添加时段</button>
+        </div>
+
+        <div id="prChangelogBox"></div>
+
+        <div class="pr-preview" id="prPreview">预览：选择范围后将展示示例商品的基础价 → 动态价</div>
+      </div></div>
+      <div style="flex-shrink:0;padding:12px 24px;border-top:1px solid #e9eef7;display:flex;justify-content:flex-end;gap:8px">
+        <button class="ps-op-btn" onclick="prCloseRuleModal()">取消</button>
+        <button class="ps-op-btn ps-op-pri" onclick="prSaveRule()">保存活动</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 自定义节日弹窗 ===== -->
+  <div class="ps-overlay" id="prHolidayModal" style="display:none">
+    <div class="ps-dialog" style="width:min(460px,94vw)">
+      <div style="padding:16px 20px;border-bottom:1px solid #e9eef7;display:flex;align-items:center">
+        <span style="font-size:15px;font-weight:600;color:#0b1019" id="prHolidayModalTitle">新建自定义节日</span>
+        <span style="flex:1"></span>
+        <button style="border:none;background:none;font-size:18px;color:#8a94a6;cursor:pointer" onclick="prCloseHolidayModal()">×</button>
+      </div>
+      <div style="padding:16px 20px">
+        <div style="font-size:12px;color:#4a5568;margin-bottom:4px">节日名称 <span style="color:#fc4b52">*</span></div>
+        <input type="text" id="prHoliName" style="width:100%;height:32px;padding:0 12px;border:1px solid #d9dbde;border-radius:4px;font-size:12px;outline:none;color:#0b1019;box-sizing:border-box" placeholder="如：店庆、周年庆、换季日" onfocus="this.style.borderColor='#005cf5'" onblur="this.style.borderColor='#d9dbde'">
+        <div style="font-size:12px;color:#4a5568;margin:12px 0 4px">重复模式</div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap">
+          <label style="font-size:12px;color:#0b1019;cursor:pointer;display:flex;align-items:center;gap:4px"><input type="radio" name="prHoliRepeat" value="once" onchange="prHoliRepeatChange()" style="accent-color:#005cf5"> 单次（日期区间）</label>
+          <label style="font-size:12px;color:#0b1019;cursor:pointer;display:flex;align-items:center;gap:4px"><input type="radio" name="prHoliRepeat" value="yearly" checked onchange="prHoliRepeatChange()" style="accent-color:#005cf5"> 每年（月-日）</label>
+          <label style="font-size:12px;color:#0b1019;cursor:pointer;display:flex;align-items:center;gap:4px"><input type="radio" name="prHoliRepeat" value="monthly" onchange="prHoliRepeatChange()" style="accent-color:#005cf5"> 每月（指定日）</label>
+          <label style="font-size:12px;color:#0b1019;cursor:pointer;display:flex;align-items:center;gap:4px"><input type="radio" name="prHoliRepeat" value="weekly" onchange="prHoliRepeatChange()" style="accent-color:#005cf5"> 每周</label>
+        </div>
+        <div id="prHoliDateYearly" style="display:flex;align-items:center;gap:6px;margin-top:8px;flex-wrap:wrap">
+          <select id="prHoliMonth" style="height:32px;border:1px solid #d9dbde;border-radius:4px;font-size:12px;padding:0 8px;background:#fff;outline:none;color:#0b1019"></select>
+          <select id="prHoliDay" style="height:32px;border:1px solid #d9dbde;border-radius:4px;font-size:12px;padding:0 8px;background:#fff;outline:none;color:#0b1019"></select>
+          <span style="font-size:12px;color:#8a94a6">至</span>
+          <select id="prHoliMonthEnd" style="height:32px;border:1px solid #d9dbde;border-radius:4px;font-size:12px;padding:0 8px;background:#fff;outline:none;color:#0b1019"></select>
+          <select id="prHoliDayEnd" style="height:32px;border:1px solid #d9dbde;border-radius:4px;font-size:12px;padding:0 8px;background:#fff;outline:none;color:#0b1019"></select>
+          <span style="font-size:11px;color:#8a94a6">起止相同即单天</span>
+        </div>
+        <div id="prHoliDateMonthly" style="display:none;align-items:center;gap:6px;margin-top:8px;flex-wrap:wrap">
+          <span style="font-size:12px;color:#4a5568">每月</span>
+          <select id="prHoliMonthDay" style="height:32px;border:1px solid #d9dbde;border-radius:4px;font-size:12px;padding:0 8px;background:#fff;outline:none;color:#0b1019"></select>
+          <span style="font-size:12px;color:#4a5568">号 至</span>
+          <select id="prHoliMonthDayEnd" style="height:32px;border:1px solid #d9dbde;border-radius:4px;font-size:12px;padding:0 8px;background:#fff;outline:none;color:#0b1019"></select>
+          <span style="font-size:12px;color:#4a5568">号</span>
+        </div>
+        <div id="prHoliDateWeekly" style="display:none;margin-top:8px">
+          <div id="prHoliWeekChips" style="display:flex;flex-wrap:wrap;gap:3px"></div>
+        </div>
+        <div id="prHoliDateOnce" style="display:none;margin-top:8px">
+          <div class="pr-daterange">
+            <div class="pr-date-trigger" id="prHoliDateTrigger">
+              <span class="pr-date-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg></span>
+              <input type="text" id="prHoliDateRange" placeholder="开始日期 - 结束日期" readonly>
+              <span class="pr-date-clear" id="prHoliDateClear" title="清空">×</span>
+            </div>
+            <input type="hidden" id="prHoliDate">
+            <input type="hidden" id="prHoliDateEnd">
+          </div>
+        </div>
+        <div class="pr-dev-rule" style="margin-top:10px">说明：节日为长期生效，按所选重复模式循环（每年 / 每月 / 每周 / 单次），无需设置截止日期；如需停止，可停用或删除该节日。</div>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#0b1019;cursor:pointer;margin-top:12px"><input type="checkbox" id="prHoliEnabled" checked style="accent-color:#005cf5"> 启用</label>
+      </div>
+      <div style="flex-shrink:0;padding:12px 20px;border-top:1px solid #e9eef7;display:flex;justify-content:flex-end;gap:8px">
+        <button class="ps-op-btn" onclick="prCloseHolidayModal()">取消</button>
+        <button class="ps-op-btn ps-op-pri" onclick="prSaveHoliday()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 节假日管理弹窗（整页弹窗） ===== -->
+  <div class="ps-overlay" id="prHolidayManageModal" style="display:none" onclick="if(event.target===this)prCloseHolidayManage()">
+    <div class="ps-dialog" style="width:min(960px,94vw);max-height:86vh;display:flex;flex-direction:column">
+      <div style="padding:16px 20px;border-bottom:1px solid #e9eef7;display:flex;align-items:center">
+        <span style="font-size:15px;font-weight:600;color:#0b1019">节假日管理</span>
+        <span style="flex:1"></span>
+        <button style="border:none;background:none;font-size:18px;color:#8a94a6;cursor:pointer" onclick="prCloseHolidayManage()">×</button>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:14px 16px">
+        <div class="pr-dev-rule" style="margin-bottom:10px">法定节假日为系统内置示例，可为多天周期（不含调休补班）；实际放假安排以国务院办公厅发布为准</div>
+
+        <div class="pr-holi-card">
+          <div class="hd"><span class="pr-legal-tag">系统内置</span> 法定节假日（2026 示例数据）<span class="pr-tag-note">实际放假安排以国务院办公厅发布为准</span></div>
+          <div class="table-wrap"><table class="ps-table" style="table-layout:fixed;width:100%">
+            <thead><tr><th style="width:180px">节日</th><th style="width:250px">2026 日期周期</th><th>说明</th></tr></thead>
+            <tbody id="prLegalHolidayBody"></tbody>
+          </table></div>
+        </div>
+
+        <div style="margin:10px 0">
+          <button class="ps-op-btn ps-op-pri" onclick="prOpenHolidayModal()">＋ 新建自定义节日</button>
+        </div>
+
+        <div class="pr-holi-card">
+          <div class="hd"><span class="pr-legal-tag" style="background:#f3e8ff;color:#7b2cbf;border-color:#e0c8f5">商家自定义</span> 自定义节日 / 纪念日<span class="pr-tag-note">作为调价活动的日期条件，支持 单次 / 每月 / 每周 / 每年 重复，均可配置多天区间</span></div>
+          <div class="table-wrap"><table class="ps-table" style="table-layout:fixed;width:100%">
+            <thead><tr><th style="width:160px">名称</th><th style="width:140px">日期</th><th style="width:100px">重复</th><th style="width:80px">状态</th><th style="width:120px">操作</th></tr></thead>
+            <tbody id="prCustomHolidayBody"></tbody>
+          </table></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 轻量确认弹窗（替代原生 confirm，避免预览环境拦截） ===== -->
+  <div class="ps-overlay" id="prConfirmOverlay" style="display:none;z-index:10000" onclick="if(event.target===this)prConfirmCancel()">
+    <div class="ps-dialog" style="width:min(360px,90vw)">
+      <div style="padding:20px;font-size:13px;color:#0b1019;line-height:1.7;white-space:pre-line" id="prConfirmMessage"></div>
+      <div style="flex-shrink:0;padding:12px 20px;border-top:1px solid #e9eef7;display:flex;justify-content:flex-end;gap:8px">
+        <button class="ps-op-btn" onclick="prConfirmCancel()">取消</button>
+        <button class="ps-op-btn ps-op-pri" onclick="prConfirmOk()">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <script>var CURRENT_PAGE='dynamic-pricing';</script>
+  <script src="../shared/sidebar.js?v=2"></script>
+  <script src="../shared/header.js?v=2"></script>
+  <script src="../shared/modals.js?v=2"></script>
+  <script src="../shared/layout.js?v=2" data-page="dynamic-pricing"></script>
+  <script>
+  // ============================================================
+  // 动态调价（规划 · 刘）—— 页面逻辑（独立于 layout.js，便于迭代）
+  // ============================================================
+  (function(){
+    // ---------- Mock 数据 ----------
+    var PR_CATEGORIES = ['蔬菜', '水果', '肉类', '水产', '干货', '调味品'];
+    var PR_PRODUCTS = [
+      { name: '鲜猪肉（带皮前腿）', code: '6928484901001', spec: '称重/kg', memberPrice: 19.00, origPrice: 22.00, category: '肉类' },
+      { name: '鲜猪肉（带皮五花）', code: '6928484901002', spec: '称重/kg', memberPrice: 17.50, origPrice: 20.00, category: '肉类' },
+      { name: '鲜鸡蛋（散装）', code: '6928484901003', spec: '称重/kg', memberPrice: 10.50, origPrice: 12.00, category: '肉类' },
+      { name: '西红柿（精选）', code: '6928484901004', spec: '称重/kg', memberPrice: 5.50, origPrice: 6.50, category: '蔬菜' },
+      { name: '土豆（黄心）', code: '6928484901005', spec: '称重/kg', memberPrice: 3.50, origPrice: 4.00, category: '蔬菜' },
+      { name: '大白菜', code: '6928484901006', spec: '称重/kg', memberPrice: 2.30, origPrice: 2.80, category: '蔬菜' },
+      { name: '黄瓜（刺黄瓜）', code: '6928484901007', spec: '称重/kg', memberPrice: 4.80, origPrice: 5.50, category: '蔬菜' },
+      { name: '茄子（紫长茄）', code: '6928484901008', spec: '称重/kg', memberPrice: 3.80, origPrice: 4.50, category: '蔬菜' },
+      { name: '青椒（薄皮）', code: '6928484901009', spec: '称重/kg', memberPrice: 6.00, origPrice: 7.00, category: '蔬菜' },
+      { name: '豆腐（老豆腐）', code: '6928484901010', spec: '称重/kg', memberPrice: 2.80, origPrice: 3.50, category: '蔬菜' },
+      { name: '苹果（红富士）', code: '6928484901011', spec: '称重/kg', memberPrice: 8.50, origPrice: 9.90, category: '水果' },
+      { name: '香蕉（进口）', code: '6928484901012', spec: '称重/kg', memberPrice: 7.50, origPrice: 8.80, category: '水果' },
+      { name: '大米（东北珍珠米 5kg）', code: '6928484901013', spec: '5kg/袋', memberPrice: 26.00, origPrice: 29.90, category: '干货' },
+      { name: '金龙鱼调和油 5L', code: '6928484901014', spec: '5L/瓶', memberPrice: 72.00, origPrice: 79.90, category: '调味品' },
+      { name: '海天酱油（生抽 500ml）', code: '6928484901015', spec: '500ml/瓶', memberPrice: 7.20, origPrice: 8.50, category: '调味品' },
+      { name: '纯牛奶（蒙牛 250ml×12）', code: '6928484901016', spec: '250ml×12/箱', memberPrice: 45.00, origPrice: 49.90, category: '干货' },
+      { name: '方便面（康师傅红烧 5连包）', code: '6928484901017', spec: '5包/袋', memberPrice: 11.00, origPrice: 12.90, category: '干货' },
+      { name: '矿泉水（农夫山泉 550ml×24）', code: '6928484901018', spec: '550ml×24/箱', memberPrice: 30.00, origPrice: 35.00, category: '干货' },
+      { name: '食盐（中盐精制盐 400g）', code: '6928484901019', spec: '400g/袋', memberPrice: 1.60, origPrice: 2.00, category: '调味品' },
+      { name: '白砂糖（太古 400g）', code: '6928484901020', spec: '400g/袋', memberPrice: 6.50, origPrice: 7.50, category: '调味品' }
+    ];
+    // 法定节假日：日期周期（不含调休补班），2026 示例
+    var PR_LEGAL_HOLIDAYS = [
+      { name: '元旦',   date: '2026-01-01', end: '2026-01-03', note: '3 天（示例）' },
+      { name: '春节',   date: '2026-02-17', end: '2026-02-23', note: '示例：初一至初七' },
+      { name: '清明节', date: '2026-04-05', end: '2026-04-06', note: '2 天（示例）' },
+      { name: '劳动节', date: '2026-05-01', end: '2026-05-05', note: '5 天（示例）' },
+      { name: '端午节', date: '2026-06-19', end: '2026-06-21', note: '3 天（示例）' },
+      { name: '中秋节', date: '2026-09-25', end: '2026-09-27', note: '3 天（示例）' },
+      { name: '国庆节', date: '2026-10-01', end: '2026-10-07', note: '7 天（示例）' }
+    ];
+    var PR_CUSTOM_HOLIDAYS = [
+      { id: 1, name: '店庆', repeat: 'yearly', monthDay: '11-18', monthDayEnd: '11-20', date: '', dateEnd: '', weekDays: [], enabled: true },
+      { id: 2, name: '开业纪念', repeat: 'once', monthDay: '', monthDayEnd: '', date: '2026-03-15', dateEnd: '2026-03-16', weekDays: [], enabled: true },
+      { id: 3, name: '月半特惠', repeat: 'monthly', monthDay: '15', monthDayEnd: '17', date: '', dateEnd: '', weekDays: [], enabled: true },
+      { id: 4, name: '周末狂欢', repeat: 'weekly', monthDay: '', monthDayEnd: '', date: '', dateEnd: '', weekDays: [6, 7], enabled: true }
+    ];
+    var PR_RULES = [
+      { id: 1, name: '晚市清货折扣', enabled: true, storeId: 'S2001', scopeType: 'category', scopeValues: ['蔬菜'],
+        validFrom: '2026-01-01', validTo: '2026-12-31',
+        main: { enabled: true, timeRanges: [{ start: '19:00', end: '21:00', actionType: 'discount', actionValue: 0.8 }] } },
+      { id: 2, name: '鲜果分时特价', enabled: true, storeId: 'S2002', scopeType: 'category', scopeValues: ['水果'],
+        validFrom: '2026-01-01', validTo: '2026-12-31',
+        main: { enabled: true, timeRanges: [
+          { start: '06:00', end: '12:00', actionType: 'discount', actionValue: 0.9 },
+          { start: '18:00', end: '22:00', actionType: 'discount', actionValue: 0.85 }
+        ] } },
+      { id: 3, name: '国庆大促', enabled: true, storeId: 'S2003', scopeType: 'goods', scopeValues: ['苹果（红富士）'],
+        validFrom: '2026-10-01', validTo: '2026-10-07',
+        main: { enabled: true, timeRanges: [{ start: '00:00', end: '23:59', actionType: 'price', actionValue: 8.9 }] } },
+      { id: 4, name: '周末狂欢折扣（限定节日生效）', enabled: true, storeId: 'S2004', scopeType: 'category', scopeValues: ['干货'],
+        validFrom: '2026-11-01', validTo: '2026-11-30',
+        holidayFilter: ['custom:4'],
+        main: { enabled: true, timeRanges: [{ start: '00:00', end: '23:59', actionType: 'discount', actionValue: 0.9 }] } },
+      { id: 5, name: '蛋品午后折扣', enabled: true, storeId: 'S2005', scopeType: 'goods', scopeValues: ['鲜鸡蛋（散装）'],
+        validFrom: '2026-01-01', validTo: '2026-12-31',
+        main: { enabled: true, timeRanges: [{ start: '10:00', end: '20:00', actionType: 'discount', actionValue: 0.95 }] } },
+      { id: 6, name: '年货节特惠（已结束示例）', enabled: true, storeId: 'S2006', scopeType: 'category', scopeValues: ['调味品'],
+        validFrom: '2026-02-01', validTo: '2026-02-17',
+        main: { enabled: true, timeRanges: [{ start: '00:00', end: '23:59', actionType: 'discount', actionValue: 0.85 }] } }
+    ];
+    // 代码内置默认数据（用于「恢复示例」）
+    var PR_RULES_DEFAULT = JSON.parse(JSON.stringify(PR_RULES));
+    var PR_CUSTOM_HOLIDAYS_DEFAULT = JSON.parse(JSON.stringify(PR_CUSTOM_HOLIDAYS));
+    // 已删除节日墓碑：仅用于历史活动回查（保留日期信息，使已配置活动不受影响）；不参与新建 / 管理列表
+    var PR_DELETED_HOLIDAYS = [];
+
+    // ---------- 本地缓存（localStorage） ----------
+    var PR_STORE_KEY = 'tcm_marketing_pr_v4';
+    function prLoadStore() {
+      try {
+        var raw = localStorage.getItem(PR_STORE_KEY);
+        if (raw) return JSON.parse(raw);
+      } catch (e) {}
+      return null;
+    }
+    function prSaveStore() {
+      try {
+        localStorage.setItem(PR_STORE_KEY, JSON.stringify({
+          rules: PR_RULES,
+          customHolidays: PR_CUSTOM_HOLIDAYS,
+          deletedHolidays: PR_DELETED_HOLIDAYS
+        }));
+      } catch (e) {}
+    }
+    (function prInitStore() {
+      var s = prLoadStore();
+      if (s) {
+        if (Array.isArray(s.rules)) PR_RULES = s.rules;
+        if (Array.isArray(s.customHolidays)) PR_CUSTOM_HOLIDAYS = s.customHolidays;
+        if (Array.isArray(s.deletedHolidays)) PR_DELETED_HOLIDAYS = s.deletedHolidays;
+      }
+      var sf = document.getElementById('prFilterStore'); if (sf) sf.innerHTML = prStoreOptions('');
+    })();
+
+    // ---------- 活动周期：flatpickr 双月范围选择器 ----------
+    var PR_DATE_PICKER = null;
+    (function prInitDateRange() {
+      var el = document.getElementById('prDateRange');
+      if (!el || typeof flatpickr === 'undefined') return;
+      PR_DATE_PICKER = flatpickr(el, {
+        mode: 'range',
+        showMonths: 2,
+        dateFormat: 'Y-m-d',
+        locale: 'zh',
+        allowInput: false,
+        clickOpens: true,
+        onChange: function(selectedDates, dateStr, instance) {
+          var fromEl = document.getElementById('prValidFrom');
+          var toEl = document.getElementById('prValidTo');
+          var clearEl = document.getElementById('prDateClear');
+          if (selectedDates.length >= 2) {
+            fromEl.value = instance.formatDate(selectedDates[0], 'Y-m-d');
+            toEl.value = instance.formatDate(selectedDates[1], 'Y-m-d');
+            if (clearEl) clearEl.style.display = 'inline';
+          } else if (selectedDates.length === 0) {
+            fromEl.value = '';
+            toEl.value = '';
+            if (clearEl) clearEl.style.display = 'none';
+          }
+          prRenderHolidayPicker(prReadHolidays());
+          prHolidayPeriodUI();
+        }
+      });
+      var trigger = document.getElementById('prDateTrigger');
+      if (trigger) trigger.addEventListener('click', function(e) {
+        if (e.target.id === 'prDateClear') return;
+        if (PR_DATE_PICKER) PR_DATE_PICKER.open();
+      });
+      var clearBtn = document.getElementById('prDateClear');
+      if (clearBtn) clearBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if (PR_DATE_PICKER) PR_DATE_PICKER.clear();
+        document.getElementById('prValidFrom').value = '';
+        document.getElementById('prValidTo').value = '';
+        clearBtn.style.display = 'none';
+        prRenderHolidayPicker(prReadHolidays());
+        prHolidayPeriodUI();
+      });
+    })();
+    window.prSyncDateRange = function() {
+      if (!PR_DATE_PICKER) return;
+      var from = document.getElementById('prValidFrom').value;
+      var to = document.getElementById('prValidTo').value;
+      var clearEl = document.getElementById('prDateClear');
+      if (from && to) {
+        PR_DATE_PICKER.setDate([from, to], false);
+        if (clearEl) clearEl.style.display = 'inline';
+      } else {
+        PR_DATE_PICKER.clear(false);
+        if (clearEl) clearEl.style.display = 'none';
+      }
+    };
+    window.prSyncFilterDateRange = function() {
+      if (!PR_FILTER_PICKER) return;
+      var from = document.getElementById('prFilterFrom').value;
+      var to = document.getElementById('prFilterTo').value;
+      var clearEl = document.getElementById('prFilterDateClear');
+      if (from && to) {
+        PR_FILTER_PICKER.setDate([from, to], false);
+        if (clearEl) clearEl.style.display = 'inline';
+      } else {
+        PR_FILTER_PICKER.clear(false);
+        if (clearEl) clearEl.style.display = 'none';
+      }
+    };
+
+    // ---------- 列表时间筛选：flatpickr 双月范围选择器 ----------
+    var PR_FILTER_PICKER = null;
+    (function prInitFilterDateRange() {
+      var el = document.getElementById('prFilterDateRange');
+      if (!el || typeof flatpickr === 'undefined') return;
+      PR_FILTER_PICKER = flatpickr(el, {
+        mode: 'range',
+        showMonths: 2,
+        dateFormat: 'Y-m-d',
+        locale: 'zh',
+        allowInput: false,
+        clickOpens: true,
+        onChange: function(selectedDates, dateStr, instance) {
+          var fromEl = document.getElementById('prFilterFrom');
+          var toEl = document.getElementById('prFilterTo');
+          var clearEl = document.getElementById('prFilterDateClear');
+          if (selectedDates.length >= 2) {
+            fromEl.value = instance.formatDate(selectedDates[0], 'Y-m-d');
+            toEl.value = instance.formatDate(selectedDates[1], 'Y-m-d');
+            if (clearEl) clearEl.style.display = 'inline';
+          } else if (selectedDates.length === 0) {
+            fromEl.value = '';
+            toEl.value = '';
+            if (clearEl) clearEl.style.display = 'none';
+          }
+        }
+      });
+      var trigger = document.getElementById('prFilterDateTrigger');
+      if (trigger) trigger.addEventListener('click', function(e) {
+        if (e.target.id === 'prFilterDateClear') return;
+        if (PR_FILTER_PICKER) PR_FILTER_PICKER.open();
+      });
+      var clearBtn = document.getElementById('prFilterDateClear');
+      if (clearBtn) clearBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if (PR_FILTER_PICKER) PR_FILTER_PICKER.clear();
+        document.getElementById('prFilterFrom').value = '';
+        document.getElementById('prFilterTo').value = '';
+        clearBtn.style.display = 'none';
+      });
+    })();
+
+    window.prSyncHoliDateRange = function() {
+      if (!PR_HOLI_DATE_PICKER) return;
+      var from = document.getElementById('prHoliDate').value;
+      var to = document.getElementById('prHoliDateEnd').value;
+      var clearEl = document.getElementById('prHoliDateClear');
+      if (from && to) {
+        PR_HOLI_DATE_PICKER.setDate([from, to], false);
+        if (clearEl) clearEl.style.display = 'inline';
+      } else {
+        PR_HOLI_DATE_PICKER.clear(false);
+        if (clearEl) clearEl.style.display = 'none';
+      }
+    };
+
+    // ---------- 节日单次：flatpickr 双月范围选择器 ----------
+    var PR_HOLI_DATE_PICKER = null;
+    (function prInitHoliDateRange() {
+      var el = document.getElementById('prHoliDateRange');
+      if (!el || typeof flatpickr === 'undefined') return;
+      PR_HOLI_DATE_PICKER = flatpickr(el, {
+        mode: 'range',
+        showMonths: 2,
+        dateFormat: 'Y-m-d',
+        locale: 'zh',
+        allowInput: false,
+        clickOpens: true,
+        onChange: function(selectedDates, dateStr, instance) {
+          var fromEl = document.getElementById('prHoliDate');
+          var toEl = document.getElementById('prHoliDateEnd');
+          var clearEl = document.getElementById('prHoliDateClear');
+          if (selectedDates.length >= 2) {
+            fromEl.value = instance.formatDate(selectedDates[0], 'Y-m-d');
+            toEl.value = instance.formatDate(selectedDates[1], 'Y-m-d');
+            if (clearEl) clearEl.style.display = 'inline';
+          } else if (selectedDates.length === 0) {
+            fromEl.value = '';
+            toEl.value = '';
+            if (clearEl) clearEl.style.display = 'none';
+          }
+        }
+      });
+      var trigger = document.getElementById('prHoliDateTrigger');
+      if (trigger) trigger.addEventListener('click', function(e) {
+        if (e.target.id === 'prHoliDateClear') return;
+        if (PR_HOLI_DATE_PICKER) PR_HOLI_DATE_PICKER.open();
+      });
+      var clearBtn = document.getElementById('prHoliDateClear');
+      if (clearBtn) clearBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if (PR_HOLI_DATE_PICKER) PR_HOLI_DATE_PICKER.clear();
+        document.getElementById('prHoliDate').value = '';
+        document.getElementById('prHoliDateEnd').value = '';
+        clearBtn.style.display = 'none';
+      });
+    })();
+
+    window.prRestoreDemo = function() {
+      if (!confirm('确认恢复为内置示例数据？本地新增/修改的活动与节日将被覆盖。')) return;
+      PR_RULES = JSON.parse(JSON.stringify(PR_RULES_DEFAULT));
+      PR_CUSTOM_HOLIDAYS = JSON.parse(JSON.stringify(PR_CUSTOM_HOLIDAYS_DEFAULT));
+      PR_DELETED_HOLIDAYS = [];
+      PR_HOLIDAY_OCC_CACHE = {};
+      prSaveStore();
+      prRenderRules();
+      if (document.getElementById('prHolidaysView').style.display !== 'none') prRenderHolidays();
+      showToast('已恢复示例数据');
+    };
+
+    var PR_FILTER = { status: 'all', keyword: '', store: '', from: '', to: '' };
+    function prStoreOptions(selected) {
+      var opts = '<option value="">全部门店</option>';
+      if (typeof STORE_DATA !== 'undefined') {
+        STORE_DATA.forEach(function(st) {
+          opts += '<option value="' + st.shopId + '"' + (st.shopId === selected ? ' selected' : '') + '>' + (st.shopShortName || st.shopId) + '</option>';
+        });
+      }
+      return opts;
+    }
+    function prModalStoreOptions(selected) {
+      var opts = '';
+      if (typeof STORE_DATA !== 'undefined') {
+        STORE_DATA.forEach(function(st) {
+          opts += '<option value="' + st.shopId + '"' + (st.shopId === selected ? ' selected' : '') + '>' + (st.shopShortName || st.shopId) + '</option>';
+        });
+      }
+      return opts;
+    }
+    function prStoreName(id) {
+      if (!id) return '<span style="color:#c0c4cc">-</span>';
+      if (typeof STORE_DATA === 'undefined') return id;
+      var f = STORE_DATA.filter(function(st){ return st.shopId === id; })[0];
+      return f ? (f.shopShortName || id) : id;
+    }
+    window.prSetStore = function(v) {
+      PR_FILTER.store = v;
+      prRenderRules();
+    }
+    var PR_SORT = { by: 'priority', dir: 'desc', active: false };  // 按复合优先级排序（点击表头切换）
+    var PR_SELECTED_IDS = new Set();   // 列表多选选中的活动 id 集合
+    var PR_EDITING_ID = null;   // null=新建
+    var PR_COPY_QUEUE = [];     // 复制活动草稿队列（内存，未落盘）；保存才真正新增
+    var PR_HOLI_EDITING_ID = null;
+
+    // ---------- 列表多选与批量操作 ----------
+    window.prSelectRow = function(id, checked) {
+      if (checked) {
+        PR_SELECTED_IDS.clear();            // 单选：勾选新行时清空其余已选
+        PR_SELECTED_IDS.add(id);
+      } else {
+        PR_SELECTED_IDS.delete(id);
+      }
+      // 同步所有行 checkbox 勾选态（其余自动取消勾选，确保始终仅一条）
+      document.querySelectorAll('#prRulesBody tr').forEach(function(row) {
+        var cb = row.querySelector('input[type=checkbox]');
+        if (cb) cb.checked = (+cb.value === id) && checked;
+      });
+      prUpdateSelectAllState();
+      prUpdateBatchBar();
+    };
+    function prUpdateSelectAllState() {
+      var allCb = document.getElementById('prSelectAll');
+      if (!allCb) return;
+      var rows = document.querySelectorAll('#prRulesBody tr');
+      var checkedCount = 0, total = 0;
+      rows.forEach(function(row) {
+        var cb = row.querySelector('input[type=checkbox]');
+        if (!cb) return;
+        total++;
+        if (cb.checked) checkedCount++;
+      });
+      allCb.checked = total > 0 && checkedCount === total;
+      allCb.indeterminate = checkedCount > 0 && checkedCount < total;
+    }
+    function prUpdateBatchBar() {
+      // 按钮始终可点击，未选中时点击会给出提示
+      ['prBatchEdit','prBatchCopy','prBatchEnable','prBatchDisable','prBatchDelete'].forEach(function(k){
+        var btn = document.getElementById(k);
+        if (btn) { btn.disabled = false; }
+      });
+    }
+    window.prBatchEdit = function() {
+      if (PR_SELECTED_IDS.size === 0) { showToast('请先选择要编辑的活动'); return; }
+      if (PR_SELECTED_IDS.size > 1) { showToast('一次只能编辑一条活动'); return; }
+      var id = Array.from(PR_SELECTED_IDS)[0];
+      prOpenRuleModal(id);
+    };
+    window.prBatchEnable = function() {
+      if (PR_SELECTED_IDS.size === 0) { showToast('请先选择要启用的活动'); return; }
+      if (PR_SELECTED_IDS.size > 1) { showToast('启用仅支持单条操作，请只勾选一条活动'); return; }
+      var names = [], skipped = 0, conflictNames = [], conflictDetail = '';
+      PR_RULES.forEach(function(r) {
+        if (!PR_SELECTED_IDS.has(r.id)) return;
+        if (r.enabled && !prPausing(r)) { skipped++; return; } // 已启用，跳过
+        var conflict = prCheckConflict(r);
+        if (conflict) { // 冲突项不启用，但与保存逻辑一致需明确告知原因
+          conflictNames.push(r.name);
+          if (!conflictDetail) conflictDetail = prFmtConflict(conflict, r);
+          return;
+        }
+        r.enabled = true; r.pauseBufferUntil = 0; names.push(r.name);
+      });
+      PR_SELECTED_IDS.clear();
+      prRenderRules(); prSaveStore(); prUpdateBatchBar();
+      var parts = [];
+      parts.push('已启用 ' + names.length + ' 条活动');
+      if (skipped) parts.push('跳过 ' + skipped + ' 条已启用');
+      if (conflictNames.length) {
+        parts.push(conflictNames.length + ' 条因冲突未启用（' + conflictNames.slice(0, 3).join('、') + (conflictNames.length > 3 ? ' 等' : '') + '）');
+        if (conflictDetail) parts.push(conflictDetail);
+      }
+      showToast(parts.join('；'));
+    };
+    window.prBatchDisable = function() {
+      if (PR_SELECTED_IDS.size === 0) { showToast('请先选择要停用的活动'); return; }
+      if (PR_SELECTED_IDS.size > 1) { showToast('停用仅支持单条操作，请只勾选一条活动'); return; }
+      var names = [], skipped = 0;
+      PR_RULES.forEach(function(r) {
+        if (!PR_SELECTED_IDS.has(r.id)) return;
+        if (r.enabled) { // 启用→停用：开新缓冲（与行内/保存一致）
+          r.enabled = false; r.pauseBufferUntil = Date.now() + PR_PAUSE_BUFFER_MS; names.push(r.name);
+        } else if (prPausing(r)) { // 已在缓冲中：保持原缓冲时钟（与保存一致，不重复起算）
+          names.push(r.name);
+        } else { skipped++; } // 已完全停用：跳过
+      });
+      PR_SELECTED_IDS.clear();
+      prRenderRules(); prSaveStore(); prUpdateBatchBar();
+      showToast('已停用 ' + names.length + ' 条活动' + (skipped ? ('，跳过 ' + skipped + ' 条已停用') : ''));
+    };
+    window.prBatchDelete = function() {
+      if (PR_SELECTED_IDS.size === 0) { showToast('请先选择要删除的活动'); return; }
+      if (PR_SELECTED_IDS.size > 1) { showToast('删除仅支持单条操作，请只勾选一条活动'); return; }
+      var ids = Array.from(PR_SELECTED_IDS);
+      var deletable = ids.filter(function(id) { var r = prFindRule(id); return r && prIsDeletable(r); });
+      var blocked = ids.filter(function(id) { return deletable.indexOf(id) < 0; });
+      if (deletable.length === 0) { showToast('所选活动均非「未开始」状态，不可删除（进行中 / 已结束活动不可删除）'); return; }
+      var msg = '确认删除选中的 ' + deletable.length + ' 条活动？删除后对应时段将恢复为基础价。';
+      if (blocked.length) msg += '（' + blocked.length + ' 条进行中 / 已结束已跳过）';
+      showConfirm(msg, function() {
+        deletable.forEach(function(id) {
+          for (var i = 0; i < PR_RULES.length; i++) {
+            if (PR_RULES[i].id === id) { PR_RULES.splice(i, 1); break; }
+          }
+        });
+        PR_SELECTED_IDS.clear();
+        prRenderRules(); prSaveStore(); prUpdateBatchBar();
+        showToast('已删除 ' + deletable.length + ' 条活动' + (blocked.length ? ('，跳过 ' + blocked.length + ' 条不可删除活动') : ''));
+      });
+      return;
+    };
+    window.prBatchCopy = function() {
+      if (PR_SELECTED_IDS.size === 0) { showToast('请先选择要复制的活动'); return; }
+      if (PR_SELECTED_IDS.size > 1) { showToast('复制仅支持单条操作，请只勾选一条活动'); return; }
+      var maxId = 0;
+      PR_RULES.forEach(function(r) { if (r.id > maxId) maxId = r.id; });
+      // 仅构建副本草稿（内存，不落盘）；保存时才真正新增
+      PR_COPY_QUEUE = [];
+      PR_SELECTED_IDS.forEach(function(id) {
+        var src = prFindRule(id);
+        if (!src) return;
+        maxId += 1;
+        PR_COPY_QUEUE.push({
+          id: maxId,
+          name: (src.name || '活动') + '（副本）',
+          enabled: false,            // 副本默认停用：时间字段已清空，需用户补填生效时间后才能启用
+          pauseBufferUntil: 0,
+          scopeType: src.scopeType,
+          scopeValues: JSON.parse(JSON.stringify(src.scopeValues || [])),
+          storeId: src.storeId,
+          validFrom: '',             // 清空时间维度
+          validTo: '',
+          holidayFilter: [],         // 节日=生效时间的一种形式，同属时间，清空
+          // 时段 start/end：清空（时间）；保留 actionType/actionValue（优惠类型与数值，非时间）
+          main: {
+            enabled: !!(src.main && src.main.enabled),
+            timeRanges: (src.main && src.main.timeRanges || []).map(function(tr) {
+              return { start: '', end: '', actionType: tr.actionType, actionValue: tr.actionValue };
+            })
+          }
+        });
+      });
+      PR_SELECTED_IDS.clear();
+      prUpdateBatchBar();
+      if (PR_COPY_QUEUE.length) prOpenRuleCopyModal(PR_COPY_QUEUE[0]);
+    };
+    window.prFilterStatusClick = function(el) {
+      document.querySelectorAll('#prFilterStatusTabs .gl-radio-btn').forEach(function(t) { t.classList.remove('active'); });
+      el.classList.add('active');
+      PR_FILTER.status = el.getAttribute('data-val');
+      PR_SELECTED_IDS.clear();
+      prRenderRules();
+      prUpdateBatchBar();
+    };
+
+    // ---------- 工具 ----------
+    function money(v) { return '¥' + Number(v).toFixed(2); }
+    function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    function showToast(msg) {
+      var t = document.getElementById('toast');
+      if (!t) return;
+      t.textContent = msg; t.classList.add('show');
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(function(){ t.classList.remove('show'); }, 2200);
+    }
+    function showConfirm(message, onYes) {
+      var old = document.getElementById('prConfirmOverlay');
+      if (old) old.remove();
+      var ov = document.createElement('div');
+      ov.id = 'prConfirmOverlay';
+      ov.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;z-index:9999';
+      ov.innerHTML = '<div style="background:#fff;border-radius:10px;width:min(380px,90vw);padding:22px 22px 16px;box-shadow:0 12px 40px rgba(0,0,0,.2)">' +
+        '<div style="font-size:14px;color:#0b1019;line-height:1.6;margin-bottom:18px">' + message + '</div>' +
+        '<div style="display:flex;justify-content:flex-end;gap:10px">' +
+        '<button id="prConfirmNo" style="height:34px;padding:0 18px;border:1px solid #d9dbde;background:#fff;border-radius:5px;font-size:13px;cursor:pointer;color:#4a5568">取消</button>' +
+        '<button id="prConfirmYes" style="height:34px;padding:0 18px;border:none;background:#005cf5;border-radius:5px;font-size:13px;cursor:pointer;color:#fff">确定</button>' +
+        '</div></div>';
+      document.body.appendChild(ov);
+      function close(){ if (ov.parentNode) ov.remove(); }
+      document.getElementById('prConfirmNo').onclick = close;
+      ov.onclick = function(e){ if (e.target === ov) close(); };
+      document.getElementById('prConfirmYes').onclick = function(){ close(); onYes(); };
+    }
+    function fmtDate(iso) { return iso ? iso.replace(/-/g, '.') : '—'; }
+    function isAllDay(r) { return r.start === '00:00' && r.end === '23:59'; }
+    function fmtTime(r) { return isAllDay(r) ? '全天' : r.start + '~' + r.end; }
+    function timeToMin(t) { var p = t.split(':'); return (+p[0]) * 60 + (+p[1]); }
+    function segsOf(r) {
+      var s = timeToMin(r.start), e = timeToMin(r.end);
+      return e > s ? [{ s: s, e: e }] : [{ s: s, e: 1440 }, { s: 0, e: e }];
+    }
+    function rangesOverlap(a, b, touch) {
+      var as = segsOf(a), bs = segsOf(b), i, j;
+      for (i = 0; i < as.length; i++) for (j = 0; j < bs.length; j++) {
+        // touch=true 时首尾相接（如 12:00 结束 与 12:00 开始）也判为重叠；跨规则冲突调用不传，保持严格
+        if (touch ? (as[i].s <= bs[j].e && bs[j].s <= as[i].e) : (as[i].s < bs[j].e && bs[j].s < as[i].e)) return true;
+      }
+      return false;
+    }
+
+    // ---------- 时间集合 & 跨规则冲突 ----------
+    function prParseDate(s) {
+      var p = s.split('-');
+      return { y: +p[0], m: +p[1], d: +p[2], jsDay: new Date(+p[0], +p[1] - 1, +p[2]).getDay() };
+    }
+    function prISO(dt) {
+      var m = dt.m < 10 ? '0' + dt.m : '' + dt.m;
+      var d = dt.d < 10 ? '0' + dt.d : '' + dt.d;
+      return dt.y + '-' + m + '-' + d;
+    }
+    function prAddDays(dt, n) { var nd = new Date(dt.y, dt.m - 1, dt.d + n); return { y: nd.getFullYear(), m: nd.getMonth() + 1, d: nd.getDate(), jsDay: nd.getDay() }; }
+    function prJsDayCode(jsDay) { return jsDay === 0 ? 7 : jsDay; } // 1=周一 .. 7=周日
+    function prHolidayHit(key, dt, ds) {
+      if (!key) return false;
+      if (key.indexOf('legal:') === 0) { var lh = legalHoliday(key.slice(6)); return lh ? lh.date === ds : false; }
+      if (key.indexOf('custom:') === 0) {
+        var ch = customHoliday(+key.slice(7)); if (!ch) return false;
+        if (ch.repeat === 'weekly') return (ch.weekDays || []).indexOf(prJsDayCode(dt.jsDay)) >= 0;
+        if (ch.repeat === 'monthly') return String(ch.monthDay) === String(dt.d);
+        if (ch.repeat === 'once') return ch.date === ds;
+        return ch.monthDay === ((dt.m < 10 ? '0' + dt.m : dt.m) + '-' + (dt.d < 10 ? '0' + dt.d : dt.d));
+      }
+      return false;
+    }
+    function prModeHit(dr, dt, ds) {
+      var v = dr.values;
+      switch (dr.mode) {
+        case 'daily': return true;
+        case 'single': return v && v.date === ds;
+        case 'weekly': return (v || []).indexOf(prJsDayCode(dt.jsDay)) >= 0;
+        case 'monthly': return (v || []).indexOf(dt.d) >= 0;
+        case 'yearly': return (v || []).indexOf((dt.m < 10 ? '0' + dt.m : dt.m) + '-' + (dt.d < 10 ? '0' + dt.d : dt.d)) >= 0;
+        case 'holiday': return prHolidayHit(v && v[0], dt, ds);
+        default: return false;
+      }
+    }
+    function prDateMatch(rule, ds) {
+      var dt = prParseDate(ds), drs = rule.dateRules;
+      if (!drs || !drs.length) return false;
+      for (var i = 0; i < drs.length; i++) if (prModeHit(drs[i], dt, ds)) return true;
+      return false;
+    }
+    function prTimeOverlapAny(a, b) {
+      for (var i = 0; i < a.length; i++) for (var j = 0; j < b.length; j++) if (rangesOverlap(a[i], b[j])) return true;
+      return false;
+    }
+    // ---------- 活动周期日期展开 ----------
+    // 节日仅作日期条件锚点，不再有提前/延后窗口
+    function prValidISO(d) {
+      var p = d.split('-');
+      if (p.length !== 3) return false;
+      var dt = new Date(+p[0], +p[1] - 1, +p[2]);
+      return dt.getFullYear() === +p[0] && dt.getMonth() === +p[1] - 1 && dt.getDate() === +p[2];
+    }
+    var PR_HOLIDAY_OCC_CACHE = {};
+    // 法定节假日发生日（含区间展开）
+    function prLegalOcc(lh) {
+      return (lh.end && lh.end > lh.date) ? prDaysInRange(lh.date, lh.end) : [lh.date];
+    }
+    // 自定义节假日发生日：yearly/monthly/weekly/once 全部展开
+    function prCustomOcc(ch) {
+      var occ = [];
+      [2024, 2025, 2026, 2027, 2028, 2029, 2030].forEach(function(y) {
+        if (ch.repeat === 'yearly') {
+          if (ch.monthDay) {
+            var ys = y + '-' + ch.monthDay;
+            var ye = y + '-' + (ch.monthDayEnd && ch.monthDayEnd >= ch.monthDay ? ch.monthDayEnd : ch.monthDay);
+            if (prValidISO(ys) && prValidISO(ye)) occ = occ.concat(prDaysInRange(ys, ye));
+          }
+        } else if (ch.repeat === 'once') {
+          if (ch.date) occ = (ch.dateEnd && ch.dateEnd > ch.date) ? prDaysInRange(ch.date, ch.dateEnd) : [ch.date];
+        } else if (ch.repeat === 'monthly') {
+          var day = +ch.monthDay, dayEnd = (ch.monthDayEnd && +ch.monthDayEnd >= +ch.monthDay) ? +ch.monthDayEnd : day;
+          for (var m = 1; m <= 12; m++) {
+            for (var dd = day; dd <= dayEnd; dd++) {
+              var d2 = y + '-' + (m < 10 ? '0' + m : m) + '-' + (dd < 10 ? '0' + dd : dd);
+              if (prValidISO(d2)) occ.push(d2);
+            }
+          }
+        } else if (ch.repeat === 'weekly') {
+          var cur = prParseDate(y + '-01-01'), end = prParseDate(y + '-12-31'), g = 0;
+          while ((cur.y <= end.y || (cur.y === end.y && cur.m <= end.m)) && g < 400) {
+            g++;
+            if ((ch.weekDays || []).indexOf(prJsDayCode(cur.jsDay)) >= 0) occ.push(prISO(cur));
+            cur = prAddDays(cur, 1);
+          }
+        }
+      });
+      return occ;
+    }
+    function prHolidayOccurrences(key) {
+      if (PR_HOLIDAY_OCC_CACHE[key]) return PR_HOLIDAY_OCC_CACHE[key];
+      var occ = [];
+      if (key.indexOf('legal:') === 0) {
+        var lh = legalHoliday(key.slice(6));
+        if (lh) occ = prLegalOcc(lh);
+      } else if (key.indexOf('custom:') === 0) {
+        var ch = customHoliday(+key.slice(7));
+        if (ch) occ = prCustomOcc(ch);
+      }
+      PR_HOLIDAY_OCC_CACHE[key] = occ;
+      return occ;
+    }
+    // 判断某节日是否落在当前活动周期内（任一发生日相交即启用；无周期则全部启用）
+    function prHolidayOverlapsPeriod(key, periodFrom, periodTo) {
+      if (!periodFrom || !periodTo) return true;
+      var occ = prHolidayOccurrences(key);
+      if (!occ || !occ.length) return false;
+      for (var i = 0; i < occ.length; i++) {
+        var d = occ[i];
+        if (d >= periodFrom && d <= periodTo) return true;
+      }
+      return false;
+    }
+    // 一条规则活动期间的生效日期集合：
+    //   - 固定模式：日期 = rule.validFrom ~ rule.validTo；
+    //   - 限定节日模式：日期 = 所选节日的逐日发生日（多天节日按区间展开）；
+    //   - 返回 { 日期 -> [时段窗口...] }，供跨规则按日比对。
+    function prSegActiveDays(seg, rule) {
+      if (!seg || !seg.enabled) return null;
+      if (rule.holidayFilter && rule.holidayFilter.length) {
+        var occ = [];
+        rule.holidayFilter.forEach(function(k) { occ = occ.concat(prHolidayOccurrences(k)); });
+        // 节日模式也受活动周期限定窗口约束：仅保留窗口内的节日发生日
+        if (rule.validFrom && rule.validTo) occ = occ.filter(function(d) { return d >= rule.validFrom && d <= rule.validTo; });
+        var set = {};
+        occ.forEach(function(d) { set[d] = 1; });
+        return set; // { 日期: 1 }
+      }
+      var f = rule.validFrom, t = rule.validTo;
+      if (!f || !t) return null;
+      return { range: [f, t] };
+    }
+    function prDaysInRange(f, t) {
+      var out = [], cur = prParseDate(f), end = prParseDate(t), g = 0;
+      while ((cur.y < end.y || (cur.y === end.y && (cur.m < end.m || (cur.m === end.m && cur.d <= end.d)))) && g < 4000) {
+        g++; out.push(prISO(cur)); cur = prAddDays(cur, 1);
+      }
+      return out;
+    }
+    function prRuleDayWindows(rule) {
+      var map = {};
+      ['main'].forEach(function(ph) {
+        var res = prSegActiveDays(rule[ph], rule);
+        if (!res) return;
+        var dates = res.range ? prDaysInRange(res.range[0], res.range[1]) : Object.keys(res);
+        dates.forEach(function(ds) {
+          if (!map[ds]) map[ds] = [];
+          (rule[ph].timeRanges || []).forEach(function(tr) { map[ds].push(tr); });
+        });
+      });
+      return map;
+    }
+    // 跨规则时间重叠：活动周期有交集的日期上，且同日生效分段时段窗口重叠 → 冲突
+    function prRulesTimeOverlap(a, b) {
+      var ma = prRuleDayWindows(a), mb = prRuleDayWindows(b);
+      for (var ds in ma) {
+        if (!mb[ds]) continue;
+        if (prTimeOverlapAny(ma[ds], mb[ds])) return true;
+      }
+      return false;
+    }
+    // 同级范围交集：仅当两规则 scopeType 相同时比对 scopeValues（单品↔单品、分类↔分类、全店↔全店），
+    // 跨级（如分类 vs 其旗下单品）不比对，故不再视为冲突。
+    function prScopeOverlap(a, b) {
+      if (a.scopeType !== b.scopeType) return [];
+      if (a.scopeType === 'all') return ['全店'];
+      var va = a.scopeValues || [], vb = b.scopeValues || [];
+      var inter = [];
+      for (var i = 0; i < va.length; i++) if (vb.indexOf(va[i]) >= 0 && inter.indexOf(va[i]) < 0) inter.push(va[i]);
+      return inter;
+    }
+    // ---------- 活动优先级（两组：优先时间，其次商品） ----------
+    // 时间组：节假日 > 普通日期；节假日内 单次 > 每年 > 每月 > 每周；每年中 自定义 > 法定
+    function prRuleTimeTier(rule) {
+      if (rule.holidayFilter && rule.holidayFilter.length) {
+        var k = rule.holidayFilter[0];
+        if (k.indexOf('custom:') === 0) {
+          var ch = customHoliday(+k.slice(7));
+          if (ch) {
+            if (ch.repeat === 'once') return 6;       // 自定义·单次 最高
+            if (ch.repeat === 'yearly') return 5;      // 自定义·每年 > 法定每年
+            if (ch.repeat === 'monthly') return 3;
+            if (ch.repeat === 'weekly') return 2;
+          }
+        }
+        return 4; // 法定节假日 = 每年固定日期（低于自定义每年）
+      }
+      return 1; // 普通日期 最低
+    }
+    // 商品组：单品 > 分类 > 全店
+    function prRuleProductTier(rule) {
+      if (rule.scopeType === 'goods') return 2;
+      if (rule.scopeType === 'all') return 0;
+      return 1; // category
+    }
+    function prRulePriority(rule) { return { time: prRuleTimeTier(rule), product: prRuleProductTier(rule) }; }
+    // 复合优先级分：time 为主维度、product 为次维度（仅当 time 相同时才比 product），单一整数可直接排序（越大越优先）
+    function prPriorityScore(rule) { var p = prRulePriority(rule); return p.time * 10 + p.product; }
+    // >0：a 优先于 b；<0：b 优先于 a；0：同级（无法自动裁决）
+    function prPriorityCmp(a, b) {
+      if (a.time !== b.time) return a.time - b.time;
+      return a.product - b.product;
+    }
+    // 跨规则冲突（硬约束）：同一时间内，相同「单品」或相同「分类」不可重复出现在多个活动中。
+    // 仅按同级范围比对（单品↔单品、分类↔分类），不再将分类展开为其旗下单品，
+    // 因此「分类活动」与「该分类下的单品活动」不再判为冲突；无论优先级高低，命中即拦截。
+    function prCheckConflict(rule) {
+      var ra = { scopeType: rule.scopeType, scopeValues: rule.scopeValues };
+      for (var i = 0; i < PR_RULES.length; i++) {
+        var o = PR_RULES[i];
+        if (o.id === rule.id) continue;
+        if (!o.enabled) continue;
+        if (!prActive(o)) continue; // 仅「已完全停用（过缓冲）」的活动不拦新活动；停用缓冲期仍生效，需避让
+        if (prRuleTimeTier(rule) !== prRuleTimeTier(o)) continue; // 跨时间档（普通日期 vs 特殊日期等）由优先级裁决，不硬冲突
+        var rb = { scopeType: o.scopeType, scopeValues: o.scopeValues };
+        var inter = prScopeOverlap(ra, rb);
+        if (!inter.length) continue;
+        if (!prRulesTimeOverlap(o, rule)) continue;
+        return { rule: o, overlap: inter, relation: 'tie' };
+      }
+      return null;
+    }
+    function prFmtConflict(conflict, currentRule) {
+      var names = conflict.overlap;
+      var shown = names.slice(0, 3).join('、') + (names.length > 3 ? ' 等 ' + names.length + ' 个' : '');
+      var otherTier = prTimeTierLabel(conflict.rule);
+      var curTier = currentRule ? prTimeTierLabel(currentRule) : '';
+      return '与活动「' + conflict.rule.name + '」(' + otherTier + ') 存在相同商品/分类且时间重叠（' + shown + '），请调整周期或范围' +
+        (curTier ? ' [当前：' + curTier + ']' : '');
+    }
+
+    // ---------- 节日工具 ----------
+    function legalHoliday(name) {
+      for (var i = 0; i < PR_LEGAL_HOLIDAYS.length; i++) if (PR_LEGAL_HOLIDAYS[i].name === name) return PR_LEGAL_HOLIDAYS[i];
+      return null;
+    }
+    function customHoliday(id) {
+      for (var i = 0; i < PR_CUSTOM_HOLIDAYS.length; i++) if (PR_CUSTOM_HOLIDAYS[i].id === id) return PR_CUSTOM_HOLIDAYS[i];
+      for (var j = 0; j < PR_DELETED_HOLIDAYS.length; j++) if (PR_DELETED_HOLIDAYS[j].id === id) return PR_DELETED_HOLIDAYS[j];
+      return null;
+    }
+    function holidayLabel(key) {
+      if (key.indexOf('legal:') === 0) {
+        var lh = legalHoliday(key.slice(6));
+        return lh ? '法定·' + lh.name + '（' + fmtHoliRange(lh.date, lh.end) + '）' : key;
+      }
+      if (key.indexOf('custom:') === 0) {
+        var ch = customHoliday(+key.slice(7));
+        if (!ch) return '自定义·（未知节日）';
+        if (ch.deleted) return '自定义·' + ch.name + '（' + holidayWindow(ch) + '，已删除）';
+        return '自定义·' + ch.name + '（' + holidayWindow(ch) + '）';
+      }
+      return key;
+    }
+    function fmtHoliRange(from, to) {
+      if (!from) return '';
+      return (to && to > from) ? fmtDate(from) + ' ~ ' + fmtDate(to) : fmtDate(from);
+    }
+    // 把 "11-18" / "11-18~11-20" 这类 M-D 写法格式化为「11月18号」「11月18~20号」
+    function mdToCN(md) {
+      if (!md) return '';
+      var p = md.split('-');
+      return (parseInt(p[0], 10) || 0) + '月' + (parseInt(p[1], 10) || 0) + '号';
+    }
+    function holidayWindow(ch) {
+      if (!ch) return '';
+      var s = '';
+      if (ch.repeat === 'weekly') {
+        var W = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+        var wd = (ch.weekDays || []).map(function(v) { return W[v - 1]; }).join('、');
+        s = '每周 ' + wd;
+      } else if (ch.repeat === 'monthly') {
+        var md = ch.monthDay || '';
+        var mde = (ch.monthDayEnd && ch.monthDayEnd !== ch.monthDay) ? '~' + ch.monthDayEnd : '';
+        s = '每月 ' + md + mde + ' 号';
+      } else if (ch.repeat === 'once') {
+        var d = (ch.date || '').split('-');
+        s = mdToCN(d[1] + '-' + d[2]);
+        if (ch.dateEnd && ch.dateEnd > ch.date) { var e = ch.dateEnd.split('-'); s += '~' + mdToCN(e[1] + '-' + e[2]); }
+        if (d[0]) s = d[0] + '年' + s;
+      } else {
+        var ymd = ch.monthDay || '';
+        var ymde = (ch.monthDayEnd && ch.monthDayEnd !== ch.monthDay) ? ch.monthDayEnd : '';
+        s = '每年 ' + mdToCN(ymd) + (ymde ? '~' + mdToCN(ymde) : '');
+      }
+      return s;
+    }
+    // 节日级日期冲突：仅校验「同类型」自定义节日之间的重叠（跨类型 单次/每年/每月/每周 允许重叠，由活动优先级裁决）
+    // 单次(含法定一次性)不校验；每年之间不可交叉、每月之间不可交叉、每周之间不可交叉
+    function prMDtoNum(s) { if (!s || s.indexOf('-') < 0) return 0; var p = s.split('-'); return (+p[0]) * 100 + (+p[1]); }
+    function prRangesOverlapNum(aS, aE, bS, bE, max) {
+      function spans(s, e) { return (s <= e) ? [[s, e]] : [[s, max], [1, e]]; }
+      var A = spans(aS, aE), B = spans(bS, bE);
+      for (var i = 0; i < A.length; i++) for (var j = 0; j < B.length; j++) {
+        if (A[i][0] <= B[j][1] && B[j][0] <= A[i][1]) return true;
+      }
+      return false;
+    }
+    function prHolidayConflict(cand) {
+      if (cand.repeat === 'once') return [];   // 单次（含法定一次性）不校验
+      var out = [];
+      PR_CUSTOM_HOLIDAYS.forEach(function(o) {
+        if (cand.id !== undefined && o.id === cand.id) return;
+        if (o.repeat !== cand.repeat) return;  // 只比同类型
+        var hit = false;
+        if (cand.repeat === 'weekly') {
+          var a = cand.weekDays || [], b = o.weekDays || [];
+          hit = a.some(function(d) { return b.indexOf(d) >= 0; });
+        } else if (cand.repeat === 'yearly') {
+          hit = prRangesOverlapNum(prMDtoNum(cand.monthDay), prMDtoNum(cand.monthDayEnd || cand.monthDay), prMDtoNum(o.monthDay), prMDtoNum(o.monthDayEnd || o.monthDay), 1231);
+        } else if (cand.repeat === 'monthly') {
+          hit = prRangesOverlapNum(+cand.monthDay, +(cand.monthDayEnd || cand.monthDay), +o.monthDay, +(o.monthDayEnd || o.monthDay), 31);
+        }
+        if (hit) out.push('自定义·' + o.name + '（' + holidayWindow(o) + '）');
+      });
+      return out;
+    }
+
+    // ---------- 摘要格式化 ----------
+    function fmtScope(rule) {
+      if (rule.scopeType === 'category') return '分类·' + rule.scopeValues.join('、');
+      return '单品·' + rule.scopeValues.length + ' 个';
+    }
+    function prTimeTierLabel(r) {
+      if (r.holidayFilter && r.holidayFilter.length) {
+        var k = r.holidayFilter[0];
+        if (k.indexOf('custom:') === 0) {
+          var ch = customHoliday(+k.slice(7));
+          if (ch) {
+            if (ch.repeat === 'once') return '节假日·单次';
+            if (ch.repeat === 'yearly') return '节假日·每年(自定义)';
+            if (ch.repeat === 'monthly') return '节假日·每月';
+            if (ch.repeat === 'weekly') return '节假日·每周';
+          }
+        }
+        return '节假日·每年(法定)'; // 法定
+      }
+      return '普通日期';
+    }
+    // 双维度优先级标签：主维度=周期序(1最高)，次维度=商品档(高/中/低，仅周期性相同时才生效)；编码如「2·高」
+    function prPriorityTag(r) {
+      var timeT = prRuleTimeTier(r);
+      var periodRank = 7 - timeT;                 // 1=最高优先级
+      var pLevel = r.scopeType === 'goods' ? '高' : (r.scopeType === 'all' ? '低' : '中');
+      var pColor = r.scopeType === 'goods' ? '#1a56c4' : (r.scopeType === 'all' ? '#8a94a6' : '#0b7a4d');
+      var pText = r.scopeType === 'goods' ? '单品·高' : (r.scopeType === 'all' ? '全店·低' : '分类·中');
+      var t = prTimeTierLabel(r);
+      return '<div style="line-height:1.5">'
+        + '<span style="color:#b25b00;font-weight:600">' + periodRank + '·' + pLevel + '</span>'
+        + ' <span style="color:#8a94a6">' + t + '</span>'
+        + '<br><span style="color:' + pColor + '">' + pText + '</span></div>';
+    }
+    function fmtTimeList(trs) { return (trs || []).map(fmtTime).join('、'); }
+    function fmtStageAction(seg) {
+      if (!seg) return '—';
+      if (seg.actionType === 'price') return '直价 ' + money(seg.actionValue);
+      if (seg.actionType === 'reduce') return '立减 ' + money(seg.actionValue);
+      var d = seg.actionValue * 10;
+      return (d % 1 === 0 ? d : d.toFixed(1)) + ' 折';
+    }
+    function prActiveSegs(r) {
+      return ['活动期间'];
+    }
+    function fmtValid(rule) {
+      if (rule.holidayFilter && rule.holidayFilter.length) return '节日周期：' + rule.holidayFilter.map(holidayLabel).join('、');
+      if (!rule.validFrom && !rule.validTo) return '—';
+      return fmtDate(rule.validFrom) + ' ~ ' + fmtDate(rule.validTo);
+    }
+    // 列表「时段与优惠」列：逐时段展示 时段 → 优惠
+    function fmtPlan(rule) {
+      var trs = (rule.main && rule.main.timeRanges) || [];
+      if (!trs.length) return '<span style="color:#8a94a6">未设置</span>';
+      return trs.map(function(tr) {
+        return fmtTime(tr) + ' → ' + fmtStageAction(tr);
+      }).join('<br>');
+    }
+
+    // ---------- Tab 切换 ----------
+    window.prOpenHolidayManage = function() {
+      prRenderHolidays();
+      document.getElementById('prHolidayManageModal').style.display = 'flex';
+    };
+    window.prCloseHolidayManage = function() {
+      document.getElementById('prHolidayManageModal').style.display = 'none';
+    };
+
+    // ---------- 停用带结算缓冲（活动停用后，缓冲期内已在结算/购物车的商品仍按原活动结算，不受影响） ----------
+    var PR_PAUSE_BUFFER_MS = 5 * 60 * 1000; // 停用缓冲期：5 分钟（仅逻辑生效，界面不展示缓冲状态）
+    function prFindRule(id) {
+      for (var i = 0; i < PR_RULES.length; i++) if (PR_RULES[i].id === id) return PR_RULES[i];
+      return null;
+    }
+    // 缓冲期内（停用后尚未到点的窗口）：活动仍算「生效」，以保护已在结算/购物车中的商品
+    function prPausing(r) {
+      return !!(r && r.pauseBufferUntil && Date.now() < r.pauseBufferUntil);
+    }
+    // 当前是否仍作为生效活动（启用中，或停用缓冲期内）：用于生效来源 / 冲突校验 / 删除守卫
+    function prActive(r) {
+      return !!(r && (r.enabled || prPausing(r)));
+    }
+    function prBufferRemaining(r) {
+      if (!r || !r.pauseBufferUntil) return 0;
+      return Math.max(0, r.pauseBufferUntil - Date.now());
+    }
+    function prFmtBuffer(ms) {
+      var s = Math.ceil(ms / 1000), m = Math.floor(s / 60), ss = s % 60;
+      return m + '分' + (ss < 10 ? '0' + ss : ss) + '秒';
+    }
+    function prStatusCell(r) {
+      // 列表「启用/停用」操作按钮：点击在 启用↔停用 间切换，与弹窗保存逻辑一致
+      // 停用后内部仍有结算缓冲保护期（已在结算/购物车的商品仍按原活动结算），仅逻辑生效、界面不展示缓冲状态
+      var cls = r.enabled ? 'on' : 'off';
+      var label = r.enabled ? '启用' : '停用';
+      return '<button type="button" class="pr-status-btn pr-status ' + cls + '" title="点击切换启用/停用" onclick="event.stopPropagation();prToggle(' + r.id + ')"><span class="dot"></span>' + label + '</button>';
+    }
+    // ---------- 活动状态（生命周期） ----------
+    function prTodayISO() {
+      var n = new Date();
+      var m = (n.getMonth() + 1 < 10 ? '0' : '') + (n.getMonth() + 1);
+      var d = (n.getDate() < 10 ? '0' : '') + n.getDate();
+      return n.getFullYear() + '-' + m + '-' + d;
+    }
+    function prRuleActivityWindow(rule) {
+      if (rule.validFrom && rule.validTo) return { from: rule.validFrom, to: rule.validTo };
+      if (rule.holidayFilter && rule.holidayFilter.length) {
+        var occ = [];
+        rule.holidayFilter.forEach(function(k) { occ = occ.concat(prHolidayOccurrences(k)); });
+        if (occ.length) { occ.sort(); return { from: occ[0], to: occ[occ.length - 1] }; }
+      }
+      return null;
+    }
+    // 活动状态：未开始 / 进行中 / 已结束（基于活动周期与当前日期）
+    function prActivityStatus(rule) {
+      var w = prRuleActivityWindow(rule);
+      if (!w) return null;
+      var now = prTodayISO();
+      if (now < w.from) return 'upcoming';
+      if (now > w.to) return 'ended';
+      return 'active';
+    }
+    function prRuleLockState(rule) {
+      var s = prActivityStatus(rule);
+      return (s === null) ? 'upcoming' : s; // 无周期（如副本）按未开始处理，可编辑
+    }
+    function prIsDeletable(rule) {
+      var s = prActivityStatus(rule);
+      return s !== 'active' && s !== 'ended'; // 仅未开始（及无周期）可删除
+    }
+    function prStatusLabel(s) {
+      return s === 'upcoming' ? '未开始' : (s === 'active' ? '进行中' : (s === 'ended' ? '已结束' : '—'));
+    }
+    function prDateOverlap(aF, aT, bF, bT) {
+      return aF <= bT && bF <= aT; // 两个区间任一整天重叠即命中
+    }
+    function prActivityStatusCell(r) {
+      var s = prActivityStatus(r);
+      if (s === 'upcoming') return '<span class="pr-astatus up">未开始</span>';
+      if (s === 'active') return '<span class="pr-astatus ac">进行中</span>';
+      if (s === 'ended') return '<span class="pr-astatus ed">已结束</span>';
+      return '<span class="pr-astatus ed">—</span>';
+    }
+    function prNowStr() {
+      var n = new Date();
+      function p(v) { return (v < 10 ? '0' : '') + v; }
+      return n.getFullYear() + '-' + p(n.getMonth() + 1) + '-' + p(n.getDate()) + ' ' + p(n.getHours()) + ':' + p(n.getMinutes());
+    }
+    // 进行中：锁定活动周期 / 节日 / 优惠时段 / 范围类型，仅可增减范围商品；已结束：全字段锁定
+    function prApplyStatusLock(status) {
+      var lockEdit = (status === 'active' || status === 'ended');
+      var ended = (status === 'ended');
+      var vf = document.getElementById('prValidFrom'), vt = document.getElementById('prValidTo');
+      if (vf) vf.disabled = lockEdit;
+      if (vt) vt.disabled = lockEdit;
+
+      // 锁定的区域统一加置灰 class
+      var lockTargets = ['prStoreSelectWrap', 'prFixedPeriodRow', 'prHolidayPicker', 'prScopeTypeTabs'];
+      lockTargets.forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) el.classList.toggle('pr-locked', lockEdit);
+      });
+      var st = document.getElementById('prStoreSelect'); if (st) st.disabled = lockEdit;
+      var seg = document.querySelector('.pr-seg');
+      if (seg) seg.classList.toggle('pr-locked', lockEdit);
+
+      document.querySelectorAll('.pr-seg-times[data-seg=main] .pr-time-row').forEach(function(row) {
+        row.querySelectorAll('input,select,button').forEach(function(el) { el.disabled = lockEdit; });
+      });
+      document.querySelectorAll('#prCategoryList input[type=checkbox], #prGoodsList input[type=checkbox]').forEach(function(cb) { cb.disabled = ended; });
+      var nm = document.getElementById('prName'); if (nm) nm.disabled = lockEdit;
+      var en = document.getElementById('prEnabled'); if (en) en.disabled = ended;
+      var note = document.getElementById('prStatusLockNote');
+      if (note) {
+        if (status === 'active') {
+          note.style.display = 'block'; note.className = 'pr-lock-note';
+          note.textContent = '该活动进行中：活动周期、节日、优惠时段及范围类型不可修改；仅可增减生效范围内的商品 / 分类，且改动将记入「修改记录」。';
+        } else if (status === 'ended') {
+          note.style.display = 'block'; note.className = 'pr-lock-note ended';
+          note.textContent = '该活动已结束，不可修改。';
+        } else {
+          note.style.display = 'none'; note.textContent = '';
+        }
+      }
+    }
+    function prDescribeChanges(oldR, newR) {
+      var lines = [];
+      if (oldR.name !== newR.name) lines.push('名称：' + oldR.name + ' → ' + newR.name);
+      if (oldR.scopeType !== newR.scopeType) lines.push('范围类型：' + (oldR.scopeType === 'goods' ? '单品' : '分类') + ' → ' + (newR.scopeType === 'goods' ? '单品' : '分类'));
+      var oldS = oldR.scopeValues || [], newS = newR.scopeValues || [];
+      var added = newS.filter(function(x) { return oldS.indexOf(x) < 0; });
+      var removed = oldS.filter(function(x) { return newS.indexOf(x) < 0; });
+      if (added.length) lines.push('新增范围：' + added.join('、'));
+      if (removed.length) lines.push('移除范围：' + removed.join('、'));
+      if (oldR.validFrom !== newR.validFrom || oldR.validTo !== newR.validTo) lines.push('活动周期：' + (oldR.validFrom || '?') + '~' + (oldR.validTo || '?') + ' → ' + (newR.validFrom || '?') + '~' + (newR.validTo || '?'));
+      var oh = (oldR.holidayFilter || []).join(','), nh = (newR.holidayFilter || []).join(',');
+      if (oh !== nh) lines.push('节日筛选变更');
+      var oa = JSON.stringify(oldR.main && oldR.main.timeRanges || []), na = JSON.stringify(newR.main && newR.main.timeRanges || []);
+      if (oa !== na) lines.push('优惠时段变更');
+      if (!!oldR.enabled !== !!newR.enabled) lines.push(newR.enabled ? '已启用' : '已停用');
+      return lines;
+    }
+    function prRenderChangelog(r) {
+      var box = document.getElementById('prChangelogBox');
+      if (!box) return;
+      if (!r || !r.changelog || !r.changelog.length) { box.style.display = 'none'; box.innerHTML = ''; return; }
+      box.style.display = 'block';
+      box.innerHTML = '<div class="pr-sec-label"><span class="n">★</span> 修改记录</div>' +
+        '<div class="pr-changelog">' + r.changelog.map(function(e) {
+          return '<div class="pr-cl-item"><span class="pr-cl-ts">' + esc(e.ts) + '</span><span class="pr-cl-desc">' + esc(e.desc) + '</span></div>';
+        }).join('') + '</div>';
+    }
+    // ---------- 活动列表 ----------
+    function prRenderRules() {
+      var kw = PR_FILTER.keyword.trim();
+      var rows = PR_RULES.filter(function(r) {
+        if (PR_FILTER.status === 'on' && !r.enabled) return false;
+        if (PR_FILTER.status === 'off' && r.enabled) return false;
+        if (kw) {
+          var hay = (r.name + ' ' + fmtScope(r) + ' ' + fmtValid(r) + ' ' + fmtPlan(r)).toLowerCase();
+          if (hay.indexOf(kw.toLowerCase()) < 0) return false;
+        }
+        if (PR_FILTER.store && r.storeId !== PR_FILTER.store) return false;
+        if (PR_FILTER.from && PR_FILTER.to) {
+          var aw = prRuleActivityWindow(r);
+          if (!aw || !prDateOverlap(PR_FILTER.from, PR_FILTER.to, aw.from, aw.to)) return false;
+        }
+        return true;
+      });
+      var body = document.getElementById('prRulesBody');
+      if (PR_SORT.active) {
+        rows.sort(function(a, b) {
+          var d = prPriorityScore(b) - prPriorityScore(a);
+          if (PR_SORT.dir === 'asc') d = -d;
+          return d;
+        });
+      }
+      if (!rows.length) {
+        body.innerHTML = '<tr class="pr-empty-row"><td colspan="9" style="text-align:center;color:#8a94a6;height:120px;pointer-events:none;cursor:default;-webkit-user-select:none;user-select:none">暂无匹配的活动</td></tr>';
+        return;
+      }
+      body.innerHTML = rows.map(function(r) {
+        var sel = PR_SELECTED_IDS.has(r.id);
+        return '<tr class="' + (sel ? 'pr-selected-row' : '') + '" onclick="prSelectRow(' + r.id + ')">' +
+          '<td style="text-align:center" onclick="event.stopPropagation()"><input type="checkbox" value="' + r.id + '" ' + (sel ? 'checked' : '') + ' onchange="prSelectRow(' + r.id + ', this.checked)"></td>' +
+          '<td style="font-weight:600">' + esc(r.name) + '</td>' +
+          '<td>' + fmtScope(r) + '</td>' +
+          '<td>' + prPriorityTag(r) + '</td>' +
+          '<td style="font-size:11px;color:#4a5568;white-space:nowrap">' + fmtValid(r) + '</td>' +
+          '<td style="font-size:11px;color:#4a5568;line-height:1.7">' + fmtPlan(r) + '</td>' +
+          '<td style="font-size:11px;color:#666">' + prStoreName(r.storeId) + '</td>' +
+          '<td>' + prStatusCell(r) + '</td>' +
+          '<td>' + prActivityStatusCell(r) + '</td>' +
+        '</tr>';
+      }).join('');
+      var ind = document.getElementById('prSortInd');
+      if (ind) ind.textContent = PR_SORT.active ? (PR_SORT.dir === 'desc' ? '▼ 高→低' : '▲ 低→高') : '';
+      prUpdateBatchBar();
+      prUpdateSelectAllState();
+    }
+    window.prToggleSort = function() {
+      if (!PR_SORT.active) { PR_SORT.active = true; PR_SORT.dir = 'desc'; }
+      else { PR_SORT.dir = (PR_SORT.dir === 'desc') ? 'asc' : 'desc'; }
+      prRenderRules();
+    };
+    window.prToggle = function(id) {
+      var r = null;
+      for (var i = 0; i < PR_RULES.length; i++) if (PR_RULES[i].id === id) { r = PR_RULES[i]; break; }
+      if (!r) return;
+      if (r.enabled) {
+        // 停用：进入缓冲期，缓冲内已在结算/购物车的商品仍按原活动结算（不受影响）
+        r.enabled = false;
+        r.pauseBufferUntil = Date.now() + PR_PAUSE_BUFFER_MS;
+        prRenderRules(); prSaveStore();
+        showToast('活动「' + r.name + '」已停用');
+      } else {
+        // 启用：立即生效，清掉缓冲；与保存逻辑一致需先校验冲突
+        var conflict = prCheckConflict(r);
+        if (conflict) { showToast(prFmtConflict(conflict, r)); return; }
+        r.enabled = true; r.pauseBufferUntil = 0;
+        prRenderRules(); prSaveStore();
+        showToast('活动「' + r.name + '」已启用');
+      }
+    };
+    window.prDelete = function(id) {
+      var r = null, i;
+      for (i = 0; i < PR_RULES.length; i++) if (PR_RULES[i].id === id) { r = PR_RULES[i]; break; }
+      if (!r) return;
+      if (!prIsDeletable(r)) { showToast('仅「未开始」的活动可删除（' + prStatusLabel(prActivityStatus(r)) + '活动不可删除）'); return; }
+      showConfirm('确认删除活动「' + r.name + '」？删除后该活动覆盖时段将恢复为基础价。', function() {
+        PR_RULES.splice(i, 1);
+        prRenderRules();
+        prSaveStore();
+        showToast('活动已删除');
+      });
+      return;
+    };
+    window.prSearch = function() {
+      var activeTab = document.querySelector('#prFilterStatusTabs .gl-radio-btn.active');
+      PR_FILTER.status = activeTab ? activeTab.getAttribute('data-val') : 'all';
+      PR_FILTER.keyword = document.getElementById('prFilterKeyword').value;
+      PR_FILTER.from = document.getElementById('prFilterFrom').value;
+      PR_FILTER.to = document.getElementById('prFilterTo').value;
+      PR_SELECTED_IDS.clear();
+      prRenderRules();
+      prUpdateBatchBar();
+    };
+    window.prReset = function() {
+      document.querySelectorAll('#prFilterStatusTabs .gl-radio-btn').forEach(function(t) { t.classList.remove('active'); });
+      var firstTab = document.querySelector('#prFilterStatusTabs .gl-radio-btn[data-val="all"]');
+      if (firstTab) firstTab.classList.add('active');
+      document.getElementById('prFilterKeyword').value = '';
+      var ff = document.getElementById('prFilterFrom'); if (ff) ff.value = '';
+      var ft = document.getElementById('prFilterTo'); if (ft) ft.value = '';
+      var fc = document.getElementById('prFilterDateClear'); if (fc) fc.style.display = 'none';
+      if (PR_FILTER_PICKER) PR_FILTER_PICKER.clear(false);
+      PR_FILTER = { status: 'all', keyword: '', store: '', from: '', to: '' };
+      var sf = document.getElementById('prFilterStore'); if (sf) sf.value = '';
+      PR_SELECTED_IDS.clear();
+      prRenderRules();
+      prUpdateBatchBar();
+    };
+
+    // ---------- 活动弹窗 ----------
+    window.prScopeTypeClick = function(el) {
+      el.parentElement.querySelectorAll('.gl-radio-btn').forEach(function(b) { b.classList.remove('active'); });
+      el.classList.add('active');
+      prScopeTypeChange();
+    };
+    window.prScopeTypeChange = function() {
+      var active = document.querySelector('#prScopeTypeTabs .gl-radio-btn.active');
+      var t = active ? active.getAttribute('data-val') : 'category';
+      document.getElementById('prScopeCategory').style.display = t === 'category' ? 'block' : 'none';
+      document.getElementById('prScopeGoods').style.display = t === 'goods' ? 'block' : 'none';
+      if (t === 'goods') { prFilterGoods(PR_GOODS_SEARCH); prUpdateGoodsCount(); }
+      if (t === 'category') { prFilterCategories(PR_CATEGORY_SEARCH); prUpdateCategoryCount(); }
+      prUpdatePreview();
+    };
+    var PR_GOODS_SEARCH = '';
+    var PR_CATEGORY_SEARCH = '';
+    function prRenderScope() {
+      // 分类列表
+      var catCountMap = {};
+      PR_PRODUCTS.forEach(function(p) { catCountMap[p.category] = (catCountMap[p.category] || 0) + 1; });
+      document.getElementById('prCategoryList').innerHTML = PR_CATEGORIES.map(function(c, idx) {
+        return '<label class="pr-goods-row" data-cat-idx="' + idx + '">' +
+          '<input type="checkbox" data-cat="' + c + '" onchange="prCategoryChanged(this)">' +
+          '<span class="name" title="' + esc(c) + '">' + esc(c) + '</span>' +
+          '<span style="margin-left:auto;color:#8a94a6;font-size:11px">' + (catCountMap[c] || 0) + ' 个商品</span>' +
+        '</label>';
+      }).join('');
+      // 商品列表
+      document.getElementById('prGoodsList').innerHTML = PR_PRODUCTS.map(function(p, idx) {
+        return '<label class="pr-goods-row" data-idx="' + idx + '">' +
+          '<input type="checkbox" data-goods="' + esc(p.name) + '" onchange="prGoodsChanged(this)">' +
+          '<span class="name" title="' + esc(p.name) + '">' + esc(p.name) + '</span>' +
+          '<span class="code">' + esc(p.code) + '</span>' +
+          '<span class="price">' + money(p.origPrice) + '</span>' +
+          '<span class="cat">' + esc(p.category) + '</span>' +
+        '</label>';
+      }).join('');
+      prFilterCategories(PR_CATEGORY_SEARCH);
+      prFilterGoods(PR_GOODS_SEARCH);
+      prBindScopeSearch();
+    }
+    window.prFilterGoods = function(kw) {
+      PR_GOODS_SEARCH = (kw || '').trim().toLowerCase();
+      var rows = document.querySelectorAll('#prGoodsList .pr-goods-row');
+      var visible = 0;
+      rows.forEach(function(row) {
+        var idx = +row.getAttribute('data-idx');
+        var p = PR_PRODUCTS[idx];
+        var hit = !PR_GOODS_SEARCH ||
+          p.name.toLowerCase().indexOf(PR_GOODS_SEARCH) >= 0 ||
+          p.code.toLowerCase().indexOf(PR_GOODS_SEARCH) >= 0;
+        row.style.display = hit ? 'flex' : 'none';
+        if (hit) visible++;
+      });
+      var listEl = document.getElementById('prGoodsList');
+      var empty = listEl.querySelector('.pr-scope-empty');
+      if (visible === 0 && PR_GOODS_SEARCH) {
+        if (!empty) { empty = document.createElement('div'); empty.className = 'pr-scope-empty'; listEl.appendChild(empty); }
+        empty.textContent = '未找到匹配商品';
+        empty.style.display = 'block';
+      } else if (empty) {
+        empty.style.display = 'none';
+      }
+      var totalEl = document.getElementById('prGoodsTotal');
+      if (totalEl) totalEl.textContent = '共 ' + visible + ' 个商品';
+      prUpdateGoodsCount();
+    };
+    window.prFilterCategories = function(kw) {
+      PR_CATEGORY_SEARCH = (kw || '').trim().toLowerCase();
+      var rows = document.querySelectorAll('#prCategoryList .pr-goods-row');
+      var visible = 0;
+      rows.forEach(function(row) {
+        var idx = +row.getAttribute('data-cat-idx');
+        var c = PR_CATEGORIES[idx];
+        var hit = !PR_CATEGORY_SEARCH || c.toLowerCase().indexOf(PR_CATEGORY_SEARCH) >= 0;
+        row.style.display = hit ? 'flex' : 'none';
+        if (hit) visible++;
+      });
+      var listEl = document.getElementById('prCategoryList');
+      var empty = listEl.querySelector('.pr-scope-empty');
+      if (visible === 0 && PR_CATEGORY_SEARCH) {
+        if (!empty) { empty = document.createElement('div'); empty.className = 'pr-scope-empty'; listEl.appendChild(empty); }
+        empty.textContent = '未找到匹配分类';
+        empty.style.display = 'block';
+      } else if (empty) {
+        empty.style.display = 'none';
+      }
+      var totalEl = document.getElementById('prCategoryTotal');
+      if (totalEl) totalEl.textContent = '共 ' + visible + ' 个分类';
+      prUpdateCategoryCount();
+    };
+    // 兼容中文输入法：composition 期间不搜索，上屏后再过滤
+    function prBindScopeSearch() {
+      function bind(input, fn) {
+        if (!input) return;
+        var composing = false;
+        input.addEventListener('compositionstart', function() { composing = true; });
+        input.addEventListener('compositionend', function(e) {
+          composing = false;
+          fn(e.target.value);
+        });
+        input.addEventListener('input', function(e) {
+          if (!composing) fn(e.target.value);
+        });
+      }
+      bind(document.getElementById('prGoodsSearch'), prFilterGoods);
+      bind(document.getElementById('prCategorySearch'), prFilterCategories);
+    }
+    function prUpdateGoodsCount() {
+      var cnt = document.querySelectorAll('#prScopeGoods input[type=checkbox]:checked').length;
+      var el = document.getElementById('prGoodsCount');
+      if (el) el.textContent = '已选 ' + cnt + ' 项';
+    }
+    function prUpdateCategoryCount() {
+      var cnt = document.querySelectorAll('#prCategoryList input[type=checkbox]:checked').length;
+      var el = document.getElementById('prCategoryCount');
+      if (el) el.textContent = '已选 ' + cnt + ' 项';
+    }
+    window.prToggleCat = function(el) { el.classList.toggle('active'); prUpdatePreview(); };
+    window.prCategoryChanged = function() { prUpdateCategoryCount(); prUpdatePreview(); };
+    window.prGoodsChanged = function() { prUpdateGoodsCount(); prUpdatePreview(); };
+    function prReadScope() {
+      var active = document.querySelector('#prScopeTypeTabs .gl-radio-btn.active');
+      var t = active ? active.getAttribute('data-val') : 'category';
+      if (t === 'category') {
+        var cats = [];
+        document.querySelectorAll('#prCategoryList input[type=checkbox]:checked').forEach(function(el) { cats.push(el.getAttribute('data-cat')); });
+        return { type: 'category', values: cats };
+      }
+      var goods = [];
+      document.querySelectorAll('#prScopeGoods input[type=checkbox]:checked').forEach(function(el) { goods.push(el.getAttribute('data-goods')); });
+      return { type: 'goods', values: goods };
+    }
+    function prMinBasePriceInScope() {
+      var scope = prReadScope();
+      if (!scope.values.length) return null;
+      var prices = [];
+      if (scope.type === 'category') {
+        var set = {};
+        scope.values.forEach(function(v) { set[v] = 1; });
+        PR_PRODUCTS.forEach(function(p) { if (set[p.category]) prices.push(+p.origPrice); });
+      } else {
+        var set = {};
+        scope.values.forEach(function(v) { set[v] = 1; });
+        PR_PRODUCTS.forEach(function(p) { if (set[p.name]) prices.push(+p.origPrice); });
+      }
+      if (!prices.length) return null;
+      var min = prices[0];
+      for (var i = 1; i < prices.length; i++) if (prices[i] < min) min = prices[i];
+      return min;
+    }
+    function prSetScope(scope) {
+      document.querySelectorAll('#prScopeTypeTabs .gl-radio-btn').forEach(function(el) {
+        el.classList.toggle('active', el.getAttribute('data-val') === scope.scopeType);
+      });
+      prScopeTypeChange();
+      if (scope.scopeType === 'category') {
+        document.querySelectorAll('#prCategoryList input[type=checkbox]').forEach(function(el) {
+          el.checked = scope.scopeValues.indexOf(el.getAttribute('data-cat')) >= 0;
+        });
+      } else {
+        document.querySelectorAll('#prScopeGoods input[type=checkbox]').forEach(function(el) {
+          el.checked = scope.scopeValues.indexOf(el.getAttribute('data-goods')) >= 0;
+        });
+      }
+      prFilterCategories(PR_CATEGORY_SEARCH);
+      prFilterGoods(PR_GOODS_SEARCH);
+      prUpdateGoodsCount();
+      prUpdateCategoryCount();
+    }
+
+    // 日期条件行
+    var MODES = [
+      { v: 'single', t: '指定年月日' }, { v: 'daily', t: '每日' }, { v: 'weekly', t: '每周' },
+      { v: 'monthly', t: '每月' }, { v: 'yearly', t: '每年' }, { v: 'holiday', t: '节日' }
+    ];
+    function holidayOptions() {
+      var opts = '';
+      PR_LEGAL_HOLIDAYS.forEach(function(h) {
+        opts += '<option value="legal:' + h.name + '">法定·' + h.name + '（' + fmtDate(h.date) + '）</option>';
+      });
+      PR_CUSTOM_HOLIDAYS.forEach(function(c) {
+        opts += '<option value="custom:' + c.id + '">自定义·' + c.name + '（' + holidayWindow(c) + '）</option>';
+      });
+      return opts;
+    }
+    function dateValHTML(mode, vals) {
+      vals = vals || {};
+      switch (mode) {
+        case 'single': return '<input type="date" class="pr-date-input" value="' + (vals.date || '') + '">';
+        case 'daily': return '<span class="pr-hint">每天生效</span>';
+        case 'weekly': {
+          var W = ['一','二','三','四','五','六','日'];
+          var arr = Array.isArray(vals) ? vals : (vals.weekly || []);
+          return W.map(function(w, i) {
+            return '<span class="pr-chip' + (arr.indexOf(i + 1) >= 0 ? ' active' : '') + '" data-week="' + (i + 1) + '" onclick="prChipToggle(this)">周' + w + '</span>';
+          }).join('');
+        }
+        case 'monthly': {
+          var md = Array.isArray(vals) ? vals : (vals.monthly || []);
+          var chips = '';
+          for (var d = 1; d <= 31; d++) {
+            chips += '<span class="pr-chip' + (md.indexOf(d) >= 0 ? ' active' : '') + '" data-month-day="' + d + '" onclick="prChipToggle(this)">' + d + '</span>';
+          }
+          return chips;
+        }
+        case 'yearly': {
+          var mds = Array.isArray(vals) ? vals : (vals.yearly || []);
+          return '<select class="pr-md-month"></select><select class="pr-md-day"></select>' +
+            '<button class="pr-add-btn" onclick="prAddYearly(this)">添加</button>' +
+            '<span class="pr-yearly-chips">' + mds.map(function(m) {
+              return '<span class="pr-chip active" data-md="' + m + '" onclick="prChipRemove(this)">' + m + '<span style="margin-left:4px;color:rgba(255,255,255,0.7)">×</span></span>';
+            }).join('') + '</span>';
+        }
+        case 'holiday': return '<select class="pr-holi-select">' + holidayOptions() + '</select><span class="pr-hint pr-holi-window"></span>';
+        default: return '';
+      }
+    }
+    function fillMonthDaySelects(row) {
+      var m = row.querySelector('.pr-md-month'), d = row.querySelector('.pr-md-day');
+      if (!m) return;
+      m.innerHTML = '<option value="">月</option>';
+      for (var i = 1; i <= 12; i++) m.innerHTML += '<option value="' + (i < 10 ? '0' + i : i) + '">' + i + ' 月</option>';
+      d.innerHTML = '<option value="">日</option>';
+      for (var j = 1; j <= 31; j++) d.innerHTML += '<option value="' + (j < 10 ? '0' + j : j) + '">' + j + ' 日</option>';
+    }
+    window.prAddDateRow = function(rootEl, data) {
+      var wrap = (typeof rootEl === 'string') ? document.getElementById(rootEl) : (rootEl || document.getElementById('prDateRows'));
+      var row = document.createElement('div');
+      row.className = 'pr-date-row';
+      var mode = (data && data.mode) || 'daily';
+      var sel = '<select class="pr-mode">' + MODES.map(function(m) {
+        return '<option value="' + m.v + '"' + (m.v === mode ? ' selected' : '') + '>' + m.t + '</option>';
+      }).join('') + '</select>';
+      row.innerHTML = sel + '<div class="pr-val">' + dateValHTML(mode, data ? data.values : null) + '</div>' +
+        '<button class="pr-del-row" onclick="prRemoveRow(this)" title="删除条件">✕</button>';
+      wrap.appendChild(row);
+      fillMonthDaySelects(row);
+      if (mode === 'holiday') updateHoliWindow(row);
+    };
+    window.prRemoveRow = function(btn) {
+      var row = btn.parentNode;
+      if (row.parentNode.children.length <= 1 && !confirm('至少保留一行日期条件，确定删除吗？')) return;
+      row.parentNode.removeChild(row);
+      prUpdatePreview();
+    };
+    window.prChipToggle = function(el) {
+      el.classList.toggle('active');
+      prUpdatePreview();
+    };
+    window.prChipRemove = function(el) {
+      el.parentNode.removeChild(el);
+      prUpdatePreview();
+    };
+    window.prAddYearly = function(btn) {
+      var row = btn.parentNode.parentNode;
+      var m = row.querySelector('.pr-md-month').value;
+      var d = row.querySelector('.pr-md-day').value;
+      if (!m || !d) { showToast('请先选择月、日'); return; }
+      var chips = row.querySelector('.pr-yearly-chips');
+      var md = m + '-' + d;
+      if (chips.querySelector('[data-md="' + md + '"]')) { showToast('该日期已添加'); return; }
+      var span = document.createElement('span');
+      span.className = 'pr-chip active';
+      span.setAttribute('data-md', md);
+      span.innerHTML = md + '<span style="margin-left:4px;color:rgba(255,255,255,0.7)">×</span>';
+      span.onclick = function() { prChipRemove(span); };
+      chips.appendChild(span);
+      prUpdatePreview();
+    };
+    function updateHoliWindow(row) {
+      var sel = row.querySelector('.pr-holi-select');
+      var hint = row.querySelector('.pr-holi-window');
+      if (!sel) return;
+      var key = sel.value, txt = '';
+      if (key.indexOf('legal:') === 0) {
+        var lh = legalHoliday(key.slice(6));
+        if (lh) txt = '锚点 ' + fmtDate(lh.date);
+      } else if (key.indexOf('custom:') === 0) {
+        var ch = customHoliday(+key.slice(7));
+        if (ch) txt = holidayWindow(ch);
+      }
+      hint.textContent = txt;
+    }
+    window.prHoliSelectChange = function(sel) {
+      updateHoliWindow(sel.closest('.pr-date-row'));
+    };
+    function prReadDateRules(rootEl) {
+      var wrap = (typeof rootEl === 'string') ? document.getElementById(rootEl) : (rootEl || document.getElementById('prDateRows'));
+      var rows = wrap.querySelectorAll('.pr-date-row');
+      var rules = [];
+      for (var i = 0; i < rows.length; i++) {
+        var row = rows[i];
+        var mode = row.querySelector('.pr-mode').value;
+        var r = { mode: mode, values: {} };
+        if (mode === 'single') {
+          var d = row.querySelector('.pr-date-input');
+          if (!d.value) { showToast('请选择单次日期'); return null; }
+          r.values.date = d.value;
+        } else if (mode === 'daily') {
+          r.values = [];
+        } else if (mode === 'weekly') {
+          r.values = [];
+          row.querySelectorAll('.pr-chip[data-week].active').forEach(function(el) { r.values.push(+el.getAttribute('data-week')); });
+          if (!r.values.length) { showToast('每周模式请至少选择一天'); return null; }
+        } else if (mode === 'monthly') {
+          r.values = [];
+          row.querySelectorAll('.pr-chip[data-month-day].active').forEach(function(el) { r.values.push(+el.getAttribute('data-month-day')); });
+          if (!r.values.length) { showToast('每月模式请至少选择一个日期'); return null; }
+        } else if (mode === 'yearly') {
+          r.values = [];
+          row.querySelectorAll('.pr-yearly-chips .pr-chip').forEach(function(el) { r.values.push(el.getAttribute('data-md')); });
+          if (!r.values.length) { showToast('每年模式请至少添加一个日期'); return null; }
+        } else if (mode === 'holiday') {
+          r.values = [row.querySelector('.pr-holi-select').value];
+        }
+        rules.push(r);
+      }
+      return rules;
+    }
+    function prSetDateRules(rootEl, dateRules) {
+      var wrap = (typeof rootEl === 'string') ? document.getElementById(rootEl) : (rootEl || document.getElementById('prDateRows'));
+      wrap.innerHTML = '';
+      (dateRules || []).forEach(function(r) { prAddDateRow(wrap, r); });
+      if (!dateRules || !dateRules.length) prAddDateRow(wrap);
+    }
+
+    // 时段行
+    window.prAddTimeRow = function(rootEl, data) {
+      var wrap = (typeof rootEl === 'string') ? document.getElementById(rootEl) : (rootEl || document.getElementById('prTimeRows'));
+      var row = document.createElement('div');
+      row.className = 'pr-time-row';
+      var s = (data && data.start) || '00:00';
+      var e = (data && data.end) || '23:59';
+      var type = (data && data.actionType) || 'discount';
+      var val = (data && data.actionValue != null) ? data.actionValue : 0.8;
+      var unit = type === 'discount' ? '%' : '元';
+      var defVal = type === 'discount' ? Math.round(val * 100) : val;
+      row.innerHTML =
+        '<input type="time" value="' + s + '" class="pr-time-start" onchange="prUpdatePreview()">' +
+        '<span class="pr-tip">至</span>' +
+        '<input type="time" value="' + e + '" class="pr-time-end" onchange="prUpdatePreview()">' +
+        '<span class="pr-tip">优惠</span>' +
+        '<select class="pr-act-sel" onchange="prRowActTypeChange(this)">' +
+          '<option value="discount"' + (type === 'discount' ? ' selected' : '') + '>折扣率</option>' +
+          '<option value="price"' + (type === 'price' ? ' selected' : '') + '>直价</option>' +
+          '<option value="reduce"' + (type === 'reduce' ? ' selected' : '') + '>立减</option>' +
+        '</select>' +
+        '<input type="number" class="pr-act-val" value="' + defVal + '" step="0.01" min="0" onchange="prUpdatePreview()">' +
+        '<span class="pr-act-unit">' + unit + '</span>' +
+        '<button class="pr-del-row" onclick="prRemoveTimeRow(this)">✕</button>';
+      wrap.appendChild(row);
+      prUpdatePreview();
+    };
+    window.prRowActTypeChange = function(sel) {
+      var row = sel.closest('.pr-time-row');
+      if (!row) return;
+      row.querySelector('.pr-act-unit').textContent = sel.value === 'discount' ? '%' : '元';
+      prUpdatePreview();
+    };
+    window.prRemoveTimeRow = function(btn) {
+      var wrap = btn.parentNode.parentNode;
+      if (wrap.children.length <= 1 && !confirm('至少保留一个时段，确定删除吗？')) return;
+      wrap.removeChild(btn.parentNode);
+      prUpdatePreview();
+    };
+    function prReadTimeRanges(rootEl) {
+      var wrap = (typeof rootEl === 'string') ? document.getElementById(rootEl) : (rootEl || document.getElementById('prTimeRows'));
+      var rows = wrap.querySelectorAll('.pr-time-row');
+      var list = [];
+      rows.forEach(function(row) {
+        var start = row.querySelector('.pr-time-start').value;
+        var end = row.querySelector('.pr-time-end').value;
+        var type = row.querySelector('.pr-act-sel').value;
+        var raw = row.querySelector('.pr-act-val').value;
+        var val, err = '';
+        if (type === 'discount') {
+          val = (+raw) / 100;
+          if (!raw || +raw <= 0 || +raw >= 100) err = '折扣率需在 1~99 之间';
+        } else if (type === 'price') {
+          val = +raw; if (!raw || +raw < 0.01) err = '直价金额不可小于 0.01';
+        } else {
+          val = +raw; if (raw === '' || +raw < 0.01) err = '立减金额不可小于 0.01';
+        }
+        // 折扣 / 立减必须保证作用范围内最低基础价的优惠后金额 >= 0.01
+        if (!err && (type === 'discount' || type === 'reduce')) {
+          var minBase = prMinBasePriceInScope();
+          if (minBase != null) {
+            var finalPrice = (type === 'discount') ? +(minBase * val).toFixed(2) : +(minBase - val).toFixed(2);
+            if (finalPrice < 0.01) err = '优惠后金额不可小于 0.01';
+          }
+        }
+        var item = { start: start, end: end, actionType: type, actionValue: val };
+        if (err) item._err = err;
+        list.push(item);
+      });
+      return list;
+    }
+    function prSetTimeRanges(rootEl, ranges) {
+      var wrap = (typeof rootEl === 'string') ? document.getElementById(rootEl) : (rootEl || document.getElementById('prTimeRows'));
+      wrap.innerHTML = '';
+      (ranges || []).forEach(function(r) { prAddTimeRow(wrap, r); });
+      if (!ranges || !ranges.length) prAddTimeRow(wrap);
+    }
+    function prCheckOverlap(ranges) {
+      for (var i = 0; i < ranges.length; i++) {
+        for (var j = i + 1; j < ranges.length; j++) {
+          if (rangesOverlap(ranges[i], ranges[j], true)) return { a: i, b: j };
+        }
+      }
+      return null;
+    }
+
+    // ---------- 优惠分段（活动期间，按时段） ----------
+    function prRenderSeg(seg, segObj) {
+      var timesBox = document.querySelector('.pr-seg-times[data-seg=' + seg + ']');
+      if (!timesBox) return;
+      prSetTimeRanges(timesBox, (segObj && segObj.timeRanges) || [{ start: '00:00', end: '23:59', actionType: 'discount', actionValue: 0.8 }]);
+    }
+    // 节日勾选后：活动周期仍保留作为「限定窗口」，与节日发生日取交集
+    function prHolidayPeriodUI() {
+      var hf = prReadHolidays();
+      var fixed = document.getElementById('prFixedPeriodRow');
+      var hint = document.getElementById('prHolidayPeriodHint');
+      var segHint = document.getElementById('prSegDateHint');
+      if (!fixed || !hint) return;
+      // 活动周期始终显示：节日模式也需要时间周期作为限定窗口
+      fixed.style.display = 'flex';
+      if (hf.length) {
+        hint.style.display = 'block';
+        hint.innerHTML = '已选节日 <b>' + holidayLabel(hf[0]) + '</b>：本活动仅在上方「活动周期」窗口内的该节日日期生效（节日模式也需填写活动周期作为限定窗口）。';
+        if (segHint) segHint.textContent = '生效日期：所选节日在「活动周期」窗口内的日期';
+      } else {
+        hint.style.display = 'none';
+        if (segHint) segHint.textContent = '生效日期：沿用上方「活动周期」';
+      }
+    }
+    window.prHoliChipToggle = function(el) {
+      if (el.classList.contains('disabled')) return;
+      var wasActive = el.classList.contains('active');
+      document.querySelectorAll('#prHolidayPicker .pr-holi-chip.active').forEach(function(c) { c.classList.remove('active'); });
+      if (!wasActive) el.classList.add('active'); // 再次点击当前节日则取消，回到活动周期模式
+      prHolidayPeriodUI(); prUpdatePreview();
+    };
+    function prRenderHolidayPicker(sel) {
+      var box = document.getElementById('prHolidayPicker');
+      if (!box) return;
+      // 节日单选：即便传入多个（旧数据兼容）也只保留第一个
+      var activeKey = (sel && sel.length) ? sel[0] : null;
+      var periodFrom = document.getElementById('prValidFrom') ? document.getElementById('prValidFrom').value : '';
+      var periodTo = document.getElementById('prValidTo') ? document.getElementById('prValidTo').value : '';
+      var legalHtml = '';
+      PR_LEGAL_HOLIDAYS.forEach(function(h) {
+        var key = 'legal:' + h.name;
+        var overlap = prHolidayOverlapsPeriod(key, periodFrom, periodTo);
+        var isActive = key === activeKey;
+        if (!overlap && isActive) { isActive = false; activeKey = null; }
+        var title = esc(fmtHoliRange(h.date, h.end)) + (overlap ? '' : ' — 不在当前活动周期内');
+        legalHtml += '<span class="pr-holi-chip' + (isActive ? ' active' : '') + (!overlap ? ' disabled' : '') + '" data-key="' + key + '" title="' + title + '"' + (overlap ? ' onclick="prHoliChipToggle(this)"' : '') + '>' + esc(h.name) + '</span>';
+      });
+      var customHtml = '';
+      PR_CUSTOM_HOLIDAYS.forEach(function(c) {
+        var key = 'custom:' + c.id;
+        var overlap = prHolidayOverlapsPeriod(key, periodFrom, periodTo);
+        var isActive = key === activeKey;
+        if (!overlap && isActive) { isActive = false; activeKey = null; }
+        var title = esc(holidayWindow(c)) + (overlap ? '' : ' — 不在当前活动周期内');
+        customHtml += '<span class="pr-holi-chip' + (isActive ? ' active' : '') + (!overlap ? ' disabled' : '') + '" data-key="' + key + '" title="' + title + '"' + (overlap ? ' onclick="prHoliChipToggle(this)"' : '') + '>' + esc(c.name) + '</span>';
+      });
+      // 已删除节日幽灵标签：仅当当前编辑的活动引用了它时展示（保留引用，不被静默丢弃）；新活动(activeKey 为空)不展示
+      var ghostHtml = '';
+      if (activeKey && activeKey.indexOf('custom:') === 0) {
+        var gid = +activeKey.slice(7), gch = null;
+        for (var gi = 0; gi < PR_DELETED_HOLIDAYS.length; gi++) if (PR_DELETED_HOLIDAYS[gi].id === gid) gch = PR_DELETED_HOLIDAYS[gi];
+        if (gch) {
+          var gkey = activeKey;
+          var gOverlap = prHolidayOverlapsPeriod(gkey, periodFrom, periodTo);
+          if (!gOverlap) { gch = null; activeKey = null; }
+          if (gch) ghostHtml = '<span class="pr-holi-chip active pr-holi-ghost" data-key="' + gkey + '" title="' + esc(holidayWindow(gch)) + '（已删除）" onclick="prHoliChipToggle(this)">' + esc(gch.name) + ' <i style="font-style:normal">·已删除</i></span>';
+        }
+      }
+      var html = '';
+      html += '<div class="pr-holi-group"><div class="pr-holi-group-label">法定节假日</div><div class="pr-holi-group-chips">' + legalHtml + '</div></div>';
+      html += '<div class="pr-holi-group"><div class="pr-holi-group-label">自定义节日 / 纪念日</div><div class="pr-holi-group-chips">' + ghostHtml + customHtml + '</div></div>';
+      box.innerHTML = html;
+    }
+    function prReadHolidays() {
+      var box = document.getElementById('prHolidayPicker');
+      if (!box) return [];
+      var out = [];
+      box.querySelectorAll('.pr-holi-chip.active').forEach(function(el) { out.push(el.getAttribute('data-key')); });
+      return out;
+    }
+    function prReadSeg(seg) {
+      var tr = prReadTimeRanges(document.querySelector('.pr-seg-times[data-seg=' + seg + ']'));
+      if (!tr || !tr.length) return { _err: '活动期间请至少添加一个时段' };
+      for (var i = 0; i < tr.length; i++) if (tr[i]._err) return { _err: '时段' + (i + 1) + '：' + tr[i]._err };
+      return { enabled: true, timeRanges: tr };
+    }
+    function prReadSegments() {
+      var main = prReadSeg('main');
+      if (main._err) return { _err: main._err };
+      return { main: main };
+    }
+
+    // 预览
+    window.prUpdatePreview = function() {
+      var el = document.getElementById('prPreview');
+      if (!el) return;
+      var scope = prReadScope();
+      if (!scope.values.length) { el.textContent = '预览：选择范围后将展示示例商品的动态价'; return; }
+      var p = null;
+      if (scope.type === 'category') {
+        for (var i = 0; i < PR_PRODUCTS.length; i++) if (PR_PRODUCTS[i].category === scope.values[0]) { p = PR_PRODUCTS[i]; break; }
+      } else {
+        for (var j = 0; j < PR_PRODUCTS.length; j++) if (PR_PRODUCTS[j].name === scope.values[0]) { p = PR_PRODUCTS[j]; break; }
+      }
+      if (!p) { el.textContent = '预览：该范围下暂无示例商品'; return; }
+      var main = prReadSeg('main');
+      if (main._err) { el.innerHTML = '<span style="color:#fc4b52">' + main._err + '</span>'; return; }
+      var periodLabel = '生效日期：';
+      var hf = prReadHolidays();
+      if (hf.length) {
+        periodLabel += '仅 ' + hf.map(holidayLabel).join('、') + ' 周期';
+      } else {
+        var vf = document.getElementById('prValidFrom').value, vt = document.getElementById('prValidTo').value;
+        periodLabel += (vf && vt) ? (fmtDate(vf) + ' ~ ' + fmtDate(vt)) : '（请填写活动周期）';
+      }
+      var html = '<div style="color:#8a5568;font-size:11px;margin-bottom:6px">' + periodLabel + '</div>';
+      html += '预览示例：<b>' + esc(p.name) + '</b>　基础价 ' + money(p.origPrice);
+      (main.timeRanges || []).forEach(function(tr) {
+        var finalP = tr.actionType === 'discount' ? p.origPrice * tr.actionValue
+          : (tr.actionType === 'price' ? tr.actionValue : Math.max(0, p.origPrice - tr.actionValue));
+        html += '<br>　' + fmtTime(tr) + '：' + fmtStageAction(tr) + ' → 动态价 <b>' + money(finalP) + '</b>';
+      });
+      el.innerHTML = html;
+      // 生效来源（按完整优先级裁决：先时间后商品）
+      var hits = PR_RULES.filter(function(rr) {
+        if (!rr.enabled) return false;
+        if (!prActive(rr)) return false; // 停用缓冲期仍作为生效来源（保护结算中商品），过缓冲后不再生效
+        if (rr.scopeType === 'goods') return rr.scopeValues.indexOf(p.name) >= 0;
+        if (rr.scopeType === 'category') return rr.scopeValues.indexOf(p.category) >= 0;
+        if (rr.scopeType === 'all') return true;
+        return false;
+      });
+      hits.sort(function(x, y) { return prPriorityCmp(prRulePriority(y), prRulePriority(x)); });
+      var top = hits[0];
+      if (top) el.innerHTML += '<br><span style="color:#8a94a6;font-size:11px">生效来源：最终由《' + esc(top.name) + '》生效（优先级：先时间后商品 —— 时间档 节假日·单次＞每年(自定义)＞每年(法定)＞每月＞每周＞普通日期；时间同档再比商品 单品＞分类＞全店）</span>';
+    }
+
+    // 打开/保存/关闭 活动弹窗
+    window.prOpenRuleModal = function(id) {
+      prRenderScope();
+      var isNew = (id === undefined || id === null);
+      PR_EDITING_ID = isNew ? null : id;
+      document.getElementById('prRuleModalTitle').textContent = isNew ? '新建动态调价' : '编辑动态调价';
+      var r = null;
+      if (!isNew) for (var i = 0; i < PR_RULES.length; i++) if (PR_RULES[i].id === id) r = PR_RULES[i];
+
+      var storeSel = document.getElementById('prStoreSelect');
+      if (storeSel) storeSel.innerHTML = '<option value="">请选择适用门店</option>' + prModalStoreOptions(r ? r.storeId : '');
+      document.getElementById('prName').value = r ? r.name : '';
+      document.getElementById('prEnabled').checked = r ? r.enabled : true;
+      // 停用缓冲仅在逻辑层生效（保护结算中商品），界面不再展示缓冲提示
+      var fpn = document.getElementById('prPauseNote');
+      if (fpn) { fpn.style.display = 'none'; fpn.textContent = ''; }
+      document.getElementById('prValidFrom').value = r ? (r.validFrom || '') : '';
+      document.getElementById('prValidTo').value = r ? (r.validTo || '') : '';
+      prSyncDateRange();
+      prRenderHolidayPicker(r ? (r.holidayFilter || []) : []);
+      prHolidayPeriodUI();
+      if (r) prSetScope(r); else {
+        var def = document.querySelector('#prScopeTypeTabs .gl-radio-btn[data-val=category]');
+        if (def) {
+          def.parentElement.querySelectorAll('.gl-radio-btn').forEach(function(b) { b.classList.remove('active'); });
+          def.classList.add('active');
+        }
+        prScopeTypeChange();
+      }
+      prRenderSeg('main', r ? r.main : null);
+      prUpdatePreview();
+      // 按活动状态施加编辑锁定 / 展示修改记录
+      prApplyStatusLock(r ? prRuleLockState(r) : 'upcoming'); // 新建按未开始（可编辑）
+      prRenderChangelog(r);
+      document.getElementById('prRuleModal').style.display = 'flex';
+    };
+    // 打开「复制活动」草稿弹窗：预填副本数据（时间已清空），以新建模式保存才真正新增
+    window.prOpenRuleCopyModal = function(draft) {
+      prRenderScope();
+      PR_EDITING_ID = null; // 新建模式 → 保存时 push 新增
+      document.getElementById('prRuleModalTitle').textContent = '新建动态调价（副本）';
+      var storeSel = document.getElementById('prStoreSelect');
+      if (storeSel) storeSel.innerHTML = '<option value="">请选择适用门店</option>' + prModalStoreOptions(draft.storeId || '');
+      document.getElementById('prName').value = draft.name || '';
+      document.getElementById('prEnabled').checked = draft.enabled;
+      var fpn = document.getElementById('prPauseNote');
+      if (fpn) { fpn.style.display = 'none'; fpn.textContent = ''; }
+      document.getElementById('prValidFrom').value = draft.validFrom || '';
+      document.getElementById('prValidTo').value = draft.validTo || '';
+      prSyncDateRange();
+      prRenderHolidayPicker(draft.holidayFilter || []);
+      prHolidayPeriodUI();
+      prSetScope(draft);
+      prRenderSeg('main', draft.main);
+      prUpdatePreview();
+      prApplyStatusLock('upcoming'); // 副本始终按未开始（可编辑）
+      prRenderChangelog(null);
+      document.getElementById('prRuleModal').style.display = 'flex';
+    };
+    window.prCloseRuleModal = function() {
+      // 直接取消：放弃任何未保存的副本草稿，不弹确认
+      PR_COPY_QUEUE = [];
+      document.getElementById('prRuleModal').style.display = 'none';
+      PR_EDITING_ID = null;
+      prRenderRules(); // 刷新列表（反映已保存的副本；无变化也安全）
+    };
+    window.prSaveRule = function() {
+      var name = document.getElementById('prName').value.trim();
+      if (!name) { showToast('请填写活动名称'); return; }
+      var storeId = document.getElementById('prStoreSelect').value;
+      if (!storeId) { showToast('请选择适用门店'); return; }
+      var scope = prReadScope();
+      if (!scope.values.length) { showToast('请选择生效范围（至少一个分类或单品）'); return; }
+      var segs = prReadSegments();
+      if (segs._err) { showToast(segs._err); return; }
+      // 活动期间时段重叠检查（重叠禁配）
+      var ov = prCheckOverlap(segs.main.timeRanges);
+      if (ov) { showToast('活动期间时段存在重叠或首尾相接，请勿重叠（重叠禁配）'); return; }
+      var hf = prReadHolidays();
+      if (hf.length > 1) { showToast('限定节日仅可选 1 个（节日间互斥）'); return; }
+      var rule = {
+        id: PR_EDITING_ID || (PR_RULES.length ? PR_RULES[PR_RULES.length - 1].id + 1 : 1),
+        name: name,
+        enabled: document.getElementById('prEnabled').checked,
+        scopeType: scope.type,
+        scopeValues: scope.values,
+        main: segs.main
+      };
+      var vf = document.getElementById('prValidFrom').value, vt = document.getElementById('prValidTo').value;
+      if (!vf || !vt) { showToast('请填写活动周期（有效期起止，节日模式也需作为限定窗口）'); return; }
+      if (vf > vt) { showToast('活动周期起始不能晚于结束'); return; }
+      rule.validFrom = vf; rule.validTo = vt;
+      if (hf.length) {
+        rule.holidayFilter = hf;
+      } else {
+        delete rule.holidayFilter;
+      }
+      var conflict = prCheckConflict(rule);
+      if (conflict) { showToast(prFmtConflict(conflict, rule)); return; }
+      if (PR_EDITING_ID) {
+        for (var i = 0; i < PR_RULES.length; i++) if (PR_RULES[i].id === PR_EDITING_ID) {
+          var _old = PR_RULES[i];
+          // 已结束活动不可修改
+          if (prActivityStatus(_old) === 'ended') { showToast('已结束活动不可修改'); return; }
+          // 对齐：编辑保存必须保留表单之外的旧字段（尤其是 storeId 适用门店），
+          // 否则保存后活动的适用门店/筛选归属被清空，与列表「启用」按钮改原对象的行为不一致
+          rule.id = _old.id;
+          rule.storeId = _old.storeId;
+          // 启用 → 立即生效并清缓冲；未勾选(停用) → 与行内「停用」一致进入结算缓冲
+          if (rule.enabled) {
+            rule.pauseBufferUntil = 0;
+          } else if (prPausing(_old)) {
+            rule.pauseBufferUntil = _old.pauseBufferUntil;          // 已在缓冲中：保留原缓冲时钟（不重复起算）
+          } else if (_old && _old.enabled) {
+            rule.pauseBufferUntil = Date.now() + PR_PAUSE_BUFFER_MS; // 由启用→停用：开新缓冲（保护结算中商品）
+          } else {
+            rule.pauseBufferUntil = _old ? (_old.pauseBufferUntil || 0) : 0; // 原本已完全停用：保持
+          }
+          // 写入修改记录（进行中改动必记录；未开始改动也记录）
+          var diff = prDescribeChanges(_old, rule);
+          if (diff.length) {
+            rule.changelog = (_old.changelog || []).slice();
+            rule.changelog.unshift({ ts: prNowStr(), desc: diff.join('；') });
+          } else {
+            rule.changelog = _old.changelog ? _old.changelog.slice() : undefined;
+          }
+          PR_RULES[i] = rule;
+        }
+        showToast('活动已更新');
+      } else {
+        // 新建/副本均从弹窗表单读取适用门店（基本信息中已必填）
+        rule.storeId = storeId;
+        rule.changelog = [{ ts: prNowStr(), desc: '创建活动' }];
+        PR_RULES.push(rule);
+        showToast('活动已保存');
+      }
+      // 复制草稿队列：保存后继续下一条，逐条确认；未保存不新增
+      if (PR_COPY_QUEUE.length) {
+        PR_COPY_QUEUE.shift();
+        if (PR_COPY_QUEUE.length) {
+          prSaveStore(); // 落盘当前已保存的副本
+          showToast('已保存，继续编辑下一条副本（剩余 ' + PR_COPY_QUEUE.length + ' 条）');
+          prOpenRuleCopyModal(PR_COPY_QUEUE[0]); // 重新加载下一条草稿，不关闭弹窗
+          return;
+        }
+        showToast('已保存全部副本');
+      }
+      prCloseRuleModal();
+      prRenderRules();
+      prSaveStore();
+    };
+
+    // ---------- 节日管理 ----------
+    function prRenderHolidays() {
+      var lb = document.getElementById('prLegalHolidayBody');
+      lb.innerHTML = PR_LEGAL_HOLIDAYS.map(function(h) {
+        return '<tr><td style="font-weight:600">' + esc(h.name) + '</td><td>' + fmtHoliRange(h.date, h.end) + '</td><td style="color:#8a94a6;font-size:11px">' + esc(h.note) + '</td></tr>';
+      }).join('');
+
+      var cb = document.getElementById('prCustomHolidayBody');
+      if (!PR_CUSTOM_HOLIDAYS.length) {
+        cb.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#8a94a6;height:80px">暂无自定义节日</td></tr>';
+        return;
+      }
+      cb.innerHTML = PR_CUSTOM_HOLIDAYS.map(function(c) {
+        var repeatTxt = { yearly: '每年', monthly: '每月', weekly: '每周', once: '单次' }[c.repeat] || '';
+        var dateTxt = holidayWindow(c);
+        return '<tr>' +
+          '<td style="font-weight:600">' + esc(c.name) + '</td>' +
+          '<td>' + dateTxt + '</td>' +
+          '<td>' + repeatTxt + '</td>' +
+          '<td><span class="pr-status ' + (c.enabled ? 'on' : 'off') + '"><span class="dot"></span>' + (c.enabled ? '启用' : '停用') + '</span></td>' +
+          '<td>' +
+            '<button class="pr-op-link" onclick="prOpenHolidayModal(' + c.id + ')">编辑</button>' +
+            '<button class="pr-op-link danger" onclick="prDeleteHoliday(' + c.id + ')">删除</button>' +
+          '</td>' +
+        '</tr>';
+      }).join('');
+      if (PR_DELETED_HOLIDAYS.length) {
+        cb.innerHTML += '<tr><td colspan="5" style="color:#8a94a6;font-size:11px;padding-top:6px">已删除 ' + PR_DELETED_HOLIDAYS.length + ' 个节日（仍被历史活动引用、按原周期生效；新活动不可选）</td></tr>';
+      }
+    }
+
+    function prHoliMonthDayOptions() {
+      var mSel = document.getElementById('prHoliMonth');
+      mSel.innerHTML = '';
+      for (var i = 1; i <= 12; i++) mSel.innerHTML += '<option value="' + (i < 10 ? '0' + i : i) + '">' + i + ' 月</option>';
+      var dSel = document.getElementById('prHoliDay');
+      dSel.innerHTML = '';
+      for (var j = 1; j <= 31; j++) dSel.innerHTML += '<option value="' + (j < 10 ? '0' + j : j) + '">' + j + ' 日</option>';
+      var mSel2 = document.getElementById('prHoliMonthEnd');
+      mSel2.innerHTML = mSel.innerHTML;
+      var dSel2 = document.getElementById('prHoliDayEnd');
+      dSel2.innerHTML = dSel.innerHTML;
+      var mdSel = document.getElementById('prHoliMonthDay');
+      mdSel.innerHTML = '';
+      for (var k = 1; k <= 31; k++) mdSel.innerHTML += '<option value="' + (k < 10 ? '0' + k : k) + '">' + k + ' 号</option>';
+      var mdSel2 = document.getElementById('prHoliMonthDayEnd');
+      mdSel2.innerHTML = '';
+      for (var k2 = 1; k2 <= 31; k2++) mdSel2.innerHTML += '<option value="' + (k2 < 10 ? '0' + k2 : k2) + '">' + k2 + ' 号</option>';
+      var W = ['一', '二', '三', '四', '五', '六', '日'];
+      var wc = document.getElementById('prHoliWeekChips');
+      wc.innerHTML = W.map(function(w, i) {
+        return '<span class="pr-chip" data-week="' + (i + 1) + '" onclick="prHoliWeekToggle(this)">周' + w + '</span>';
+      }).join('');
+    }
+    window.prHoliWeekToggle = function(el) { el.classList.toggle('active'); };
+    window.prHoliRepeatChange = function() {
+      var t = document.querySelector('input[name=prHoliRepeat]:checked').value;
+      document.getElementById('prHoliDateYearly').style.display = t === 'yearly' ? 'flex' : 'none';
+      document.getElementById('prHoliDateMonthly').style.display = t === 'monthly' ? 'flex' : 'none';
+      document.getElementById('prHoliDateWeekly').style.display = t === 'weekly' ? 'block' : 'none';
+      document.getElementById('prHoliDateOnce').style.display = t === 'once' ? 'block' : 'none';
+    };
+    window.prOpenHolidayModal = function(id) {
+      var isNew = (id === undefined || id === null);
+      PR_HOLI_EDITING_ID = isNew ? null : id;
+      document.getElementById('prHolidayModalTitle').textContent = isNew ? '新建自定义节日' : '编辑自定义节日';
+      var c = null;
+      if (!isNew) for (var i = 0; i < PR_CUSTOM_HOLIDAYS.length; i++) if (PR_CUSTOM_HOLIDAYS[i].id === id) c = PR_CUSTOM_HOLIDAYS[i];
+      prHoliMonthDayOptions();
+      document.getElementById('prHoliName').value = c ? c.name : '';
+      document.getElementById('prHoliEnabled').checked = c ? c.enabled : true;
+      var rep = c ? c.repeat : 'yearly';
+      document.querySelector('input[name=prHoliRepeat][value=' + rep + ']').checked = true;
+      if (rep === 'once') {
+        document.getElementById('prHoliDate').value = c ? c.date : '';
+        document.getElementById('prHoliDateEnd').value = c ? (c.dateEnd || c.date || '') : '';
+        prSyncHoliDateRange();
+      } else if (rep === 'yearly') {
+        document.getElementById('prHoliMonth').value = c ? c.monthDay.slice(0, 2) : '11';
+        document.getElementById('prHoliDay').value = c ? c.monthDay.slice(3) : '18';
+        var me = c && c.monthDayEnd ? c.monthDayEnd.slice(0, 2) : (c ? c.monthDay.slice(0, 2) : '11');
+        var de = c && c.monthDayEnd ? c.monthDayEnd.slice(3) : (c ? c.monthDay.slice(3) : '18');
+        document.getElementById('prHoliMonthEnd').value = me;
+        document.getElementById('prHoliDayEnd').value = de;
+      } else if (rep === 'monthly') {
+        document.getElementById('prHoliMonthDay').value = c ? c.monthDay : '15';
+        document.getElementById('prHoliMonthDayEnd').value = c ? (c.monthDayEnd || c.monthDay || '15') : '15';
+      } else if (rep === 'weekly') {
+        var wd = c ? (c.weekDays || []) : [];
+        document.querySelectorAll('#prHoliWeekChips .pr-chip').forEach(function(el) {
+          el.classList.toggle('active', wd.indexOf(+el.getAttribute('data-week')) >= 0);
+        });
+      }
+      prHoliRepeatChange();
+      document.getElementById('prHolidayModal').style.display = 'flex';
+    };
+    window.prCloseHolidayModal = function() {
+      document.getElementById('prHolidayModal').style.display = 'none';
+      PR_HOLI_EDITING_ID = null;
+    };
+    var PR_CONFIRM_CALLBACK = null;
+    window.prConfirm = function(msg, onOk) {
+      PR_CONFIRM_CALLBACK = onOk;
+      document.getElementById('prConfirmMessage').textContent = msg;
+      document.getElementById('prConfirmOverlay').style.display = 'flex';
+    };
+    window.prConfirmOk = function() {
+      document.getElementById('prConfirmOverlay').style.display = 'none';
+      if (PR_CONFIRM_CALLBACK) PR_CONFIRM_CALLBACK();
+      PR_CONFIRM_CALLBACK = null;
+    };
+    window.prConfirmCancel = function() {
+      document.getElementById('prConfirmOverlay').style.display = 'none';
+      PR_CONFIRM_CALLBACK = null;
+    };
+
+    function prApplySaveHoliday(cand) {
+      var c = {
+        id: PR_HOLI_EDITING_ID || (PR_CUSTOM_HOLIDAYS.length ? PR_CUSTOM_HOLIDAYS[PR_CUSTOM_HOLIDAYS.length - 1].id + 1 : 1),
+        name: cand.name, repeat: cand.repeat, monthDay: cand.monthDay, monthDayEnd: cand.monthDayEnd, date: cand.date, dateEnd: cand.dateEnd, weekDays: cand.weekDays,
+        enabled: document.getElementById('prHoliEnabled').checked
+      };
+      if (PR_HOLI_EDITING_ID) {
+        for (var i = 0; i < PR_CUSTOM_HOLIDAYS.length; i++) if (PR_CUSTOM_HOLIDAYS[i].id === PR_HOLI_EDITING_ID) PR_CUSTOM_HOLIDAYS[i] = c;
+      } else {
+        PR_CUSTOM_HOLIDAYS.push(c);
+      }
+      PR_HOLIDAY_OCC_CACHE = {};   // 节日定义变更，失效发生日缓存
+      prCloseHolidayModal();
+      prRenderHolidays();
+      prRenderRules();
+      prSaveStore();
+      showToast('自定义节日已保存');
+    }
+
+    window.prSaveHoliday = function() {
+      var name = document.getElementById('prHoliName').value.trim();
+      if (!name) { showToast('请填写节日名称'); return; }
+      var repeat = document.querySelector('input[name=prHoliRepeat]:checked').value;
+      var monthDay = '', monthDayEnd = '', date = '', dateEnd = '', weekDays = [];
+      if (repeat === 'yearly') {
+        monthDay = document.getElementById('prHoliMonth').value + '-' + document.getElementById('prHoliDay').value;
+        monthDayEnd = document.getElementById('prHoliMonthEnd').value + '-' + document.getElementById('prHoliDayEnd').value;
+        if (monthDayEnd < monthDay) { showToast('结束日期不能早于开始日期'); return; }
+      } else if (repeat === 'monthly') {
+        monthDay = document.getElementById('prHoliMonthDay').value;
+        monthDayEnd = document.getElementById('prHoliMonthDayEnd').value;
+        if (+monthDayEnd < +monthDay) { showToast('结束日期不能早于开始日期'); return; }
+      } else if (repeat === 'weekly') {
+        document.querySelectorAll('#prHoliWeekChips .pr-chip.active').forEach(function(el) { weekDays.push(+el.getAttribute('data-week')); });
+        if (!weekDays.length) { showToast('每周模式请至少选择一天'); return; }
+      } else {
+        date = document.getElementById('prHoliDate').value;
+        dateEnd = document.getElementById('prHoliDateEnd').value || date;
+        if (!date) { showToast('请选择开始日期'); return; }
+        if (dateEnd < date) { showToast('结束日期不能早于开始日期'); return; }
+      }
+      // 日期冲突校验：仅同类型自定义节日之间做重叠校验（单次免校验；跨类型由活动优先级裁决）
+      var cand = {
+        id: PR_HOLI_EDITING_ID || undefined,
+        name: name, repeat: repeat, monthDay: monthDay, monthDayEnd: monthDayEnd, date: date, dateEnd: dateEnd, weekDays: weekDays
+      };
+      var conflicts = prHolidayConflict(cand);
+      if (conflicts.length) {
+        var preview = conflicts.slice(0, 8).join('、') + (conflicts.length > 8 ? ' 等 ' + conflicts.length + ' 个' : '');
+        prConfirm('「' + name + '」的生效日期与以下节日重叠，会导致调价周期判定模糊：\n\n' + preview + '\n\n仍要保存吗？', function() { prApplySaveHoliday(cand); });
+        return;
+      }
+      prApplySaveHoliday(cand);
+    };
+    window.prDeleteHoliday = function(id) {
+      var c = null, idx = -1;
+      for (var i = 0; i < PR_CUSTOM_HOLIDAYS.length; i++) if (PR_CUSTOM_HOLIDAYS[i].id === id) { c = PR_CUSTOM_HOLIDAYS[i]; idx = i; break; }
+      if (!c || idx < 0) return;
+      var used = PR_RULES.filter(function(r) { return (r.holidayFilter || []).indexOf('custom:' + id) >= 0; }).length;
+      prConfirm('确认删除自定义节日「' + c.name + '」？\n\n已引用该节日的 ' + used + ' 条活动仍按原节日周期生效（不受影响）；新活动将不再可选该节日。', function() {
+        // 软删除：移出活动列表，保留墓碑供历史活动回查（日期信息不变，已配置活动继续生效）
+        PR_CUSTOM_HOLIDAYS.splice(idx, 1);
+        var tomb = JSON.parse(JSON.stringify(c));
+        tomb.deleted = true;
+        PR_DELETED_HOLIDAYS.push(tomb);
+        PR_HOLIDAY_OCC_CACHE = {};
+        prRenderHolidays();
+        prRenderRules();
+        prSaveStore();
+        showToast('自定义节日已删除（历史活动不受影响）');
+      });
+    };
+
+    // 日期行模式切换（事件委托）
+    document.addEventListener('change', function(e) {
+      if (e.target && e.target.classList && e.target.classList.contains('pr-holi-select')) {
+        updateHoliWindow(e.target.closest('.pr-date-row'));
+      }
+    });
+
+    // 范围/时段/优惠变化 → 预览（时段行内联控件各自 onchange 触发 prUpdatePreview）
+    // 范围类型切换由 prScopeTypeClick 触发，prScopeTypeChange 内已调用 prUpdatePreview()
+
+    // 生成需求说明：基于当前页面配置，生成新的需求说明 web 页面（新标签页打开）
+    window.prGenerateReqSpec = function() {
+      function pad(n){ return (n < 10 ? '0' : '') + n; }
+      var d = new Date();
+      var ts = d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+
+      var rules = PR_RULES || [];
+      var rows = rules.map(function(r){
+        var scope = (r.scopeType === 'goods' ? '单品：' : '分类：') + (r.scopeValues || []).join('、');
+        var period = (r.holidayFilter && r.holidayFilter.length) ? ('节日：' + r.holidayFilter.map(holidayLabel).join('、')) : (fmtDate(r.validFrom) + ' ~ ' + fmtDate(r.validTo));
+        var trs = (r.main && r.main.timeRanges) || [];
+        var plan = trs.length ? trs.map(function(tr){ return fmtTime(tr) + ' → ' + fmtStageAction(tr); }).join('；') : '未设置';
+        return { name: r.name, enabled: !!r.enabled, scope: scope, period: period, plan: plan };
+      });
+
+      var ruleRowsHtml = rows.map(function(x){
+        return '<tr><td>' + esc(x.name) + '</td><td>' + (x.enabled ? '<span class="st on">启用</span>' : '<span class="st off">停用</span>') + '</td><td>' + esc(x.scope) + '</td><td>' + esc(x.period) + '</td><td>' + esc(x.plan) + '</td></tr>';
+      }).join('');
+      if (!ruleRowsHtml) ruleRowsHtml = '<tr><td colspan="5" class="muted">当前暂无已配置活动</td></tr>';
+
+      var holiHtml = (PR_LEGAL_HOLIDAYS||[]).map(function(h){ return '<tr><td>法定 · ' + esc(h.name) + '</td><td>' + esc(fmtHoliRange(h.date,h.end)) + '</td></tr>'; }).join('')
+        + (PR_CUSTOM_HOLIDAYS||[]).map(function(c){ return '<tr><td>自定义 · ' + esc(c.name) + '</td><td>' + esc(holidayWindow(c)) + '</td></tr>'; }).join('');
+      if (!holiHtml) holiHtml = '<tr><td colspan="2" class="muted">暂无节日数据</td></tr>';
+
+      // ---- Markdown 文本 ----
+      var md = [];
+      md.push('# 动态调价 需求说明');
+      md.push('> 生成时间：' + ts + '　|　数据来源：动态调价 页面当前实时配置');
+      md.push('');
+      md.push('## 一、模块概述');
+      md.push('动态调价是「营销管理」下的精细化定价模块。运营可针对指定商品 / 分类，在指定时间窗口（活动周期或特定节日）内，按时间段分别设置折扣率、直价或立减金额，实现分时段、分场景的自动调价。');
+      md.push('');
+      md.push('## 二、核心概念');
+      md.push('- **活动**：一条动态调价规则，由「生效范围 + 生效周期 + 时段优惠 + 状态」构成。');
+      md.push('- **生效范围**：按分类 / 按单品（单选其一）。');
+      md.push('- **生效周期**：活动周期（起止日期区间）或 限定节日（单选、互斥）。');
+      md.push('- **时段优惠**：在生效日期内，按时间段分别设置一种优惠（折扣率 / 直价 / 立减）。');
+      md.push('');
+      md.push('## 三、业务规则');
+      md.push('### 3.1 生效范围与冲突');
+      md.push('- 同一时间内，相同商品或相同分类不可重复出现在多个活动中（硬冲突拦截）；普通日期与特殊日期（节假日）跨优先级（时间档）重叠不视为冲突，无论品类、分类、时间是否重叠均不比对、不拦截，由时间档优先级裁决（高者自动生效）。');
+      md.push('- 仅按同级范围比对（单品↔单品、分类↔分类）；分类活动与旗下单品活动不再视为冲突。');
+      md.push('');
+      md.push('### 3.2 优先级裁决（先时间，后商品）');
+      md.push('- 时间档：节假日·单次 ＞ 节假日·每年(自定义) ＞ 节假日·每年(法定) ＞ 节假日·每月 ＞ 节假日·每周 ＞ 普通日期');
+      md.push('- 商品档：单品 ＞ 分类 ＞ 全店');
+      md.push('- 同级重叠才硬冲突；跨优先级由高者自动生效。');
+      md.push('');
+      md.push('### 3.3 节日规则');
+      md.push('- 活动周期与节日不再互斥：勾选节日后，本活动仅在上方「活动周期」窗口内的该节日日期生效（节日模式也需填写活动周期作为限定窗口）；节日之间互斥，只能选 1 个。留空 = 按活动周期每天生效。');
+      md.push('- 节日之间互斥：仅可选 1 个。');
+      md.push('- 留空 = 按活动周期每天生效。');
+      md.push('');
+      md.push('### 3.4 时段优惠规则');
+      md.push('- 折扣锚定「基础价格」。');
+      md.push('- 同一时段仅一个优惠；时段不可重叠（含首尾相接，重叠禁配）。');
+      md.push('- 会员价取 min(动态价, 会员价)。');
+      md.push('');
+      md.push('### 3.5 数据校验');
+      md.push('- 折扣率 1~99；直价 / 立减不可小于 0.01（至少 0.01，两位小数）。');
+      md.push('- 活动周期起始 ≤ 结束；限定节日仅可选 1 个。');
+      md.push('');
+      md.push('## 四、数据模型');
+      md.push('### 4.1 PriceRule（调价活动）');
+      md.push('| 字段 | 类型 | 说明 |');
+      md.push('| --- | --- | --- |');
+      md.push('| id | Long | 活动唯一 ID |');
+      md.push('| name | String | 活动名称 |');
+      md.push('| enabled | Boolean | 是否启用 |');
+      md.push('| scopeType | Enum | goods=按单品 / category=按分类 |');
+      md.push('| scopeValues | String[] | 商品名或分类名数组 |');
+      md.push('| holidayFilter | String[] | 限定节日编码（如 `custom:4` / `legal:春节`）；空 = 按活动周期 |');
+      md.push('| validFrom | Date | 活动周期起始（限定节日时为空）|');
+      md.push('| validTo | Date | 活动周期结束 |');
+      md.push('| main.enabled | Boolean | 时段优惠总开关 |');
+      md.push('| main.timeRanges | TimeRange[] | 时段优惠列表 |');
+      md.push('');
+      md.push('### 4.2 TimeRange（时段优惠）');
+      md.push('| 字段 | 类型 | 说明 |');
+      md.push('| --- | --- | --- |');
+      md.push('| start | Time(HH:mm) | 时段起始 |');
+      md.push('| end | Time(HH:mm) | 时段结束（最大 23:59）|');
+      md.push('| actionType | Enum | discount=折扣率 / price=直价 / reduce=立减 |');
+      md.push('| actionValue | Number | 折扣率(0~1) / 直价金额 / 立减金额 |');
+      md.push('');
+      md.push('### 4.3 Product（商品 / 分类，下拉数据源）');
+      md.push('| 字段 | 类型 | 说明 |');
+      md.push('| --- | --- | --- |');
+      md.push('| name | String | 商品名 |');
+      md.push('| code | String(13) | 69 码 / EAN |');
+      md.push('| spec | String | 规格 |');
+      md.push('| memberPrice | Number | 会员价（基础价锚定）|');
+      md.push('| origPrice | Number | 原价 |');
+      md.push('| category | String | 所属分类 |');
+      md.push('');
+      md.push('### 4.4 Holiday（节日）');
+      md.push('- **法定**：`name`、`date`(起始)、`end`(结束)、`note`。');
+      md.push('- **自定义**：`id`、`name`、`repeat`(once/yearly/monthly/weekly)、`monthDay/monthDayEnd`、`date/dateEnd`、`weekDays[]`、`enabled`。');
+      md.push('');
+      md.push('## 五、API 接口定义');
+      md.push('> 以下为面向「动态调价」服务的前后端契约草案（RESTful，JSON）。');
+      md.push('');
+      md.push('### 5.1 调价活动');
+      md.push('| 方法 | 路径 | 说明 |');
+      md.push('| --- | --- | --- |');
+      md.push('| GET | /api/v1/price-rules | 活动列表（支持 status/keyword 筛选、priority 排序）|');
+      md.push('| POST | /api/v1/price-rules | 新建活动 |');
+      md.push('| PUT | /api/v1/price-rules/{id} | 编辑活动 |');
+      md.push('| DELETE | /api/v1/price-rules/{id} | 删除活动 |');
+      md.push('| POST | /api/v1/price-rules/batch | 批量启用 / 停用 / 删除 |');
+      md.push('| POST | /api/v1/price-rules/preview | 价格试算（商品 + 时间 → 生效价）|');
+      md.push('| GET | /api/v1/price-rules/conflicts | 冲突检测（时间 + 范围重叠）|');
+      md.push('');
+      md.push('### 5.2 商品与节日');
+      md.push('| 方法 | 路径 | 说明 |');
+      md.push('| --- | --- | --- |');
+      md.push('| GET | /api/v1/products | 商品 / 分类下拉数据源 |');
+      md.push('| GET | /api/v1/holidays/legal | 法定节假日（按年）|');
+      md.push('| GET | /api/v1/holidays/custom | 自定义节日列表 |');
+      md.push('| POST | /api/v1/holidays/custom | 新增自定义节日 |');
+      md.push('| PUT | /api/v1/holidays/custom/{id} | 编辑自定义节日 |');
+      md.push('| DELETE | /api/v1/holidays/custom/{id} | 删除自定义节日 |');
+      md.push('');
+      md.push('### 5.3 示例：新建活动');
+      md.push('```json');
+      md.push('POST /api/v1/price-rules');
+      md.push('{');
+      md.push('  "name": "晚市清货折扣",');
+      md.push('  "scopeType": "category",');
+      md.push('  "scopeValues": ["蔬菜"],');
+      md.push('  "validFrom": "2026-01-01",');
+      md.push('  "validTo": "2026-12-31",');
+      md.push('  "main": { "enabled": true, "timeRanges": [');
+      md.push('    { "start": "19:00", "end": "21:00", "actionType": "discount", "actionValue": 0.8 }');
+      md.push('  ] }');
+      md.push('}');
+      md.push('```');
+      md.push('');
+      md.push('## 六、当前配置示例（共 ' + rows.length + ' 条）');
+      md.push('');
+      md.push('| 活动名称 | 状态 | 生效范围 | 生效周期 | 时段与优惠 |');
+      md.push('| --- | --- | --- | --- | --- |');
+      rows.forEach(function(x){ md.push('| ' + x.name + ' | ' + (x.enabled ? '启用' : '停用') + ' | ' + x.scope + ' | ' + x.period + ' | ' + x.plan + ' |'); });
+      md.push('');
+      md.push('## 七、附录');
+      md.push('- 优先级编码：列表「作用优先级」编码「周期序·商品档」（如 2·高），点击表头可排序。');
+      md.push('- 数据来源：本说明「当前配置示例」实时读取自动态调价 页面当前内存数据。');
+      var mdText = md.join('\n');
+
+      // ---- 生成文档 ----
+      var CSS = '*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;color:#0b1019;background:#f5f7fa;line-height:1.7}'
+        + '.wrap{max-width:920px;margin:0 auto;padding:24px 20px 60px}'
+        + '.topbar{position:sticky;top:0;background:#fff;border-bottom:1px solid #e9eef7;padding:12px 20px;display:flex;align-items:center;gap:12px;z-index:10}'
+        + '.topbar h1{font-size:16px;margin:0;font-weight:700}.topbar .sub{font-size:12px;color:#8a94a6}.sp{flex:1}'
+        + '.btn{border:1px solid #d9dbde;background:#fff;border-radius:6px;padding:7px 14px;font-size:13px;cursor:pointer;color:#0b1019}'
+        + '.btn.pri{background:#005cf5;border-color:#005cf5;color:#fff}'
+        + '.card{background:#fff;border:1px solid #e9eef7;border-radius:10px;padding:18px 22px;margin:16px 0;box-shadow:0 1px 2px rgba(16,24,40,.04)}'
+        + '.card h2{font-size:15px;margin:0 0 12px;padding-left:10px;border-left:3px solid #005cf5}'
+        + '.card h3{font-size:13px;margin:16px 0 6px;color:#1f2a3d}'
+        + 'p{margin:8px 0;font-size:14px;color:#2b3445}'
+        + 'ul{margin:8px 0;padding-left:20px}li{font-size:14px;margin:4px 0;color:#2b3445}'
+        + 'table{width:100%;border-collapse:collapse;margin-top:8px;font-size:13px}'
+        + 'th,td{border:1px solid #e9eef7;padding:8px 10px;text-align:left;vertical-align:top}'
+        + 'th{background:#f7f9fc;font-weight:600;color:#1f2a3d}'
+        + '.muted{color:#8a94a6;text-align:center}'
+        + '.st{display:inline-block;padding:1px 8px;border-radius:10px;font-size:12px}.st.on{background:#e8f7ee;color:#1aa260}.st.off{background:#f1f3f6;color:#8a94a6}'
+        + '.foot{font-size:12px;color:#8a94a6;text-align:center;margin-top:20px}'
+        + 'code{background:#eef1f6;border-radius:4px;padding:1px 5px;font-size:12px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#1f2a3d}'
+        + '.codeblock{background:#0d1320;color:#dbe4f0;border-radius:8px;padding:12px 14px;margin-top:10px;font-size:12px;line-height:1.7;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:pre;overflow-x:auto}'
+        + '.apimethod{display:inline-block;font-size:11px;font-weight:700;padding:1px 7px;border-radius:4px;min-width:34px;text-align:center;margin-right:8px}'
+        + '.m-get{background:#e8f1ff;color:#005cf5}.m-post{background:#e9f8ee;color:#1aa260}.m-put{background:#fff4e5;color:#d9730d}.m-del{background:#fdecec;color:#e04646}';
+
+      var doc = '<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>动态调价 需求说明</title><style>' + CSS + '</style></head><body>'
+        + '<div class="topbar"><h1>动态调价 · 需求说明</h1><span class="sub">营销管理 / 动态调价</span><span class="sp"></span><button class="btn pri" onclick="dl()">下载 HTML</button><button class="btn" onclick="cp()">复制 Markdown</button></div>'
+        + '<div class="wrap">'
+        + '<div class="card"><h2>一、模块概述</h2><p>动态调价是「营销管理」下的精细化定价模块。运营可针对指定商品 / 分类，在指定时间窗口（活动周期或特定节日）内，按时间段分别设置折扣率、直价或立减金额，实现分时段、分场景的自动调价。</p><p style="color:#8a94a6;font-size:12px;margin-bottom:0">生成时间：' + ts + '　·　数据来源：动态调价 页面当前实时配置</p></div>'
+        + '<div class="card"><h2>二、核心概念</h2><ul>'
+        + '<li><b>活动</b>：一条动态调价规则，由「生效范围 + 生效周期 + 时段优惠 + 状态」构成。</li>'
+        + '<li><b>生效范围</b>：按分类 / 按单品（单选其一）。</li>'
+        + '<li><b>生效周期</b>：活动周期（起止日期区间）或 限定节日（单选、互斥）。</li>'
+        + '<li><b>时段优惠</b>：在生效日期内，按时间段分别设置一种优惠（折扣率 / 直价 / 立减）。</li>'
+        + '</ul></div>'
+        + '<div class="card"><h2>三、业务规则</h2>'
+        + '<h3>3.1 生效范围与冲突</h3><ul><li>同一时间内，相同商品或相同分类不可重复出现在多个活动中（硬冲突拦截）；普通日期与特殊日期（节假日）跨优先级（时间档）重叠不视为冲突，无论品类、分类、时间是否重叠均不比对、不拦截，由时间档优先级裁决（高者自动生效）。</li><li>仅按同级范围比对（单品↔单品、分类↔分类）；分类活动与旗下单品活动不再视为冲突。</li></ul>'
+        + '<h3>3.2 优先级裁决（先时间，后商品）</h3><ul><li>时间档：节假日·单次 ＞ 节假日·每年(自定义) ＞ 节假日·每年(法定) ＞ 节假日·每月 ＞ 节假日·每周 ＞ 普通日期</li><li>商品档：单品 ＞ 分类 ＞ 全店</li><li>同级重叠才硬冲突；跨优先级由高者自动生效。</li></ul>'
+        + '<h3>3.3 节日规则</h3><ul><li>活动周期与节日不再互斥：勾选节日后，本活动仅在上方「活动周期」窗口内的该节日日期生效（节日模式也需填写活动周期作为限定窗口）；节日之间互斥，只能选 1 个。留空 = 按活动周期每天生效。</li><li>节日之间互斥：仅可选 1 个。</li><li>留空 = 按活动周期每天生效。</li></ul>'
+        + '<h3>3.4 时段优惠规则</h3><ul><li>折扣锚定「基础价格」。</li><li>同一时段仅一个优惠；时段不可重叠（含首尾相接，重叠禁配）。</li><li>会员价取 min(动态价, 会员价)。</li></ul>'
+        + '<h3>3.5 数据校验</h3><ul><li>折扣率 1~99；直价 / 立减不可小于 0.01（至少 0.01，两位小数）。</li><li>活动周期起始 ≤ 结束；限定节日仅可选 1 个。</li></ul>'
+        + '</div>'
+        + '<div class="card"><h2>四、数据模型</h2>'
+        + '<h3>4.1 PriceRule（调价活动）</h3>'
+        + '<table><thead><tr><th>字段</th><th>类型</th><th>说明</th></tr></thead><tbody>'
+        + '<tr><td><code>id</code></td><td>Long</td><td>活动唯一 ID</td></tr>'
+        + '<tr><td><code>name</code></td><td>String</td><td>活动名称</td></tr>'
+        + '<tr><td><code>enabled</code></td><td>Boolean</td><td>是否启用</td></tr>'
+        + '<tr><td><code>scopeType</code></td><td>Enum</td><td>goods=按单品 / category=按分类</td></tr>'
+        + '<tr><td><code>scopeValues</code></td><td>String[]</td><td>商品名或分类名数组</td></tr>'
+        + '<tr><td><code>holidayFilter</code></td><td>String[]</td><td>限定节日编码（如 <code>custom:4</code> / <code>legal:春节</code>）；空 = 按活动周期</td></tr>'
+        + '<tr><td><code>validFrom</code></td><td>Date</td><td>活动周期起始（限定节日时为空）</td></tr>'
+        + '<tr><td><code>validTo</code></td><td>Date</td><td>活动周期结束</td></tr>'
+        + '<tr><td><code>main.enabled</code></td><td>Boolean</td><td>时段优惠总开关</td></tr>'
+        + '<tr><td><code>main.timeRanges</code></td><td>TimeRange[]</td><td>时段优惠列表</td></tr>'
+        + '</tbody></table>'
+        + '<h3>4.2 TimeRange（时段优惠）</h3>'
+        + '<table><thead><tr><th>字段</th><th>类型</th><th>说明</th></tr></thead><tbody>'
+        + '<tr><td><code>start</code></td><td>Time(HH:mm)</td><td>时段起始</td></tr>'
+        + '<tr><td><code>end</code></td><td>Time(HH:mm)</td><td>时段结束（最大 23:59）</td></tr>'
+        + '<tr><td><code>actionType</code></td><td>Enum</td><td>discount=折扣率 / price=直价 / reduce=立减</td></tr>'
+        + '<tr><td><code>actionValue</code></td><td>Number</td><td>折扣率(0~1) / 直价金额 / 立减金额</td></tr>'
+        + '</tbody></table>'
+        + '<h3>4.3 Product（商品 / 分类，下拉数据源）</h3>'
+        + '<table><thead><tr><th>字段</th><th>类型</th><th>说明</th></tr></thead><tbody>'
+        + '<tr><td><code>name</code></td><td>String</td><td>商品名</td></tr>'
+        + '<tr><td><code>code</code></td><td>String(13)</td><td>69 码 / EAN</td></tr>'
+        + '<tr><td><code>spec</code></td><td>String</td><td>规格</td></tr>'
+        + '<tr><td><code>memberPrice</code></td><td>Number</td><td>会员价（基础价锚定）</td></tr>'
+        + '<tr><td><code>origPrice</code></td><td>Number</td><td>原价</td></tr>'
+        + '<tr><td><code>category</code></td><td>String</td><td>所属分类</td></tr>'
+        + '</tbody></table>'
+        + '<h3>4.4 Holiday（节日）</h3>'
+        + '<ul><li><b>法定</b>：<code>name</code>、<code>date</code>(起始)、<code>end</code>(结束)、<code>note</code>。</li>'
+        + '<li><b>自定义</b>：<code>id</code>、<code>name</code>、<code>repeat</code>(once/yearly/monthly/weekly)、<code>monthDay/monthDayEnd</code>、<code>date/dateEnd</code>、<code>weekDays[]</code>、<code>enabled</code>。</li></ul>'
+        + '</div>'
+        + '<div class="card"><h2>五、API 接口定义</h2>'
+        + '<p style="color:#8a94a6;font-size:12px;margin-top:0">以下为面向「动态调价」服务的前后端契约草案（RESTful，JSON）。</p>'
+        + '<h3>5.1 调价活动</h3>'
+        + '<table><thead><tr><th>方法</th><th>路径</th><th>说明</th></tr></thead><tbody>'
+        + '<tr><td><span class="apimethod m-get">GET</span></td><td><code>/api/v1/price-rules</code></td><td>活动列表（status/keyword 筛选、priority 排序）</td></tr>'
+        + '<tr><td><span class="apimethod m-post">POST</span></td><td><code>/api/v1/price-rules</code></td><td>新建活动</td></tr>'
+        + '<tr><td><span class="apimethod m-put">PUT</span></td><td><code>/api/v1/price-rules/{id}</code></td><td>编辑活动</td></tr>'
+        + '<tr><td><span class="apimethod m-del">DEL</span></td><td><code>/api/v1/price-rules/{id}</code></td><td>删除活动</td></tr>'
+        + '<tr><td><span class="apimethod m-post">POST</span></td><td><code>/api/v1/price-rules/batch</code></td><td>批量启用 / 停用 / 删除</td></tr>'
+        + '<tr><td><span class="apimethod m-post">POST</span></td><td><code>/api/v1/price-rules/preview</code></td><td>价格试算（商品 + 时间 → 生效价）</td></tr>'
+        + '<tr><td><span class="apimethod m-get">GET</span></td><td><code>/api/v1/price-rules/conflicts</code></td><td>冲突检测（时间 + 范围重叠）</td></tr>'
+        + '</tbody></table>'
+        + '<h3>5.2 商品与节日</h3>'
+        + '<table><thead><tr><th>方法</th><th>路径</th><th>说明</th></tr></thead><tbody>'
+        + '<tr><td><span class="apimethod m-get">GET</span></td><td><code>/api/v1/products</code></td><td>商品 / 分类下拉数据源</td></tr>'
+        + '<tr><td><span class="apimethod m-get">GET</span></td><td><code>/api/v1/holidays/legal</code></td><td>法定节假日（按年）</td></tr>'
+        + '<tr><td><span class="apimethod m-get">GET</span></td><td><code>/api/v1/holidays/custom</code></td><td>自定义节日列表</td></tr>'
+        + '<tr><td><span class="apimethod m-post">POST</span></td><td><code>/api/v1/holidays/custom</code></td><td>新增自定义节日</td></tr>'
+        + '<tr><td><span class="apimethod m-put">PUT</span></td><td><code>/api/v1/holidays/custom/{id}</code></td><td>编辑自定义节日</td></tr>'
+        + '<tr><td><span class="apimethod m-del">DEL</span></td><td><code>/api/v1/holidays/custom/{id}</code></td><td>删除自定义节日</td></tr>'
+        + '</tbody></table>'
+        + '<h3>5.3 示例：新建活动</h3>'
+        + '<div class="codeblock">POST /api/v1/price-rules\n{\n  "name": "晚市清货折扣",\n  "scopeType": "category",\n  "scopeValues": ["蔬菜"],\n  "validFrom": "2026-01-01",\n  "validTo": "2026-12-31",\n  "main": { "enabled": true, "timeRanges": [\n    { "start": "19:00", "end": "21:00", "actionType": "discount", "actionValue": 0.8 }\n  ] }\n}</div>'
+        + '</div>'
+        + '<div class="card"><h2>六、当前配置示例（共 ' + rows.length + ' 条）</h2>'
+        + '<table><thead><tr><th>活动名称</th><th>状态</th><th>生效范围</th><th>生效周期</th><th>时段与优惠</th></tr></thead><tbody>' + ruleRowsHtml + '</tbody></table>'
+        + '<h3 style="margin-top:18px">节日数据</h3>'
+        + '<table><thead><tr><th>节日</th><th>周期</th></tr></thead><tbody>' + holiHtml + '</tbody></table>'
+        + '</div>'
+        + '<div class="card"><h2>七、附录</h2><ul><li>优先级编码：列表「作用优先级」编码「周期序·商品档」（如 2·高），点击表头可排序。</li><li>数据来源：本说明「当前配置示例」实时读取自动态调价 页面当前内存数据。</li></ul></div>'
+        + '<div class="foot">本需求说明由「动态调价」页面一键生成 · ' + ts + '</div>'
+        + '</div>'
+        + '<script type="text/plain" id="mdData">' + mdText + '<\/script>'
+        + '<script>function dl(){var b=new Blob([document.documentElement.outerHTML],{type:"text/html;charset=utf-8"});var a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="动态调价-需求说明.html";a.click();}'
+        + 'function cp(){var t=document.getElementById("mdData").textContent;if(navigator.clipboard){navigator.clipboard.writeText(t).then(function(){alert("Markdown 已复制");},function(){fb(t);});}else{fb(t);}}'
+        + 'function fb(t){var ta=document.createElement("textarea");ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");alert("Markdown 已复制");}catch(e){alert("复制失败，请手动选择文本");}document.body.removeChild(ta);}<\/script>'
+        + '</body></html>';
+
+      var blob = new Blob([doc], { type: 'text/html;charset=utf-8' });
+      var url = URL.createObjectURL(blob);
+
+      var opened = false;
+
+      // 1) 优先用 <a target="_blank"> 触发,比 window.open 更不容易被浏览器弹窗拦截
+      try {
+        var a = document.createElement('a');
+        a.href = url;
+        a.target = '_blank';
+        a.rel = 'noopener';
+        a.style.cssText = 'position:fixed;opacity:0;pointer-events:none';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        opened = true;
+      } catch (e) {
+        opened = false;
+      }
+
+      // 2) 若锚点异常/仍被拦截,尝试 window.open;返回 null 说明被拦截
+      if (!opened) {
+        try {
+          var w = window.open(url, '_blank');
+          if (w) opened = true;
+        } catch (e) {
+          opened = false;
+        }
+      }
+
+      if (opened) {
+        showToast('需求说明已在新标签页打开（共 ' + rules.length + ' 条活动）');
+      } else {
+        // 3) 最终兜底:直接下载 HTML
+        try {
+          var dl = document.createElement('a');
+          dl.href = url;
+          dl.download = '动态调价-需求说明.html';
+          document.body.appendChild(dl);
+          dl.click();
+          document.body.removeChild(dl);
+          showToast('新标签页被拦截，已下载 HTML 文件（共 ' + rules.length + ' 条活动）');
+        } catch (e) {
+          showToast('打开失败，请重试或检查浏览器弹窗/下载设置');
+        }
+      }
+    };
+
+    // 初始化
+    prRenderScope();
+    prRenderRules();
+  })();
+
+  // 触发多页框架初始化（传固定字符串，避免 layout.js currentScript 兼容问题）
+  if (typeof initMultiPage === 'function') initMultiPage('dynamic-pricing');
+  </script>
+</body>
+</html>

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>菜猫智店 · 企业管理</title>
+  <link rel="stylesheet" href="../shared/layout.css">
+</head>
+<body>
+  <div class="toast" id="toast"></div>
+  <div id="sidebarRoot"></div>
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+  <div class="main">
+    <div id="headerRoot"></div>
+    <div class="content">
+    <!-- ========== PAGE: 企业管理 ========== -->
+    <div class="page page-fill" id="page-group-manage">
+      <div id="groupManageContent" style="display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden;background:#F1F2F5"></div>
+    </div>
+    </div>
+  </div>
+  <div id="modalRoot"></div>
+
+  <script>var CURRENT_PAGE='group-manage';</script>
+  <script src="../shared/sidebar.js"></script>
+  <script src="../shared/header.js"></script>
+  <script src="../shared/modals.js"></script>
+  <script src="../shared/layout.js" data-page="group-manage"></script>
+  <script>
+    initMultiPage(CURRENT_PAGE);
+    if (typeof initTicker === 'function') initTicker();
+    (function() { var el = document.getElementById('updateTime'); if (el) el.textContent = '更新 2026-07-01 23:05'; })();
+  </script>
+</body>
+</html>

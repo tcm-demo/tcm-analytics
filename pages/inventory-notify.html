@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page-node-id="I6rLEjaAAQLsyIlNi22WGN">
+<head data-page-node-id="s6ZfOu1FGHuDDuOUmsD2gC">
+  <meta charset="UTF-8" data-page-node-id="WygymlqkKtZYAYn06FudAr">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" data-page-node-id="hDHJ8xAj0RSvVF0yhPLM32">
+  <title>菜猫智店 · 库存提醒</title>
+  <link rel="stylesheet" href="../shared/layout.css" data-page-node-id="sPCaniKOBr7mAn3NmmCb9P">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+  <style>
+    /* ===== 库存提醒 · 页面级样式（self-contained） ===== */
+    .ntf-toolbar { background: #fff; border-bottom: 1px solid #dfe3ed; margin: 0; padding: 0; }
+    .ntf-bar {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 0; flex-wrap: wrap;
+    }
+    /* 数据范围（门店/分类）：决定 KPI 与列表的数据源，置于 KPI 上方 */
+    .ntf-scope {
+      display: flex; align-items: center; gap: 16px;
+      margin: 0; padding: 10px 16px; background: #fff; border-bottom: 1px solid #dfe3ed;
+    }
+    /* KPI 口径备注：KPI=未读/待处理子集（非消息总数）；列表=范围内全部消息；无时间周期筛选 */
+    .ntf-kpi-note {
+      padding: 8px 16px; background: #f7f9fc; border-bottom: 1px solid #dfe3ed;
+      font-size: 11px; color: #616161; line-height: 1.6;
+    }
+    .ntf-kpi-note b { color: #0b1019; }
+    .ntf-kpi-note .sep { color: #c7ccd6; margin: 0 6px; }
+    .ntf-bar-right { margin-left: auto; display: inline-flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .ntf-store-wrap { font-weight: 600; color: #0b1019; }
+    .ntf-select {
+      height: 32px; padding: 0 8px; font-size: 12px; color: #333;
+      border: 1px solid #dfe3ed; border-radius: 4px; background: #fff;
+      outline: none; cursor: pointer; max-width: 160px;
+    }
+    .ntf-select:focus { border-color: #005CF5; }
+    .ntf-select-wrap { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #616161; }
+    .ntf-search-wrap { display: inline-flex; align-items: center; }
+    .ntf-search {
+      height: 32px; width: 200px; padding: 0 10px; font-size: 12px; color: #333;
+      border: 1px solid #dfe3ed; border-radius: 4px; background: #fff; outline: none;
+    }
+    .ntf-search:focus { border-color: #005CF5; }
+    /* 状态筛选：segmented control */
+    .ntf-seg { display: inline-flex; padding: 3px; gap: 2px; background: #f0f1f4; border-radius: 6px; }
+    .ntf-seg button {
+      border: none; background: transparent; cursor: pointer; font-size: 12px;
+      color: #616161; padding: 5px 14px; border-radius: 4px; transition: background .12s, color .12s;
+    }
+    .ntf-seg button:hover { color: #333; }
+    .ntf-seg button.active { background: #fff; color: #005CF5; font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+    .ntf-switch {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 12px; color: #616161;
+    }
+    .ntf-switch .pill {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 10px; border-radius: 12px; font-weight: 600; font-size: 12px;
+    }
+    .ntf-switch .pill.on { background: #F0F6FF; color: #005CF5; }
+    .ntf-switch .pill.off { background: #f5f5f5; color: #9e9e9e; }
+
+    .ntf-list { padding: 12px 16px; display: flex; flex-direction: column; gap: 8px; }
+    #page-inventory-notify .kpi-grid { margin: 8px 16px; }
+    .ntf-card {
+      display: flex; align-items: stretch; gap: 12px;
+      background: #fff; border: 1px solid #dfe3ed; border-radius: 4px;
+      padding: 12px 14px; transition: background .12s, box-shadow .12s;
+      border-left: 3px solid transparent;
+    }
+    .ntf-card.low  { border-left-color: #e65100; }
+    .ntf-card.sold { border-left-color: #fc4b52; }
+    .ntf-card.read { opacity: .6; }
+    .ntf-card.invalid { opacity: .45; cursor: default; background: #fafafa; }
+    .ntf-card.invalid:hover { box-shadow: none; }
+    .ntf-card.frozen { opacity: .45; cursor: default; background: #fafafa; }
+    .ntf-card.frozen:hover { box-shadow: none; }
+    .ntf-card.handled { background: #f1f8f4; border-left-color: #2e7d32; opacity: .72; }
+    .ntf-card.handled:hover { box-shadow: none; }
+
+    .ntf-ico {
+      width: 36px; height: 36px; border-radius: 50%; flex: 0 0 36px;
+      display: flex; align-items: center; justify-content: center; font-size: 18px;
+    }
+    .ntf-card.low  .ntf-ico { background: #fff3e0; }
+    .ntf-card.sold .ntf-ico { background: #ffebee; }
+    .ntf-card.handled .ntf-ico { background: #e8f5e9; }
+
+    .ntf-body { flex: 1 1 auto; min-width: 0; }
+    .ntf-title { font-size: 13px; font-weight: 600; color: #0b1019; display: flex; align-items: center; gap: 8px; }
+    .ntf-spec { font-weight: 400; color: #9e9e9e; font-size: 12px; }
+    .ntf-code { font-weight: 400; color: #b0b4bd; font-size: 11px; font-family: ui-monospace, Menlo, Consolas, monospace; }
+    .ntf-msg { font-size: 12px; color: #333; margin-top: 3px; }
+    .ntf-msg b { color: #e65100; }
+    .ntf-card.sold .ntf-msg b { color: #fc4b52; }
+    .ntf-meta { font-size: 11px; color: #9e9e9e; margin-top: 4px; display: flex; gap: 10px; align-items: center; }
+
+    .ntf-status { font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
+    .ntf-status.unread { background: #fff3e0; color: #e65100; }
+    .ntf-status.read { background: #f5f5f5; color: #9e9e9e; }
+    .ntf-status.frozen { background: #eceff1; color: #607d8b; }
+    .ntf-status.invalid { background: #f3e5f5; color: #8e24aa; }
+    .ntf-status.handled { background: #e8f5e9; color: #2e7d32; }
+
+    .ntf-actions { display: flex; align-items: center; gap: 8px; }
+    .ntf-empty {
+      text-align: center; color: #9e9e9e; font-size: 13px; padding: 48px 0;
+    }
+    .ntf-empty .big { font-size: 32px; display: block; margin-bottom: 8px; }
+    .ntf-disabled {
+      margin: 12px 16px; padding: 14px 16px; border-radius: 4px;
+      background: #f5f5f5; color: #616161; font-size: 12px; border: 1px dashed #d9dbde;
+    }
+
+    /* ===== 预览弹框（客户端 / 小程序样式补充） ===== */
+    .ntf-bar .preview-group { display: inline-flex; gap: 8px; margin-left: 4px; }
+    .inv-modal-overlay {
+      position: fixed; inset: 0; background: rgba(11,16,25,.45);
+      display: none; align-items: center; justify-content: center; z-index: 9500; padding: 24px;
+    }
+    .inv-modal-overlay.show { display: flex; }
+    .inv-modal {
+      background: #fff; border-radius: 4px; box-shadow: 0 8px 40px rgba(0,0,0,.18);
+      width: min(920px, 94vw); max-height: 88vh; display: flex; flex-direction: column; overflow: hidden;
+    }
+    .inv-modal.mini { width: min(420px, 94vw); }
+    .inv-modal-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 18px; border-bottom: 1px solid #dfe3ed;
+    }
+    .inv-modal-title { font-size: 14px; font-weight: 600; color: #0b1019; }
+    .inv-modal-close {
+      border: none; background: transparent; font-size: 18px; cursor: pointer;
+      color: #9e9e9e; line-height: 1; padding: 4px 8px; border-radius: 4px;
+    }
+    .inv-modal-close:hover { background: #f5f5f5; color: #333; }
+    .inv-modal-sub {
+      padding: 8px 18px; font-size: 12px; color: #616161;
+      background: #fafbfc; border-bottom: 1px solid #dfe3ed;
+    }
+    .inv-modal-body { padding: 18px; overflow-y: auto; }
+    .inv-modal-note {
+      padding: 10px 18px 16px; font-size: 12px; color: #9e9e9e; border-top: 1px solid #dfe3ed; line-height: 1.6;
+    }
+    .inv-modal-foot {
+      display: flex; justify-content: flex-end; gap: 10px;
+      padding: 12px 18px; border-top: 1px solid #dfe3ed; background: #fafbfc;
+    }
+    .set-form { display: flex; flex-direction: column; gap: 16px; }
+    .set-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .set-row label { font-size: 13px; color: #333; font-weight: 500; }
+    .set-row .ntf-select { width: 169px; }
+
+    /* —— 客户端·销售页模拟 —— */
+    .inv-modal.wide { width: min(1200px, 96vw); }
+
+    .co-app { display: flex; flex-direction: column; height: 620px; max-height: 74vh; background: #fff; border: 1px solid #dfe3ed; border-radius: 4px; overflow: hidden; font-size: 12px; }
+
+    /* 顶栏：秤头 + 门店 */
+    .co-topbar { display: flex; align-items: center; padding: 8px 12px; border-bottom: 1px solid #dfe3ed; background: #fff; gap: 12px; }
+    .co-scale { display: flex; align-items: center; gap: 10px; padding: 6px 10px; border: 1px solid #dfe3ed; border-radius: 4px; min-width: 240px; }
+    .co-scale-num { font-family: 'Courier New', monospace; font-size: 26px; font-weight: 700; color: #0b1019; line-height: 1; }
+    .co-scale-unit { font-size: 12px; color: #616161; margin-left: 2px; }
+    .co-scale-tag { font-size: 10px; color: #9e9e9e; line-height: 1.2; }
+    .co-scale-op { display: flex; gap: 6px; margin-left: auto; }
+    .co-scale-op button { font-size: 11px; padding: 4px 10px; border: 1px solid #dfe3ed; border-radius: 3px; background: #fff; cursor: pointer; color: #0b1019; }
+    .co-store { display: flex; align-items: center; gap: 8px; margin-left: auto; font-size: 12px; color: #0b1019; }
+    .co-store-tag { background: #005CF5; color: #fff; font-size: 10px; padding: 1px 6px; border-radius: 3px; }
+
+    /* 分类 tabs */
+    .co-tabs { display: flex; border-bottom: 1px solid #dfe3ed; background: #fafbfc; padding: 0 8px; }
+    .co-tabs button { padding: 10px 16px; font-size: 13px; border: none; background: transparent; cursor: pointer; color: #616161; border-bottom: 2px solid transparent; }
+    .co-tabs button.active { color: #005CF5; background: #fff; border-bottom-color: #005CF5; font-weight: 600; }
+    .co-search { margin-left: auto; display: flex; align-items: center; padding: 4px 8px; margin-top: 6px; margin-bottom: 6px; margin-right: 8px; background: #fff; border: 1px solid #dfe3ed; border-radius: 16px; }
+    .co-search input { border: none; outline: none; font-size: 12px; width: 140px; }
+
+    /* 主体 */
+    .co-body { display: flex; flex: 1; min-height: 0; }
+
+    /* 左：小分类 */
+    .co-sidecat { width: 96px; border-right: 1px solid #dfe3ed; overflow-y: auto; background: #fafbfc; }
+    .co-sidecat div { padding: 10px 12px; cursor: pointer; color: #616161; border-left: 3px solid transparent; }
+    .co-sidecat div.active { background: #fff; color: #005CF5; border-left-color: #005CF5; font-weight: 600; }
+
+    /* 中：商品网格 */
+    .co-grid { flex: 1; min-width: 0; overflow-y: auto; padding: 12px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; align-content: start; }
+    .co-card { border: 1px solid #dfe3ed; border-radius: 4px; padding: 10px 8px 8px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 4px; transition: border-color .15s; background: #fff; }
+    .co-card:hover { border-color: #005CF5; }
+    .co-card-img { width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, #e8f5e9, #c8e6c9); display: flex; align-items: center; justify-content: center; font-size: 28px; }
+    .co-card-name { font-size: 12px; font-weight: 600; color: #0b1019; margin-top: 2px; }
+    .co-card-price { font-size: 14px; color: #fc4b52; font-weight: 700; }
+    .co-card-unit { font-size: 10px; color: #9e9e9e; font-weight: 400; }
+    .co-card-add { font-size: 11px; color: #fff; background: #005CF5; border: none; border-radius: 3px; padding: 4px 14px; cursor: pointer; margin-top: 4px; }
+    .co-card-add:hover { background: #0048c7; }
+
+    /* 右：加购列表 */
+    .co-cart { width: 240px; border-left: 1px solid #dfe3ed; display: flex; flex-direction: column; background: #fff; }
+    .co-cart-head { padding: 10px 12px; border-bottom: 1px solid #dfe3ed; font-weight: 600; font-size: 13px; color: #0b1019; background: #fafbfc; display: flex; justify-content: space-between; align-items: center; }
+    .co-cart-head .count { font-size: 11px; color: #9e9e9e; font-weight: 400; }
+    .co-push-btn { font-size: 10px; color: #005CF5; background: #eaf2ff; border: 1px solid #cfe0ff; border-radius: 4px; padding: 2px 6px; cursor: pointer; white-space: nowrap; }
+    .co-cart-ops { display: flex; gap: 6px; }
+    .co-reset-btn { font-size: 10px; color: #616161; background: #f5f5f5; border: 1px solid #e0e0e0; border-radius: 4px; padding: 2px 6px; cursor: pointer; white-space: nowrap; }
+    .co-reset-btn:hover { background: #eceff1; }
+    .co-cart-list { flex: 1; overflow-y: auto; min-height: 80px; }
+    .co-cart-item { display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-bottom: 1px solid #f0f1f4; font-size: 12px; }
+    .co-cart-item:last-child { border-bottom: none; }
+    .co-cart-info { flex: 1; min-width: 0; }
+    .co-cart-name { font-weight: 600; color: #0b1019; }
+    .co-cart-sub { font-size: 10px; color: #9e9e9e; margin-top: 2px; }
+    .co-cart-badge { font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 8px; white-space: nowrap; }
+    .co-cart-badge.lack { background: #ffebee; color: #fc4b52; }
+    .co-cart-del { font-size: 14px; color: #bdbdbd; cursor: pointer; padding: 0 4px; }
+    .co-cart-del:hover { color: #fc4b52; }
+    .co-cart-empty { padding: 28px 16px; text-align: center; color: #bdbdbd; font-size: 12px; }
+    /* 加购项减号（手动减少数量） */
+    .co-cart-minus { font-size: 15px; color: #9e9e9e; cursor: pointer; padding: 0 5px; user-select: none; }
+    .co-cart-minus:hover { color: #fc4b52; }
+
+    /* 底部结算条 */
+    .co-foot { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-top: 1px solid #dfe3ed; background: #fff; }
+    .co-foot-info { font-size: 12px; color: #0b1019; display: flex; flex-direction: column; gap: 2px; }
+    .co-foot-info .row { display: flex; gap: 6px; align-items: baseline; }
+    .co-foot-info .row.total strong { color: #fc4b52; font-size: 18px; font-weight: 700; }
+    .co-foot-info .row small { color: #9e9e9e; font-size: 10px; }
+    .co-foot-op { margin-left: auto; display: flex; gap: 6px; }
+    .co-foot-op button { padding: 8px 12px; border: 1px solid #dfe3ed; background: #fff; border-radius: 3px; font-size: 12px; cursor: pointer; color: #0b1019; }
+    .co-foot-op button:hover { background: #f5f5f5; }
+    .co-foot-op button.pay-cash { background: #fc4b52; color: #fff; border-color: #fc4b52; }
+    .co-foot-op button.pay-cash:hover { background: #ec2d30; }
+    .co-foot-op button.pay-online { background: #07c160; color: #fff; border-color: #07c160; }
+    .co-foot-op button.pay-qr { background: #005CF5; color: #fff; border-color: #005CF5; }
+    .co-foot-op .pill { position: relative; }
+    .co-foot-op .pill::after { content: '99'; position: absolute; top: -6px; right: -4px; background: #fc4b52; color: #fff; font-size: 9px; padding: 1px 4px; border-radius: 8px; font-weight: 700; }
+
+    .co-cart-empty { padding: 28px 16px; text-align: center; color: #bdbdbd; font-size: 12px; }
+    .co-card { position: relative; }
+    .co-card .co-card-tip { position: absolute; top: 6px; right: 6px; font-size: 10px; background: #fff3e0; color: #e65100; padding: 1px 6px; border-radius: 8px; }
+    .co-grid-empty { padding: 40px; text-align: center; color: #bdbdbd; grid-column: 1 / -1; }
+    .co-legend span { display: inline-flex; align-items: center; gap: 5px; }
+    .co-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+
+    /* —— 小程序·手机框 —— */
+    .mp-frame {
+      position: relative;
+      width: 360px; max-width: 100%; margin: 0 auto; border: 8px solid #0b1019;
+      border-radius: 28px; overflow: hidden; background: #f5f6f8;
+    }
+    .mp-statusbar { background: #0b1019; color: #fff; font-size: 11px; padding: 6px 14px; display: flex; justify-content: space-between; }
+    .mp-nav {
+      background: #005CF5; color: #fff; padding: 12px 14px; font-size: 14px; font-weight: 600;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .mp-readall { font-size: 16px; width: 26px; height: 26px; line-height: 26px; text-align: center;
+      background: rgba(255,255,255,.18); border-radius: 50%; cursor: pointer; }
+    .mp-tabbar { display: flex; background: #fff; border-bottom: 1px solid #eef0f3; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .mp-tab { flex: 0 0 auto; padding: 11px 14px; font-size: 13px; color: #5a6573; position: relative;
+      cursor: pointer; white-space: nowrap; }
+    .mp-tab.active { color: #005CF5; font-weight: 600; }
+    .mp-tab.active::after { content: ''; position: absolute; left: 14px; right: 14px; bottom: 0; height: 3px;
+      background: #005CF5; border-radius: 2px; }
+    .mp-list { padding: 10px; display: flex; flex-direction: column; gap: 8px; max-height: 50vh; overflow-y: auto; position: relative; z-index: 1; }
+    .mp-card { background: #fff; border-radius: 10px; padding: 10px 12px; border-left: 3px solid #e65100; }
+    .mp-card.sold { border-left-color: #fc4b52; }
+    .mp-card.read { opacity: .6; }
+    .mp-card.handled { border-left-color: #2e7d32; }
+    .mp-card.invalid { border-left-color: #8e24aa; }
+    .mp-empty { text-align: center; color: #9e9e9e; font-size: 12px; padding: 30px 0; }
+    .mp-row1 { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .mp-name { font-size: 13px; font-weight: 600; color: #0b1019; }
+    .mp-badge { font-size: 10px; padding: 2px 7px; border-radius: 8px; font-weight: 700; white-space: nowrap; }
+    .mp-badge.unread { background: #fff3e0; color: #e65100; }
+    .mp-badge.read { background: #f5f5f5; color: #9e9e9e; }
+    .mp-badge.invalid { background: #f3e5f5; color: #8e24aa; }
+    .mp-badge.handled { background: #e8f5e9; color: #2e7d32; }
+    .mp-msg { font-size: 12px; color: #333; margin-top: 3px; }
+    .mp-meta { font-size: 11px; color: #9e9e9e; margin-top: 3px; }
+    .mp-actions { margin-top: 6px; display: flex; gap: 12px; }
+    .mp-link { font-size: 12px; color: #005CF5; cursor: pointer; }
+    .mp-link.disabled { color: #bdbdbd; cursor: default; }
+    .mp-watermark {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%) rotate(-18deg);
+      font-size: 30px; font-weight: 800; letter-spacing: 6px; color: rgba(0,0,0,.06);
+      pointer-events: none; user-select: none; z-index: 2; white-space: nowrap;
+    }
+  </style>
+</head>
+<body data-page-node-id="DUOneJ2IOKrhArATUbGUjB">
+  <div class="toast" id="toast" data-page-node-id="IbAu4Ov7Sqc7d6vyGDV9uU"></div>
+  <div id="sidebarRoot" data-page-node-id="QY9wYRCcdBCH8LbgTMjYFM"></div>
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()" data-page-node-id="MZX4V0fEJE9pBPNwxo6udr"></div>
+  <div class="main" data-page-node-id="daTEMu0EspbuZhZIijF61I">
+    <div id="headerRoot" data-page-node-id="HDLkcJTGBmKJ4fm9vUUHct"></div>
+    <div class="content" data-page-node-id="7HCclMw7omGNAua5pulWtr">
+    <!-- ========== PAGE: 库存提醒 ========== -->
+    <div class="page" id="page-inventory-notify" data-page-node-id="w3VcDxEgN2GfzTvwUHTOd2">
+
+      <!-- 数据范围（门店 / 分类）：决定 KPI 与列表的数据源，置于 KPI 上方 -->
+      <div class="ntf-scope" data-page-node-id="oOChm0vA6itRmj01kRHoxk">
+        <div class="ntf-select-wrap ntf-store-wrap" data-page-node-id="SDk0PeF6Q4ZJPJdKdKqlZv">
+          <span data-page-node-id="gluDiJKAt2LbXogsftm2s1">门店</span>
+          <select class="ntf-select" id="ntfStore" onchange="ntfFilterStore(this)" data-page-node-id="ZiMs4jyFfBCaKwPicPABh4"></select>
+        </div>
+        <div class="ntf-select-wrap" data-page-node-id="JHXthayZFO8GFJTMGZfMnF">
+          <span data-page-node-id="PIjKU9KOZfzh51yzfMWMQR">分类</span>
+          <select class="ntf-select" id="ntfCat" onchange="ntfFilterCat(this)" data-page-node-id="b7L2Mh7Hf8Eo2c9WlDG5qT"></select>
+        </div>
+        <div class="ntf-search-wrap" data-page-node-id="VIS65GA2jlR4bT4h3ADt8n">
+          <input class="ntf-search" id="ntfSearch" type="text" placeholder="搜索商品编码 / 名称" oninput="ntfSearch_(this)" data-page-node-id="OjwHLFvdSwuVaC9dMPITYk" />
+        </div>
+        <div class="preview-group" style="margin-left:auto" data-page-node-id="IFSkIEk2Wi3FNP6n3fp8TW">
+          <button class="ps-op-btn" onclick="openClientPreview()" data-page-node-id="yahVbnOYRGPh6L6PJIA42g">客户端样式</button>
+          <button class="ps-op-btn" onclick="openMiniPreview()" data-page-node-id="2tKqtjuNHDEHyzQnvqx39r">小程序样式</button>
+          <button class="ps-op-btn" onclick="window.open('../prd.html?doc=' + encodeURIComponent('库存提醒模块需求说明'), '_blank')" data-page-node-id="sIUNdiDn3QMsDZ4BNEpHdR">📋 需求说明</button>
+        </div>
+      </div>
+
+      <div class="kpi-grid" data-page-node-id="ZzUVBUibnC1CECxyorXeNJ">
+        <div class="kpi-card" style="--card-color:#fff3e0" data-page-node-id="na4XmyD9DCkq11RWE4ixpX">
+          <div class="kpi-label" data-page-node-id="VoJ5pCdET621GHO0H36LE4">未读消息</div>
+          <div class="kpi-value" id="kpiUnread" data-page-node-id="BLAcOdnUkoROoQqRO3IS3F">0<span data-page-node-id="o4kKOgYeehLLbFbDOIJ0c9">条</span></div>
+          <div class="kpi-change down" data-page-node-id="6AmITgME7UOsEQdsSNcbEO">⚠️ 待处理</div>
+          <div class="kpi-icon" data-page-node-id="fauMdiX3ZGdERmsIGCLDwE">🔔</div>
+        </div>
+        <div class="kpi-card" style="--card-color:#fff3e0" data-page-node-id="45ViazCgHgDWS24Ie4jqK4">
+          <div class="kpi-label" data-page-node-id="5Q7sd8E4mFUfZCiXzfj8aP">即将售罄</div>
+          <div class="kpi-value" id="kpiLow" data-page-node-id="xYBLDYzY7iSYanMkFaudvy">0<span data-page-node-id="SH0kIIVhkSYJcAEamHtxKr">个</span></div>
+          <div class="kpi-change down" id="ntfThresholdLabel" data-page-node-id="dnl9rDoOpOaeMlvMpWAUHI">⚠️ 库存 ≤ 5 件</div>
+          <div class="kpi-icon" data-page-node-id="wveaPnH2s9HyOofCWMUHZC">📉</div>
+        </div>
+        <div class="kpi-card" style="--card-color:#ffebee" data-page-node-id="f9QR2qbMIGCFmZC6I9cbb9">
+          <div class="kpi-label" data-page-node-id="8dzNkTVsIchkx5GcekqZOs">已售罄</div>
+          <div class="kpi-value" id="kpiSold" data-page-node-id="jBFosAeKweG25V6rpzvji2">0<span data-page-node-id="XzENZBSbBBjGv54rximnBD">个</span></div>
+          <div class="kpi-change down" data-page-node-id="aDqGCGoFjq8x03zOX0czxv">🚫 需补货</div>
+          <div class="kpi-icon" data-page-node-id="Kr84LlsER8lQCE4Ix2bvSt">🚫</div>
+        </div>
+        <div class="kpi-card" style="--card-color:#e8f5e9" data-page-node-id="N2NgLl8uXHqpg8lO4mDRlr">
+          <div class="kpi-label" data-page-node-id="bEFIRrcNO2AehkF3d5Mm71">今日已补货</div>
+          <div class="kpi-value" id="kpiHandled" data-page-node-id="xvGzmFHyOtxDuMG6GmBvBa">0<span data-page-node-id="1zpdGXyGGE7OvWvKoVHmtW">条</span></div>
+          <div class="kpi-change up" data-page-node-id="E4UvgIMj4HF3n81yqYmWzO">✅ 今日已处理</div>
+          <div class="kpi-icon" data-page-node-id="gbwJR690yXE7QgffGJO2fB">✅</div>
+        </div>
+      </div>
+
+      <div class="ntf-kpi-note" data-page-node-id="vtKZFBASBSoaNUdQEYHEJQ">
+        KPI 为当前<b data-page-node-id="sOsvUpJDJhMuyV060DvReg">待处理 / 未读</b>数量（非消息总数）：如「即将售罄」= 待补货 / 待下架的缺货商品数、「已售罄」= 待补货数、「未读消息」= 未读且未处理数。
+        <span class="sep" data-page-node-id="Q7IZPgU8QmUcOqUKpXxAN2">|</span>下方列表展示范围内<b data-page-node-id="lHjhTodTDhXUxBQ48SvtmZ">全部</b>消息（含已读 / 已处理的历史）。
+        <span class="sep" data-page-node-id="OIrNdBGlEuXyHmBzw06UC6">|</span>数据范围：<b data-page-node-id="U7omoNSuukGInzCiLyYep1">近 7 天全量 + 全部未读 / 未处理</b>（补货、下架），本页<b data-page-node-id="22qZgkeabWvAtQrsmcsu6K">不提供时间周期筛选</b>。
+      </div>
+
+      <div class="ntf-toolbar" data-page-node-id="FKiPr4q5MRIWVy58CglUZC">
+        <!-- 条件栏：状态（segment） + 库存功能开关/全部标记已读（右） -->
+        <div class="ntf-bar ntf-bar-sub" data-page-node-id="ZDb6P10ThbeRWsEVZulqW9">
+          <div class="ntf-seg" id="ntfTabs" data-page-node-id="Gpb0agNXqQaZwxU21yVcXU">
+            <button class="active" data-f="all" onclick="ntfFilter('all',this)" data-page-node-id="wZVgpBQc5wNRcoqqCbBMfY">全部</button>
+            <button data-f="low" onclick="ntfFilter('low',this)" data-page-node-id="CjJ8uNUlPuLLLDtHJo7sZe">即将售罄</button>
+            <button data-f="sold" onclick="ntfFilter('sold',this)" data-page-node-id="0FBTUTioerbi9CRvSLN11K">售罄</button>
+            <button data-f="unread" onclick="ntfFilter('unread',this)" data-page-node-id="BjfKL8bSeFwlHLiir9lJp7">未读</button>
+          </div>
+          <div class="ntf-bar-right" data-page-node-id="Xl6mO9jczVotwvOWTbHaHb">
+            <div class="ntf-switch" data-page-node-id="nVF2UvPpxcGmMODbPjensZ">
+              <span data-page-node-id="XZyCnWvG3mGlMTzfUa8osb">库存功能</span>
+              <span class="pill on" id="ntfSwitch" data-page-node-id="5xDwuYLRjlAwzkWVCtHuVV">● 已启用</span>
+            </div>
+            <button class="ps-op-btn" onclick="ntfOpenSettings()" data-page-node-id="QjKYGDRwKRXpkBgSAeUTBM">提醒设置</button>
+            <button class="ps-op-btn" onclick="ntfMarkAll()" data-page-node-id="th85LBMUyhGROOXv9qjQnD">全部标记已读</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="ntfDisabled" class="ntf-disabled" style="display:none" data-page-node-id="fWWK0v4eFuAXG4Y4NP5Bca">
+        ⚠️ 当前门店未启用库存功能（登录响应 <code data-page-node-id="hitWXYGd7sXhsMBUZsIkD0">inventoryEnabled=false</code>），消息中心暂不可用。请在门店设置中开启后查看。
+      </div>
+
+      <div class="ntf-list" id="ntfList" data-page-node-id="zEBu6k8yeEwADodOUN1EKu"></div>
+    </div>
+    </div>
+  </div>
+  <div id="modalRoot" data-page-node-id="4sGu6EN3VBrtEiOHuFbEVi"></div>
+
+  <!-- ===== 预览弹框 1：客户端 · 下单结算台（库存提醒样式） ===== -->
+  <div class="inv-modal-overlay" id="clientModal" onclick="invBackdrop(this,event)" data-page-node-id="uKO78wBpsJuf1DkIILCzy6">
+    <div class="inv-modal wide" onclick="event.stopPropagation()" data-page-node-id="sds3jx2sPZY8aO00xlQvgG">
+      <div class="inv-modal-head" data-page-node-id="GtN4RGpRFETf5CAKN93lA3">
+        <div class="inv-modal-title" data-page-node-id="Vla8bhMiZeqoCVb1CyzxPR">客户端 · 下单结算台（库存提醒样式）</div>
+        <button class="inv-modal-close" onclick="closeClientPreview()" data-page-node-id="fBCLo6QqhER1hiHMIXwLn9">✕</button>
+      </div>
+      <div class="inv-modal-sub" data-page-node-id="IXYKZCNSX9Jk63yv9piSRr">Android 下单终端 · 左为分类/商品区、<b data-page-node-id="Tja3p5ldkpjmikkyvmGSbn">右为加购列表</b> · 商品卡不显示已售罄，点击加购时拦截提示（加购上限 = 本地库存量）；加购列表角标仅「缺{x}」（已加购量&gt;实时库存的缺口）。点加购列表右上「🔔 模拟库存推送」可演示<b data-page-node-id="Egzjyn9FZl4nGHzCeVi1Wg">服务端 SSE 占用库存</b>后，已加购项自动变为「缺{x}」；点收款时若存在「缺x」项，订单<b data-page-node-id="HJk7716GHhPlpBmgZrDTeg">不允许结算</b>，提示「xx、xx商品库存不足」，需手动减少/删除或补货后重试。</div>
+      <div class="inv-modal-body" style="padding:0" data-page-node-id="b8D9gZ3hQU35TLwxzZhaJu">
+        <div class="co-app" id="coApp" data-page-node-id="5sCvU2MZGnHv44GS1G6RS7">
+          <!-- 顶栏：秤头 + 门店 -->
+          <div class="co-topbar" data-page-node-id="JHNdXWTUzJV6THp60GfD04">
+            <div class="co-scale" data-page-node-id="JoxLWfMXNzI823qEGvdVHy">
+              <div data-page-node-id="ZBqXHl6IkhcBIymgRCXvOD">
+                <div class="co-scale-num" data-page-node-id="lw3hwKr3qVy10YjtDalFUK">0.123<span class="co-scale-unit" data-page-node-id="XiDjzJPVngc4YBJk6YiPs7">kg</span></div>
+                <div class="co-scale-tag" data-page-node-id="QTHvK2Vr4KJWYspmXuD0HG">皮重 0.000</div>
+              </div>
+              <div class="co-scale-op" data-page-node-id="7UTVJbk6g50lJ36kAArvsa">
+                <button data-page-node-id="DhHzDhcKGAuRDEUySP4AIh">去皮</button>
+                <button data-page-node-id="02nwSBYks6jojxtcDhBkaa">置零</button>
+              </div>
+            </div>
+            <div class="co-store" data-page-node-id="8kEquCn6PBJYC0UPCVq8B3">
+              <span class="co-store-tag" data-page-node-id="tBTh3wPglYSiFYSPMWJgTu">鲜品汇</span>
+              <span data-page-node-id="nJOC5i0jQCEcNK847ZGvn5">自家营店（李冰 18765906677）</span>
+              <span style="color:#9e9e9e;font-size:11px" data-page-node-id="xTIhVlnh8whJV2ETUDMbva">2026/08/26 14:30 星期一</span>
+            </div>
+          </div>
+          <!-- 分类 tabs + 搜索 -->
+          <div class="co-tabs" id="coTabs" data-page-node-id="oRQoteJjLwVDBPULaK78rp"></div>
+          <!-- 主体：左小分类 + 商品网格 + 加购列表 -->
+          <div class="co-body" data-page-node-id="kkFWSyNECa1vLJGZHMF8KH">
+            <div class="co-sidecat" id="coSidecat" data-page-node-id="Q0pGGi6H1ew5cj9ZvU6gDa"></div>
+            <div class="co-grid" id="coGrid" data-page-node-id="xnufiTniQW03MWUSM5a0E5"></div>
+              <div class="co-cart" data-page-node-id="j7I15DDCDsfb6zwM0tPRzk">
+              <div class="co-cart-head" data-page-node-id="zoWhf0EBfpbpeWsFLbUAaR">
+                <span data-page-node-id="fL9RieBqheju6G121DNil5">加购列表 <span class="count" id="coCartCount" data-page-node-id="y3Tr4tI88G2HDNeQn7ZgKm">0 件</span></span>
+                <div class="co-cart-ops" data-page-node-id="LEZZUwjKvzyMKFhWvx1XtI">
+                  <button class="co-push-btn" onclick="coSimPush()" data-page-node-id="owWX2EMb0Ecc6hOO9xQG5h">🔔 模拟库存推送</button>
+                  <button class="co-reset-btn" onclick="coReset()" data-page-node-id="bXVZY2zmucf4cGoOXdk1n6">↺ 重置库存</button>
+                </div>
+              </div>
+              <div class="co-cart-list" id="coCartList" data-page-node-id="jnHfpaZSKXf460dlexdxGr"></div>
+            </div>
+          </div>
+          <!-- 底部结算条 -->
+          <div class="co-foot" data-page-node-id="fugeNq4sVKy5AUCy58FST5">
+            <div class="co-foot-info" data-page-node-id="yXR13AxMIiTMjUXR2cZUGG">
+              <div class="row" style="color:#9e9e9e;font-size:11px" data-page-node-id="1OThIYZbvZD4VIWFVxIhEo"><span id="coFootName" data-page-node-id="fZUpLbucAIKA2QSLi47L03">李莫浅 8976</span><span style="color:#fc4b52" data-page-node-id="DgEmXGB0pEcSi3hap0VjiQ">¥10 优惠券</span></div>
+              <div class="row total" data-page-node-id="XcN3UX1Gl6HF76CJc1Slue">合计 <strong id="coFootTotal" data-page-node-id="TExGlOTcvhzKpSG1PAbTUr">¥0.00</strong> <small data-page-node-id="tw398sYyq1M2VeUvADf3tW">0 件</small></div>
+              <div class="row" style="color:#9e9e9e;font-size:11px" data-page-node-id="JeZjWBNslb3A0QjtbQhhRA">应收 <strong style="color:#fc4b52" id="coFootDue" data-page-node-id="3ppRixcl6td9EDvPe8zoWg">¥0.00</strong> <small data-page-node-id="IwAQND1gX95gozjpZTkSkK">优惠 ¥0.00</small></div>
+            </div>
+            <div class="co-foot-op" data-page-node-id="6kCZIC7hO61rxDL29GEtwG">
+              <button class="pill" onclick="showToast('已挂单（模拟）')" data-page-node-id="JhQKATOmMiSxNqz0TdSiY0">挂单</button>
+              <button onclick="showToast('当前无取单（模拟）')" data-page-node-id="C05FmnFd6sUCjrKKCRcb0v">取单</button>
+              <button class="pay-cash" onclick="coCheckout('现金付')" data-page-node-id="DMQNmCuFv0brrZMQ8Ef2b5">💵 现金付</button>
+              <button class="pay-online" onclick="coCheckout('微信/支付宝')" data-page-node-id="I2mQfjmrGbBlB3CbOkOCZK">💚 微信/支付宝</button>
+              <button class="pay-qr" onclick="showToast('二维码收款（模拟）')" data-page-node-id="PE4847aAk2QOM8E0zOHVaW">▦ 二维码收款</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="inv-modal-note" data-page-node-id="GF6ynCoAMyWhEFN6ChIDZ4">
+        说明：本预览模拟客户端销售页面骨架（顶栏秤头 + 分类 tabs + 商品网格 + 右侧加购列表 + 底部结算条）。商品卡仅展示基础信息，不渲染已售罄态——售罄商品（猪肉、西红柿、基围虾）点击「加购」按钮时弹 toast 拦截。加购列表角标只提示「缺{x}」实时缺口信号（红）；无「告急/充足」装饰——店员只需知道能否成交，库存上限已在动作边界处理。<br data-page-node-id="rm06ECPBW5GPMiAM2sv56E"/>⚠ <b data-page-node-id="D2EOMRNUvgmCnuu3TwHKfi">缺货不允许结算</b>：加购列表存在缺货（qty&gt;stock）项（以「缺x」角标显示不足数量）时，点收款将<b data-page-node-id="2JAvnNgo6X3W5scHvE2uFB">拦截订单</b>，弹提示「xx、xx商品库存不足，订单不允许结算」；不自动改动购物车、不扣库存，需店员手动减少/删除或补货后重试。充足订单才正常扣减库存并完成下单。
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 预览弹框 2：小程序 · 库存提醒（管理端） ===== -->
+  <div class="inv-modal-overlay" id="miniModal" onclick="invBackdrop(this,event)" data-page-node-id="MjNDGyvfmwLFTZozKOelx9">
+    <div class="inv-modal mini" onclick="event.stopPropagation()" data-page-node-id="UdM9a1ISmkvm0QRJBYczig">
+      <div class="inv-modal-head" data-page-node-id="sMzuBmoBzNMCVuSmIvZXcq">
+        <div class="inv-modal-title" data-page-node-id="d1JXcLGc2MLcWmLUD8pK0B">小程序 · 库存提醒（管理端）</div>
+        <button class="inv-modal-close" onclick="closeMiniPreview()" data-page-node-id="y1c2g1ewYXdK5ekhraGyBV">✕</button>
+      </div>
+      <div class="inv-modal-sub" data-page-node-id="DSCkNTZLEIMOFJL71D9j7y">微信小程序（管理端）· 与 PC 共用通知中心数据 · 即将售罄=「库存偏低，请及时补货」、售罄=「已售罄」；支持标记已读（记录标记人）/ 「去补货」跳转库存查询（带入商品名称 + 分类作检索条件）。</div>
+      <div class="inv-modal-body" data-page-node-id="SfVHAZS5XCmjvtXxHHSTFC">
+        <div class="mp-frame" data-page-node-id="CuMC7CRz8P5qCGDu9ASaII">
+          <div class="mp-statusbar" data-page-node-id="bMW3KcKmApDniDWmDfpSDK"><span data-page-node-id="GDv2ylHVhkZhMaJrc3uoS6">9:41</span><span data-page-node-id="N6HsfSwsBUaUEFHEy4UGzP">菜猫商户</span></div>
+          <div class="mp-nav" data-page-node-id="kJhKMUYEpFlfrnnEYh080R"><span data-page-node-id="3Ae1zUyvMRMltQBjAJY6do">库存提醒</span><span class="mp-readall" onclick="showToast('已将所有未读标记为已读')" title="全部标记已读" data-page-node-id="K7jfSfrCOEOZrDfANN9Zrd">✓</span></div>
+          <div class="mp-tabbar" id="mpTabbar" data-page-node-id="PNinhCUCYXo0CxtZKG2eom">
+            <span class="mp-tab active" data-f="all" onclick="mpSetTab(this)" data-page-node-id="PKMCBV7xlu7Qn0pEE3IU0n">全部</span>
+            <span class="mp-tab" data-f="unread" onclick="mpSetTab(this)" data-page-node-id="B3mzUgwtrB3yR3N2XOxsH5">未读</span>
+            <span class="mp-tab" data-f="low" onclick="mpSetTab(this)" data-page-node-id="snl6TsMWQjkJVrSDbb6vNI">即将售罄</span>
+            <span class="mp-tab" data-f="sold" onclick="mpSetTab(this)" data-page-node-id="iy6WYUrFDj61hnt0Hp967L">已售罄</span>
+            <span class="mp-tab" data-f="handled" onclick="mpSetTab(this)" data-page-node-id="Grs1mthnieYYk9UMvjNPpI">已补货</span>
+            <span class="mp-tab" data-f="invalid" onclick="mpSetTab(this)" data-page-node-id="tFyTRqJAbdW9jCcHVNKRbf">已失效</span>
+          </div>
+          <div class="mp-list" id="mpList" data-page-node-id="RGk66ub9HaMCN0Nzp8gnxF"></div>
+          <div class="mp-watermark" data-page-node-id="vlMBYcWQk76In5bw3KjNg9">仅供参考</div>
+        </div>
+      </div>
+      <div class="inv-modal-note" data-page-node-id="9EaPS1rfCBSKAcwns2qolZ">
+        说明：小程序与 PC 同源（均为管理端通知中心），消息生命周期一致——重新上架不重发、下架冻结、已读记录标记人（仅记姓名，如"李/张"）。低库存提醒在「同商品已售罄」且自身未读时自动**失效**（不可再标记已读/补货）；点击「去补货」打开库存查询页（martSys/#/inventory/inventoryList），按商品名 + 分类预填检索条件；「已处理·补货」状态由实际入库事件回写。
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 提醒设置弹框（按门店配置「即将售罄」触发阈值） ===== -->
+  <div class="inv-modal-overlay" id="setModal" onclick="invBackdrop(this,event)" data-page-node-id="yrilXSPTttcavTxPUzwEM7">
+    <div class="inv-modal" onclick="event.stopPropagation()" style="width:min(460px,94vw)" data-page-node-id="paldMx3u0IVKYW4xAk1dZE">
+      <div class="inv-modal-head" data-page-node-id="Ibrn3lLtwj2TC9iKz8d2xV">
+        <div class="inv-modal-title" data-page-node-id="4KedeAOtkHWTjgUGbEY7Kw">提醒设置</div>
+        <button class="inv-modal-close" onclick="ntfCloseSettings()" data-page-node-id="0ILLYXovr2NFYxk63pmYQ3">✕</button>
+      </div>
+      <div class="inv-modal-sub" data-page-node-id="nHQ4eVgJ4BJhU1pHn2gCUN">配置「即将售罄」提醒触发阈值：库存 ≤ 阈值（件）时推送提醒。按门店分别设置，默认 5 件。</div>
+      <div class="inv-modal-note" style="padding:0 18px 4px;color:#9e9e9e;font-size:11px;line-height:1.5" data-page-node-id="1aINxLD9PXYxljtzGfjtLz">阈值仅对保存后<b data-page-node-id="Jx0x4GQhn2KS4tAGJf7seO">新触发</b>的提醒生效；已存在的提醒消息与计数不回溯、不撤销，调低阈值也不会对已提醒商品产生二次提醒。</div>
+      <div class="inv-modal-body" data-page-node-id="704cGz586n7Iy97wzOEaGH">
+        <div class="set-form" data-page-node-id="eGolmPIq4UN2iUtYFR3Q5S">
+          <div class="set-row" data-page-node-id="99BJpXNvzDzgHxw4YbkDi8">
+            <label data-page-node-id="sxEPkt6PRsIFpfL9BxJn7b">门店</label>
+            <select class="ntf-select" id="setStore" data-page-node-id="jISkdjrp9lkrjGSR4zDPHr"></select>
+          </div>
+          <div class="set-row" data-page-node-id="eNgIgbH8ob7tIHuoH9KVAW">
+            <label data-page-node-id="EnYsCG1DNzsFt3pAfG6LjD">提醒阈值（件）</label>
+            <input class="ntf-search" id="setThreshold" type="number" min="0" step="1" style="width:120px" data-page-node-id="k25OcrpsFLYyeWnudfw5G2" />
+          </div>
+        </div>
+      </div>
+      <div class="inv-modal-foot" data-page-node-id="bW8OYxdHq9m83GRlSJXi7C">
+        <button class="ps-op-btn" onclick="ntfCloseSettings()" data-page-node-id="2YXOgcD5bnvwq2cjK6J4GV">取消</button>
+        <button class="ps-op-pri" onclick="ntfSaveSettings()" data-page-node-id="VUfLPYdCjhUjw7yOeA10ne">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <script>var CURRENT_PAGE='inventory-notify';</script>
+  <script src="../shared/sidebar.js"></script>
+  <script src="../shared/header.js"></script>
+  <script src="../shared/modals.js"></script>
+  <script src="../shared/layout.js" data-page="inventory-notify"></script>
+  <script>
+    initMultiPage(CURRENT_PAGE);
+    if (typeof initTicker === 'function') initTicker();
+    (function() { var el = document.getElementById('updateTime'); if (el) el.textContent = '更新 2026-08-26 16:20'; })();
+
+    /* ---- 页面级标题（本页已登记 pageTitles，header.js 已自动设置，这里保险再赋一次） ---- */
+    document.getElementById('headerTitle').textContent = '库存提醒';
+    document.getElementById('headerBreadcrumb').textContent = '客户运营 / 库存提醒';
+    /* 消息中心无需 scope-bar · 日期选择器（inventory-notify 已在 NO_SCOPE_PAGES 列表，header.js + initMultiPage 已自动隐藏，留注释提示） */
+
+    /* ===== 库存提醒逻辑（mock 数据，待接入 SSE / 通知中心 API） ===== */
+    // 总开关：来自登录响应 inventoryEnabled（此处 mock = true）
+    var INVENTORY_ENABLED = true;
+    // 当前操作员（用于记录"标记人"；真实环境取登录用户，仅记姓名不含店长/店员等角色前缀）
+    var CURRENT_USER_NAME = '李';
+
+    // 消息数据：type=low(低库存·前置提醒) / sold(售罄)；frozen=下架冻结
+    // 规则：售罄商品必带一条前置 low 提醒（同一商品 low 早于 sold）；
+    // read/markedBy=已读及标记人（仅记姓名，如"李"/"张"）；handled/handledBy=已处理·补货（处理人固定记"补货"，不关联实际人；由实际入库事件触发，非人工标记）
+    // 失效规则：low 提醒在「同一商品已有 sold 消息」且自身仍未读时自动失效（ntfInvalid），不可再标记已读/补货；已读或已处理的 low 不受影响。
+    var NTF = [
+      {id:'n1',  code:'SPU10001', product:'土豆（黄心）',   spec:'5kg/袋',  type:'low',  ts:'2026-08-26 09:12', read:false, frozen:false, store:'中心店', category:'蔬菜'},
+      {id:'n2',  code:'SPU10002', product:'鸡蛋（鲜）',     spec:'30枚/盒', type:'low',  ts:'2026-08-26 10:05', read:false, frozen:false, store:'中心店', category:'蛋品'},
+      {id:'n3a', code:'SPU20001', product:'猪肉（后腿）',   spec:'散称',    type:'low',  ts:'2026-08-26 08:30', read:true, markedBy:'李', handled:true, handledBy:'补货', handledTs:'2026-08-26 12:05', frozen:false, store:'城东店', category:'肉禽蛋'},
+      {id:'n3',  code:'SPU20001', product:'猪肉（后腿）',   spec:'散称',    type:'sold', ts:'2026-08-26 11:20', read:false, frozen:false, store:'城东店', category:'肉禽蛋'},
+      {id:'n4',  code:'SPU10003', product:'上海青（青菜）', spec:'散称',    type:'low',  ts:'2026-08-25 16:40', read:true, markedBy:'张', frozen:false, store:'江南店', category:'蔬菜'},
+      {id:'n5a', code:'SPU30001', product:'基围虾（活鲜）', spec:'散称',    type:'low',  ts:'2026-08-25 09:10', read:true, markedBy:'李', handled:true, handledBy:'补货', handledTs:'2026-08-26 10:40', frozen:false, store:'城东店', category:'水产海鲜'},
+      {id:'n5',  code:'SPU30001', product:'基围虾（活鲜）', spec:'散称',    type:'sold', ts:'2026-08-25 14:02', read:true, markedBy:'张', frozen:false, store:'城东店', category:'水产海鲜'},
+      {id:'n6',  code:'SPU40001', product:'圣女果',        spec:'250g/盒', type:'low',  ts:'2026-08-24 13:10', read:true, markedBy:'张', frozen:true, store:'中心店', category:'水果'},
+      {id:'n7a', code:'SPU10004', product:'西红柿（蔬菜）', spec:'散称',    type:'low',  ts:'2026-08-26 14:10', read:false, frozen:false, store:'中心店', category:'蔬菜'},
+      {id:'n7',  code:'SPU10004', product:'西红柿（蔬菜）', spec:'散称',    type:'sold', ts:'2026-08-26 15:05', read:false, frozen:false, store:'中心店', category:'蔬菜'},
+      // 演示「超 7 天仍未读 → 继续保留」：ts 已远超近 7 天窗口，但因未读/待处理，仍纳入范围（不按时间裁剪）
+      {id:'n8',  code:'SPU50001', product:'冬瓜（青皮）',   spec:'散称',    type:'low',  ts:'2026-08-15 10:00', read:false, frozen:false, store:'中心店', category:'蔬菜'}
+    ];
+
+    var curFilter = 'all';
+    var curStore = 'all', curCat = 'all', curKeyword = '';
+
+    // ===== 提醒阈值（按门店配置，默认 5；库存 ≤ N 触发「即将售罄」）=====
+    // 真实业务中该值由后端「库存提醒设置」写入；此处 localStorage 模拟按门店持久化。
+    //
+    // ⚠️ 生成器规则（后端实现必须遵守，避免二次提醒 / 误撤）：
+    //  1) 提醒消息是「事件溯源」记录——在库存【首次】跌破【当时阈值】的那一刻生成，之后不再反算。
+    //  2) 修改阈值只对「保存后新发生的跌破」生效；已存在的消息列表与 KPI 计数不回溯、不重算、不撤销。
+    //  3) 去重键 = (productId + storeId + 当前缺货 episode)：同一 episode 内已存在 active「即将售罄」消息则不重发。
+    //     调低阈值（如 5→3）不会为「早已低于旧阈值、已有消息」的商品再发一条；调高阈值（3→5）也不撤销已发消息。
+    //  4) 本页 ntfKpi / ntfRender 计数均读消息对象字段（type/status），不按 stock ≤ NTF_THRESHOLD 重算——验证上述规则在 UI 层成立。
+    var NTF_THRESHOLD = 5;
+    var NTF_TH_KEY = 'tcm_inventory_threshold';
+    function ntfThMap(){
+      try { return JSON.parse(localStorage.getItem(NTF_TH_KEY) || '{}') || {}; } catch(e){ return {}; }
+    }
+    function ntfLoadThreshold(storeId){
+      var map = ntfThMap();
+      NTF_THRESHOLD = (storeId && typeof map[storeId] === 'number') ? map[storeId] : 5;
+      var el = document.getElementById('ntfThresholdLabel');
+      if(el) el.textContent = '库存 ≤ ' + NTF_THRESHOLD + ' 件';
+    }
+    function ntfSaveThreshold(storeId, val){
+      val = parseInt(val, 10);
+      if(isNaN(val) || val < 0) val = 5;   // 允许 0（仅售罄告警）；空/非法输入回落 5
+      var map = ntfThMap();
+      map[storeId] = val;
+      try { localStorage.setItem(NTF_TH_KEY, JSON.stringify(map)); } catch(e){}
+      NTF_THRESHOLD = val;
+      var el = document.getElementById('ntfThresholdLabel');
+      if(el) el.textContent = '库存 ≤ ' + NTF_THRESHOLD + ' 件';
+      if(typeof showToast === 'function') showToast('门店「' + storeId + '」提醒阈值已设为 ' + val + ' 件');
+      // 客户端预览角标仅认实时缺口（不读阈值），此处仅重绘保持一致；阈值变更不影响客户端
+      if(document.getElementById('clientModal') && document.getElementById('clientModal').classList.contains('show')) coRenderCart();
+    }
+    function ntfOpenSettings(){
+      var so = document.getElementById('setStore');
+      var stores = ntfUniq('store');
+      var cur = (curStore !== 'all') ? curStore : (stores[0] || '');
+      so.innerHTML = stores.map(function(s){ return '<option value="'+escAttr(s)+'"'+(s===cur?' selected':'')+'>'+s+'</option>'; }).join('');
+      var map = ntfThMap();
+      document.getElementById('setThreshold').value = (typeof map[cur] === 'number') ? map[cur] : 5;
+      document.getElementById('setModal').classList.add('show');
+    }
+    function ntfCloseSettings(){ document.getElementById('setModal').classList.remove('show'); }
+    function ntfSaveSettings(){
+      var store = document.getElementById('setStore').value;
+      var val = document.getElementById('setThreshold').value;
+      ntfSaveThreshold(store, val);
+      ntfCloseSettings();
+    }
+
+    function ntfMsg(n){
+      return n.type==='sold' ? '已售罄' : '库存偏低，请及时补货';
+    }
+    // 失效：低库存提醒(low) 在「同一商品已有售罄(sold)消息」且自身仍未读时自动失效
+    // —— 不可再标记已读或补货；已读/已处理的 low 不受影响（保留原状态）。
+    function ntfInvalid(n){
+      if(n.type!=='low' || n.read || n.handled || n.frozen) return false;
+      return NTF.some(function(x){ return x.product===n.product && x.type==='sold'; });
+    }
+    function ntfStatus(n){
+      if(n.frozen)      return {cls:'frozen',  txt:'已下架·冻结'};
+      if(ntfInvalid(n)) return {cls:'invalid', txt:'已失效'};
+      if(n.handled)     return {cls:'handled', txt:'已处理·补货'};
+      if(n.read)        return {cls:'read',    txt:'已读·'+(n.markedBy||'—')};
+      return {cls:'unread', txt:'未读'};
+    }
+    // 是否为今日（按本地日期 YYYY-MM-DD 比对 handledTs / ts 的日期部分）
+    function ntfIsToday(ts){
+      if(!ts) return false;
+      var d = String(ts).slice(0,10);
+      var now = new Date();
+      var t = now.getFullYear()+'-'+('0'+(now.getMonth()+1)).slice(-2)+'-'+('0'+now.getDate()).slice(-2);
+      return d===t;
+    }
+    // 是否在「近 7 天」窗口内（含今天，向前推 6 天）
+    function ntfWithin7d(ts){
+      if(!ts) return false;
+      var d = String(ts).slice(0,10);
+      var now = new Date();
+      var cut = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6); // 含今天共 7 天
+      var y = +d.slice(0,4), m = +d.slice(5,7) - 1, day = +d.slice(8,10);
+      return new Date(y, m, day) >= cut;
+    }
+    // 数据范围：近 7 天全量 + 全部未读 / 未处理（补货、下架）数据。
+    // 落在近 7 天 → 纳入；超 7 天但仍未读 / 仍待处理（未补货、未下架冻结）→ 继续保留；
+    // 仅「超 7 天 且 已读 且 已处理」的历史提醒才被裁剪（不出现在列表与 KPI）。本页不提供时间周期筛选。
+    function ntfInRange(n){
+      if(ntfWithin7d(n.ts)) return true;
+      if(!n.read || !n.handled) return true;   // 超期未读 / 待处理 → 保留
+      return false;                            // 超期且已读且已处理 → 裁剪
+    }
+    // 数据范围（门店/分类/关键词）筛选：同时作用于 KPI 概览与下方列表
+    function ntfInScope(n){
+      if(!ntfInRange(n)) return false;   // 数据范围：近 7 天全量 + 未读 / 未处理
+      if(curStore!=='all' && n.store!==curStore) return false;
+      if(curCat!=='all'  && n.category!==curCat)  return false;
+      if(curKeyword){
+        var kw = curKeyword.toLowerCase();
+        var hit = (n.code||'').toLowerCase().indexOf(kw)>=0 || (n.product||'').toLowerCase().indexOf(kw)>=0;
+        if(!hit) return false;
+      }
+      return true;
+    }
+    function ntfPass(n){
+      if(!ntfInScope(n)) return false;
+      if(curFilter==='all') return true;
+      if(curFilter==='unread') return !n.read && !n.handled && !n.frozen && !ntfInvalid(n);
+      if(curFilter==='low')  return n.type==='low';
+      if(curFilter==='sold') return n.type==='sold';
+      return true;
+    }
+    function ntfRender(){
+      var list=document.getElementById('ntfList');
+      if(!INVENTORY_ENABLED){
+        document.getElementById('ntfDisabled').style.display='';
+        list.innerHTML=''; return;
+      }
+      document.getElementById('ntfDisabled').style.display='none';
+      // 排序：消息中心整体按 ts 倒序（最新在上），全局时间单调、不跳跃。
+      // 同一商品的「售罄(sold,时间晚)」在上方、「即将售罄(low,时间早)」在下方——
+      // low 在其 sold 到达后已自动失效，作为该售罄消息的历史前置提醒显示在下方（关联仍成立）。
+      var rows=NTF.filter(ntfPass).slice().sort(function(a,b){
+        return a.ts<b.ts ? 1 : (a.ts>b.ts ? -1 : 0);
+      });
+      if(!rows.length){ list.innerHTML='<div class="ntf-empty"><span class="big">🔕</span>暂无相关消息</div>'; return; }
+      list.innerHTML = rows.map(function(n){
+        var st=ntfStatus(n);
+        var ico = n.type==='sold' ? '🚫' : '⚠️';
+        var titleCls = n.type==='sold' ? 'sold' : 'low';
+        var act = '';
+        if(!n.frozen && !ntfInvalid(n) && !n.handled){
+          if(!n.read)    act += '<button class="ps-op-link" onclick="event.stopPropagation();ntfMark(\''+n.id+'\')">标记已读</button>';
+          act += '<button class="ps-op-btn" onclick="event.stopPropagation();ntfGoRestock(this)" data-product="'+escAttr(n.product)+'" data-cat="'+escAttr(n.category)+'">去补货</button>';
+        }
+        return ''+
+        '<div class="ntf-card '+titleCls+' '+st.cls+'">'+
+          '<div class="ntf-ico">'+ico+'</div>'+
+          '<div class="ntf-body">'+
+            '<div class="ntf-title">'+n.product+'<span class="ntf-spec">'+n.spec+'</span><span class="ntf-code">'+n.code+'</span></div>'+
+            '<div class="ntf-msg">'+ntfMsg(n)+'</div>'+
+            '<div class="ntf-meta"><span>'+n.ts+'</span><span>'+n.store+'</span><span>'+n.category+'</span><span class="ntf-status '+st.cls+'">'+st.txt+'</span></div>'+
+          '</div>'+
+          '<div class="ntf-actions">'+act+'</div>'+
+        '</div>';
+      }).join('');
+      ntfKpi();
+    }
+    // KPI 只统计「未读 / 待处理」的告警子集（非消息总数）：
+    //   · 已补货(handled) / 下架冻结(frozen) / 已失效(invalid) 均不再计入 KPI（属于「已处理」）。
+    //   · 口径：未读消息 = 未读且未处理；即将售罄 = 待补货/待下架的低库存商品数；已售罄 = 待补货的售罄商品数；
+    //     今日已补货 = 当日运营动作量（handledTs 落在今天，属「已处理」完成量）。
+    // 真实业务中 handled 由【实际入库/补货系统事件】写入——用户在库存查询页完成补货后回写，本页「去补货」按钮
+    // 即跳转到该页面并预填检索条件；预览页已通过预置 handled 项（n3a/n5a）展示效果。
+    // 注：KPI 与列表均受 ntfInRange 约束（近 7 天全量 + 全部未读/未处理）；列表额外展示范围内「全部」消息（含已读/已处理历史）。
+    function ntfKpi(){
+      var inScope = NTF.filter(ntfInScope);
+      document.getElementById('kpiUnread').innerHTML = inScope.filter(function(n){return !n.read&&!n.handled&&!n.frozen&&!ntfInvalid(n);}).length+'<span>条</span>';
+      document.getElementById('kpiLow').innerHTML  = inScope.filter(function(n){return n.type==='low'&&!ntfInvalid(n)&&!n.handled&&!n.frozen;}).length+'<span>个</span>';
+      document.getElementById('kpiSold').innerHTML = inScope.filter(function(n){return n.type==='sold'&&!n.handled&&!n.frozen;}).length+'<span>个</span>';
+      document.getElementById('kpiHandled').innerHTML = inScope.filter(function(n){return n.handled===true && ntfIsToday(n.handledTs);}).length+'<span>条</span>';
+    }
+    function ntfFilter(f, btn){
+      curFilter=f;
+      var tabs=document.querySelectorAll('#ntfTabs button');
+      for(var i=0;i<tabs.length;i++) tabs[i].classList.remove('active');
+      btn.classList.add('active');
+      ntfRender();
+    }
+    function ntfMark(id){
+      var n=NTF.find(function(x){return x.id===id;});
+      if(!n||n.frozen||n.read||n.handled||ntfInvalid(n)) return;
+      n.read=true; n.markedBy=CURRENT_USER_NAME; ntfRender();
+      if(typeof showToast==='function') showToast('已标记为已读（标记人：'+n.markedBy+'）');
+    }
+    // HTML 属性安全转义（避免中文/特殊字符在 onclick 拼接中出错）
+    function escAttr(s){ return String(s||'').replace(/[&<>"]/g, function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+    // 「去补货」——打开 PC 端【库存查询】页面（martSys/#/inventory/inventoryList），带入商品名称 + 分类作检索条件。
+    // URL 遵循 smartSystem 跨页跳转惯例（参照 views/statistics/Salesdetail.vue 的 goodsName/className 取值）；
+    // 若 Inventorylist.vue 需自动填充关键词，可在 setup() 内 useRoute() 读取 route.query.goodsName/className
+    // 并赋给 formModel.keyword / displayClassId。
+    function ntfGoRestock(btn){
+      var product = (btn && btn.dataset && btn.dataset.product) || '';
+      var cat     = (btn && btn.dataset && btn.dataset.cat) || '';
+      var url = 'https://s.taocaimall.com/martSys/#/inventory/inventoryList'
+        + '?goodsName=' + encodeURIComponent(product)
+        + '&className=' + encodeURIComponent(cat);
+      window.open(url, '_blank');
+    }
+    function ntfMarkAll(){
+      var cnt=0;
+      NTF.forEach(function(n){ if(!n.read&&!n.frozen&&!ntfInvalid(n)){n.read=true; n.markedBy=CURRENT_USER_NAME; cnt++;} });
+      ntfRender();
+      if(typeof showToast==='function') showToast(cnt?('已将 '+cnt+' 条标记为已读'):'没有未读消息');
+    }
+
+    function ntfUniq(key){ var m={}; NTF.forEach(function(n){ m[n[key]]=1; }); return Object.keys(m).sort(); }
+    function ntfFillSelects(){
+      var so=document.getElementById('ntfStore'), co=document.getElementById('ntfCat');
+      var stores=ntfUniq('store'), cats=ntfUniq('category');
+      so.innerHTML='<option value="all">全部门店</option>'+stores.map(function(s){return '<option value="'+s+'">'+s+'</option>';}).join('');
+      co.innerHTML='<option value="all">全部分类</option>'+cats.map(function(c){return '<option value="'+c+'">'+c+'</option>';}).join('');
+    }
+    function ntfFilterStore(sel){ curStore=sel.value; if(curStore!=='all') ntfLoadThreshold(curStore); ntfRender(); }
+    function ntfFilterCat(sel){ curCat=sel.value; ntfRender(); }
+    function ntfSearch_(inp){ curKeyword=inp.value.trim(); ntfRender(); }
+
+    /* 总开关指示 */
+    (function(){
+      var s=document.getElementById('ntfSwitch');
+      if(!INVENTORY_ENABLED){ s.className='pill off'; s.textContent='○ 未启用'; }
+    })();
+
+    /* ===== 预览弹框（客户端 / 小程序样式） ===== */
+    // ===== 客户端·销售页模拟（与通知中心弹框解耦，独立状态） =====
+    var CO_CATS = ['新鲜水果', '安心蔬菜', '肉禽蛋品', '水产海鲜', '乳饮制品', '牛羊肉'];
+    var CO_SUBCATS = {
+      '新鲜水果': ['全部', '浆果', '柑橘', '瓜果'],
+      '安心蔬菜': ['全部', '根茎', '叶菜', '茄果'],
+      '肉禽蛋品': ['全部', '猪肉', '禽类', '蛋品', '牛肉'],
+      '水产海鲜': ['全部', '活鲜', '冰鲜', '贝类'],
+      '乳饮制品': ['全部', '牛奶', '酸奶', '豆制品'],
+      '牛羊肉':   ['全部', '牛肉', '羊肉']
+    };
+    // 价格单位：元/kg 或 元/盒，与销售场景一致
+    var CO_GOODS = [
+      {id:'g1', cat:'安心蔬菜', sub:'根茎', name:'土豆（黄心）', spec:'5kg/袋', price:12.0, unit:'kg', stock:3, emoji:'🥔'},
+      {id:'g2', cat:'安心蔬菜', sub:'根茎', name:'土豆（散称）', spec:'散称',   price:3.6,  unit:'kg', stock:3, emoji:'🥔'},
+      {id:'g3', cat:'安心蔬菜', sub:'叶菜', name:'上海青（青菜）', spec:'散称', price:4.5,  unit:'kg', stock:2, emoji:'🥬'},
+      {id:'g4', cat:'安心蔬菜', sub:'茄果', name:'西红柿',         spec:'散称', price:6.0,  unit:'kg', stock:0, emoji:'🍅'},
+      {id:'g5', cat:'安心蔬菜', sub:'茄果', name:'圣女果',         spec:'250g/盒', price:8.0, unit:'盒', stock:1, emoji:'🍅'},
+      {id:'g6', cat:'肉禽蛋品', sub:'猪肉', name:'猪肉（后腿）', spec:'散称',     price:28.0, unit:'kg', stock:0, emoji:'🥩'},
+      {id:'g7', cat:'肉禽蛋品', sub:'蛋品', name:'鸡蛋（鲜）',   spec:'30枚/盒',  price:18.0, unit:'盒', stock:8, emoji:'🥚'},
+      {id:'g8', cat:'肉禽蛋品', sub:'禽类', name:'鸡腿肉',       spec:'散称',     price:22.0, unit:'kg', stock:6, emoji:'🍗'},
+      {id:'g9', cat:'水产海鲜', sub:'活鲜', name:'基围虾（活鲜）', spec:'散称',   price:80.0, unit:'kg', stock:0, emoji:'🦐'},
+      {id:'g10',cat:'水产海鲜', sub:'冰鲜', name:'带鱼段',       spec:'500g/份',  price:35.0, unit:'份', stock:5, emoji:'🐟'},
+      {id:'g11',cat:'新鲜水果', sub:'浆果', name:'草莓',         spec:'1盒',       price:25.0, unit:'盒', stock:12,emoji:'🍓'},
+      {id:'g12',cat:'新鲜水果', sub:'柑橘', name:'蜜桔',         spec:'散称',     price:8.0,  unit:'kg', stock:20,emoji:'🍊'}
+    ];
+    CO_GOODS.forEach(function(g){ g.stock0 = g.stock; });   // 保存初始库存，供「重置库存」恢复
+    var coCart = [];
+    var coCurCat = '安心蔬菜';
+    var coCurSub = '全部';
+
+    function coInit(){
+      var tabs = document.getElementById('coTabs');
+      var html = '';
+      CO_CATS.forEach(function(c){
+        html += '<button data-cat="'+c+'"'+(c===coCurCat?' class="active"':'')+' onclick="coPickCat(this.dataset.cat)">'+c+'</button>';
+      });
+      html += '<div class="co-search"><span>🔍</span><input placeholder="商品名或编码"/></div>';
+      tabs.innerHTML = html;
+
+      coRenderSubcat();
+      coRenderGrid();
+      coRenderCart();
+    }
+    function coPickCat(c){
+      coCurCat = c;
+      coCurSub = '全部';
+      coInit();
+    }
+    function coPickSub(s){
+      coCurSub = s;
+      coRenderSubcat();
+      coRenderGrid();
+    }
+    function coRenderSubcat(){
+      var sub = (CO_SUBCATS[coCurCat] || ['全部']).slice();
+      if(sub.indexOf(coCurSub) === -1) coCurSub = '全部';
+      document.getElementById('coSidecat').innerHTML = sub.map(function(s){
+        return '<div data-sub="'+s+'"'+(s===coCurSub?' class="active"':'')+' onclick="coPickSub(this.dataset.sub)">'+s+'</div>';
+      }).join('');
+    }
+    function coRenderGrid(){
+      var list = CO_GOODS.filter(function(g){ return g.cat===coCurCat && (coCurSub==='全部' || g.sub===coCurSub); });
+      if(!list.length){
+        document.getElementById('coGrid').innerHTML = '<div class="co-grid-empty">该分类暂无商品</div>';
+        return;
+      }
+      document.getElementById('coGrid').innerHTML = list.map(function(g){
+        // 商品卡不显示库存/售罄态（按规格：售罄点击时拦截）
+        return '<div class="co-card">'+
+                 '<div class="co-card-img">'+g.emoji+'</div>'+
+                 '<div class="co-card-name">'+g.name+'</div>'+
+                 '<div class="co-card-price">¥'+g.price.toFixed(2)+'<span class="co-card-unit">/'+g.unit+'</span></div>'+
+                 '<button class="co-card-add" data-id="'+g.id+'" onclick="coAdd(this.dataset.id)">+ 加购</button>'+
+               '</div>';
+      }).join('');
+    }
+    function coAdd(id){
+      var g = CO_GOODS.find(function(x){return x.id===id;});
+      if(!g) return;
+      // 售罄拦截：商品卡不显示「已售罄」，点击时 toast 提示
+      if(g.stock <= 0){ if(typeof showToast==='function') showToast('已售罄，无法加购：'+g.name); return; }
+      var c = coCart.find(function(x){return x.id===id;});
+      if(c){
+        // 加购上限 = 本地库存量，不能超过；超量拦截（不足由服务端推送/结算校验产生，非本地超加）
+        if(c.qty >= g.stock){ if(typeof showToast==='function') showToast('已达库存上限（最多 '+g.stock+' 件）'); return; }
+        c.qty++;
+      } else {
+        coCart.push({id:id, qty:1});
+      }
+      coRenderCart();
+    }
+    function coDel(id){
+      coCart = coCart.filter(function(x){return x.id!==id;});
+      coRenderCart();
+    }
+    // 手动减少数量（普通操作，供店员在缺货拦截后自行调整加购量）
+    function coMinus(id){
+      var c = coCart.find(function(x){return x.id===id;});
+      if(!c) return;
+      if(c.qty > 1) c.qty--;
+      else coCart = coCart.filter(function(x){return x.id!==id;});
+      coRenderCart();
+    }
+    // 角标规则：只提示「不足{x}」这一种必须处理的实时缺口信号（红）。收银员是店员，
+    // 无需「告急/充足」被动装饰——库存上限与结算拦截已在动作边界处理；缺货由「已售罄」禁加购 + 缺口「不足{x}」覆盖。
+    function coBadge(g, qty){
+      if(qty > g.stock) return '<span class="co-cart-badge lack">缺'+(qty-g.stock)+'</span>';
+      return '';
+    }
+    function coRenderCart(){
+      var list = document.getElementById('coCartList');
+      var totalQty = 0; var totalAmt = 0;
+      if(!coCart.length){
+        list.innerHTML = '<div class="co-cart-empty">暂无加购商品</div>';
+      } else {
+        list.innerHTML = coCart.map(function(c){
+          var g = CO_GOODS.find(function(x){return x.id===c.id;});
+          if(!g) return '';
+          var sub = c.qty + ' × ¥' + g.price.toFixed(2) + ' = ¥' + (c.qty*g.price).toFixed(2);
+          totalQty += c.qty; totalAmt += c.qty*g.price;
+          return '<div class="co-cart-item">'+
+                   '<div class="co-cart-info">'+
+                     '<div class="co-cart-name">'+g.name+'</div>'+
+                     '<div class="co-cart-sub">'+sub+'</div>'+
+                   '</div>'+
+                   coBadge(g, c.qty)+
+                   '<span class="co-cart-minus" data-id="'+g.id+'" title="减少" onclick="coMinus(this.dataset.id)">−</span>'+
+                   '<span class="co-cart-del" data-id="'+g.id+'" title="删除" onclick="coDel(this.dataset.id)">🗑</span>'+
+                 '</div>';
+        }).join('');
+      }
+      document.getElementById('coCartCount').textContent = totalQty + ' 件';
+      document.getElementById('coFootTotal').textContent = '¥' + totalAmt.toFixed(2);
+      var totalEl = document.querySelector('.co-foot-info .row.total small');
+      if(totalEl) totalEl.textContent = totalQty + ' 件';
+      document.getElementById('coFootDue').textContent = '¥' + totalAmt.toFixed(2);
+      var dueEl = document.querySelector('.co-foot-info .row:last-child small');
+      if(dueEl) dueEl.textContent = '优惠 ¥0.00';
+    }
+    // 结算（"算"）：模拟服务端二次校验 + 库存扣减。
+    // 加购列表存在「缺货」(qty>stock) 项 →【不允许结算】：仅 toast 提醒「xx、xx商品库存不足」，
+    // 不足数量已在加购列表以「缺x」角标展示；订单不扣库存、不清空，店员需手动 −/删除 或补货后重试。充足订单才扣库存完成下单。
+    function coCheckout(pay){
+      if(!coCart.length){ if(typeof showToast==='function') showToast('购物车为空，无法结算'); return; }
+      // 1) 校验缺货项（qty > 当前库存）
+      var shortItems = [];
+      coCart.forEach(function(c){
+        var g = CO_GOODS.find(function(x){return x.id===c.id;});
+        if(g && c.qty > g.stock) shortItems.push(g);
+      });
+      // 2) 存在缺货 → 拦截，不允许结算（不足数量已在加购列表「缺x」角标展示）
+      if(shortItems.length){
+        var names = shortItems.map(function(g){ return g.name; });
+        if(typeof showToast==='function') showToast(names.join('、') + ' 商品库存不足，订单不允许结算');
+        return;   // 不改购物车、不扣库存
+      }
+      // 3) 充足 → 正常结算：扣减库存并清空加购
+      var done = [];
+      coCart.slice().forEach(function(c){
+        var g = CO_GOODS.find(function(x){return x.id===c.id;});
+        if(!g) return;
+        g.stock -= c.qty;
+        done.push(g.name + ' ' + c.qty + g.unit);
+        coCart = coCart.filter(function(x){return x.id!==c.id;});
+      });
+      coRenderCart();
+      coRenderGrid();
+      if(typeof showToast==='function'){
+        showToast((pay||'收款') + '完成' + (done.length ? ('，已扣库存：' + done.join('、')) : '，无商品'));
+      }
+    }
+    // 模拟服务端 SSE 推送：库存被其他终端占用/变更，使已加购项 qty > 新 stock，加购列表自动刷新为「不足{x}」
+    // （本地加购上限 = 库存量，不足不来自用户超加，而来自服务端侧库存变化）
+    function coSimPush(){
+      if(!coCart.length){ if(typeof showToast==='function') showToast('请先加购商品，再模拟服务端库存推送'); return; }
+      var changed = [];
+      coCart.forEach(function(c){
+        var g = CO_GOODS.find(function(x){return x.id===c.id;});
+        if(!g) return;
+        g.stock = Math.max(0, c.qty - 2);   // 服务端被占用：剩余库存落到已加购量之下，制造缺口
+        changed.push(g.name + ' 余' + g.stock);
+      });
+      coRenderCart();   // 角标按 qty vs 新 stock 重算，出现「缺{x}」
+      if(typeof showToast==='function') showToast('SSE 推送：库存已变更（' + changed.join('、') + '），加购列表自动刷新');
+    }
+    // 重置库存：恢复所有商品初始库存、清空加购列表与角标，无需刷新页面即可重新演示
+    function coReset(){
+      CO_GOODS.forEach(function(g){ g.stock = g.stock0; });
+      coCart = [];
+      coRenderGrid();
+      coRenderCart();
+      if(typeof showToast==='function') showToast('已重置：库存恢复初始值、加购列表已清空');
+    }
+    // 初始化在打开弹框时调用，保证每次打开都渲染（不依赖外部 init）
+    function openClientPreview(){ coInit(); document.getElementById('clientModal').classList.add('show'); }
+    function closeClientPreview(){ document.getElementById('clientModal').classList.remove('show'); }
+    function openMiniPreview(){ mpResetTab(); mpRender('all'); document.getElementById('miniModal').classList.add('show'); }
+    function closeMiniPreview(){ document.getElementById('miniModal').classList.remove('show'); }
+
+    /* —— 小程序·库存提醒（管理端预览，数据驱动可筛选） —— */
+    var MP_LIST = [
+      { name:'猪肉（后腿）', spec:'散称',   cat:'肉禽蛋',   store:'城东店', time:'2026-08-26 11:20', status:'sold',  type:'unread',  msg:'已售罄', markedBy:'' },
+      { name:'土豆（黄心）', spec:'5kg/袋', cat:'蔬菜',     store:'中心店', time:'2026-08-26 09:12', status:'low',   type:'unread',  msg:'库存偏低，请及时补货', markedBy:'' },
+      { name:'鸡蛋（鲜）',   spec:'30枚/盒',cat:'蛋品',     store:'中心店', time:'2026-08-26 10:05', status:'low',   type:'unread',  msg:'库存偏低，请及时补货', markedBy:'' },
+      { name:'上海青（青菜）',spec:'散称',  cat:'蔬菜',     store:'江南店', time:'2026-08-25 16:40', status:'low',   type:'read',    msg:'库存偏低，请及时补货', markedBy:'张' },
+      { name:'西红柿（蔬菜）',spec:'散称',  cat:'蔬菜',     store:'中心店', time:'2026-08-26 14:10', status:'low',   type:'invalid', msg:'库存偏低，请及时补货', markedBy:'' },
+      { name:'基围虾（活鲜）',spec:'散称',  cat:'水产海鲜', store:'城东店', time:'2026-08-25 14:02', status:'sold',  type:'handled', msg:'已售罄', markedBy:'', handledBy:'补货' }
+    ];
+    function mpBadge(n){
+      if(n.type==='unread')  return '<span class="mp-badge unread">未读</span>';
+      if(n.type==='read')    return '<span class="mp-badge read">已读·'+n.markedBy+'</span>';
+      if(n.type==='invalid') return '<span class="mp-badge invalid">已失效</span>';
+      if(n.type==='handled') return '<span class="mp-badge handled">已处理·补货</span>';
+      return '';
+    }
+    function mpCardClass(n){
+      var c='mp-card';
+      if(n.status==='sold') c+=' sold';
+      if(n.type==='handled') c+=' handled';
+      if(n.type==='read') c+=' read';
+      if(n.type==='invalid') c+=' invalid';
+      return c;
+    }
+    function mpRender(f){
+      f = f || 'all';
+      var html='';
+      MP_LIST.forEach(function(n){
+        if(f!=='all'){
+          if(f==='unread'  && n.type!=='unread')  return;
+          if(f==='low'     && n.status!=='low')   return;
+          if(f==='sold'    && n.status!=='sold')  return;
+          if(f==='handled' && n.type!=='handled') return;
+          if(f==='invalid' && n.type!=='invalid') return;
+        }
+        var markDisabled   = (n.type==='read' || n.type==='invalid' || n.type==='handled');
+        var handleDisabled = (n.type==='invalid' || n.type==='handled');
+        html += '<div class="'+mpCardClass(n)+'">'
+          + '<div class="mp-row1"><span class="mp-name">'+n.name+'<span style="font-weight:400;color:#9e9e9e;font-size:11px">'+n.spec+'</span></span>'+mpBadge(n)+'</div>'
+          + '<div class="mp-msg">'+n.msg+'</div>'
+          + '<div class="mp-meta">'+n.store+' · '+n.cat+' · '+n.time+'</div>'
+          + '<div class="mp-actions">'
+          + '<span class="mp-link'+(markDisabled?' disabled':'')+'"'+(markDisabled?'':' onclick="showToast(\'已标记已读（标记人：李）\')"')+'>标记已读</span>'
+          + (handleDisabled
+            ? '<span class="mp-link disabled">去补货</span>'
+            : '<span class="mp-link" data-name="'+escAttr(n.name)+'" data-cat="'+escAttr(n.cat)+'" onclick="mpGoRestock(this)">去补货</span>')
+          + '</div></div>';
+      });
+      if(!html) html='<div class="mp-empty">暂无消息</div>';
+      document.getElementById('mpList').innerHTML = html;
+    }
+    function mpSetTab(el){
+      var tabs = el.parentNode.querySelectorAll('.mp-tab');
+      tabs.forEach(function(t){ t.classList.remove('active'); });
+      el.classList.add('active');
+      mpRender(el.dataset.f);
+    }
+    function mpResetTab(){
+      var tb = document.getElementById('mpTabbar');
+      if(!tb) return;
+      var tabs = tb.querySelectorAll('.mp-tab');
+      tabs.forEach(function(t){ t.classList.remove('active'); });
+      if(tabs[0]) tabs[0].classList.add('active');
+    }
+    // 小程序·「去补货」——打开 PC 端【库存查询】并预填检索条件（与 PC 同源，URL 遵循 smartSystem 跨页跳转惯例）
+    function mpGoRestock(btn){
+      var name = (btn && btn.dataset && btn.dataset.name) || '';
+      var cat  = (btn && btn.dataset && btn.dataset.cat) || '';
+      var url = 'https://s.taocaimall.com/martSys/#/inventory/inventoryList'
+        + '?goodsName=' + encodeURIComponent(name)
+        + '&className=' + encodeURIComponent(cat);
+      window.open(url, '_blank');
+    }
+    function invBackdrop(overlay, e){
+      // 点击遮罩空白处关闭；内容区已 stopPropagation，不会触发此处
+      if(e.target===overlay) overlay.classList.remove('show');
+    }
+    document.addEventListener('keydown', function(e){
+      if(e.key==='Escape'){ closeClientPreview(); closeMiniPreview(); }
+    });
+
+    ntfFillSelects();
+    ntfLoadThreshold(curStore);   // 应用当前门店（或默认）提醒阈值到 KPI 标签
+    ntfRender();
+  </script>
+</body>
+</html>

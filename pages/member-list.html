@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>菜猫智店 · 会员列表</title>
+  <link rel="stylesheet" href="../shared/layout.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+</head>
+<body>
+  <div class="toast" id="toast"></div>
+  <div id="sidebarRoot"></div>
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+  <div class="main">
+    <div id="headerRoot"></div>
+    <div class="content">
+    <!-- ========== PAGE: 会员列表（对齐 Vue master Member 域） ========== -->
+    <div class="page page-fill" id="page-member-list">
+      <div id="member-listContent" style="display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden;background:#F1F2F5"></div>
+    </div>
+    </div>
+  </div>
+  <div id="modalRoot"></div>
+
+  <script>var CURRENT_PAGE='member-list';</script>
+  <script src="../shared/sidebar.js"></script>
+  <script src="../shared/header.js"></script>
+  <script src="../shared/modals.js"></script>
+  <script src="../shared/layout.js" data-page="member-list"></script>
+  <script src="../shared/ms-member.js"></script>
+  <script>
+    initMultiPage(CURRENT_PAGE);
+    if (typeof initMemberPage === 'function') initMemberPage(CURRENT_PAGE);
+    if (typeof initTicker === 'function') initTicker();
+    (function() { var el = document.getElementById('updateTime'); if (el) el.textContent = '更新 2026-09-03'; })();
+  </script>
+</body>
+</html>

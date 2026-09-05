@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>菜猫智店 · 经营概览</title>
+  <link rel="stylesheet" href="../shared/layout.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+  <style>
+  </style>
+</head>
+<body>
+  <div class="toast" id="toast"></div>
+  <div id="sidebarRoot"></div>
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+  <div class="main">
+    <div id="headerRoot"></div>
+    <div class="content">
+    <!-- ========== PAGE: 经营概览 ========== -->
+    <div class="page active" id="page-overview">
+      <!-- KPI 上排：核心流水(4) -->
+      <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:10px">
+        <div class="kpi-card kpi-chain" style="--card-color:#F0F6FF">
+          <div class="kpi-label" id="ov1-lbl">今日交易额</div>
+          <div class="kpi-value" id="ov1-val"><span>¥</span>12,916</div>
+          <div class="kpi-change up" id="ov1-chg">▲ 8.2% 较昨日</div>
+          <div class="kpi-icon">💳</div>
+        </div>
+        <div class="kpi-card kpi-chain" style="--card-color:#c8e6c9">
+          <div class="kpi-label" id="ov2-lbl">今日营业额</div>
+          <div class="kpi-value" id="ov2-val"><span>¥</span>11,395</div>
+          <div class="kpi-change up" id="ov2-chg">▲ 7.5% 较昨日</div>
+          <div class="kpi-icon">💰</div>
+        </div>
+        <div class="kpi-card kpi-chain" style="--card-color:#a5d6a7">
+          <div class="kpi-label" id="ov3-lbl">今日营收</div>
+          <div class="kpi-value" id="ov3-val"><span>¥</span>11,015</div>
+          <div class="kpi-change up" id="ov3-chg">▲ 6.8% 较昨日</div>
+          <div class="kpi-icon">💵</div>
+        </div>
+        <div class="kpi-card" style="--card-color:#e3f2fd">
+          <div class="kpi-label" id="ov4-lbl">今日订单数</div>
+          <div class="kpi-value" id="ov4-val">156<span>单</span></div>
+          <div class="kpi-change up" id="ov4-chg">▲ 5.4% 较昨日</div>
+          <div class="kpi-icon">🧾</div>
+        </div>
+      </div>
+      <!-- KPI 下排：运营指标(6) -->
+      <div class="kpi-grid ov-kpi-grid" style="grid-template-columns:repeat(6,1fr)">
+        <div class="kpi-card" style="--card-color:#fff3e0">
+          <div class="kpi-label" id="ov5-lbl">今日优惠金额</div>
+          <div class="kpi-value" id="ov5-val"><span>¥</span>1,285</div>
+          <div class="kpi-change down" id="ov5-chg">▼ 0.5% 收窄</div>
+          <div class="kpi-icon">🏷️</div>
+        </div>
+        <div class="kpi-card" style="--card-color:#fce4ec">
+          <div class="kpi-label" id="ov6-lbl">今日退款金额</div>
+          <div class="kpi-value" id="ov6-val"><span>¥</span>616</div>
+          <div class="kpi-change-row">
+            <span class="kpi-change down" id="ov6-chg">▼ 2.1% 改善</span>
+            <span class="kpi-refund-detail" id="ov6-detail">当期 ¥236 · 跨期 ¥380</span>
+          </div>
+          <div class="kpi-icon">↩️</div>
+        </div>
+        <div class="kpi-card" style="--card-color:#e0f2f1">
+          <div class="kpi-label" id="ov7-lbl">今日客单价(成交)</div>
+          <div class="kpi-value" id="ov7-val"><span>¥</span>70.6</div>
+          <div class="kpi-change up" id="ov7-chg">▲ 1.4% 较昨日</div>
+          <div class="kpi-icon">🎯</div>
+        </div>
+        <div class="kpi-card" style="--card-color:#e8eaf6">
+          <div class="kpi-label" id="ov8-lbl">优惠率</div>
+          <div class="kpi-value" id="ov8-val">10.0<span>%</span></div>
+          <div class="kpi-change down" id="ov8-chg">▼ 较昨日-0.2%</div>
+          <div class="kpi-icon">📊</div>
+        </div>
+        <div class="kpi-card" style="--card-color:#fce4ec">
+          <div class="kpi-label" id="ov9-lbl">当期退款率</div>
+          <div class="kpi-value" id="ov9-val">2.1<span>%</span></div>
+          <div class="kpi-change down" id="ov9-chg">▼ 较昨日-0.1%</div>
+          <div class="kpi-icon">🔻</div>
+        </div>
+        <div class="kpi-card" style="--card-color:#e0f2f1">
+          <div class="kpi-label" id="ov10-lbl">营收/营业额比</div>
+          <div class="kpi-value" id="ov10-val">96.7<span>%</span></div>
+          <div class="kpi-change down" id="ov10-chg">▼ 较昨日-0.5%</div>
+          <div class="kpi-icon">🔗</div>
+        </div>
+      </div>
+      <div class="concept-bar" id="ov-concept-bar">
+        <span class="concept-detail"><b style="color:#005CF5">💡 交易额</b> = 按原价计算的商品销售总额</span>
+        <span class="concept-detail"><b style="color:#024DCA">💡 营业额</b> = 交易额 − 当期退款 − 优惠金额（按交易日维度）</span>
+        <span class="concept-detail"><b style="color:#01579b">💡 营收</b> = 营业额 − 跨期退款（往日订单今日退，实际到手金额）</span>
+        <span class="concept-detail"><b style="color:#e65100">💡 优惠金额</b> = 会员价差 + 优惠券 + 积分抵扣 + 价格优惠</span>
+        <span class="concept-detail" style="color:#999" id="ov-concept-date">📅 数据周期：2026-05-27（今日）</span>
+        <button class="concept-close" onclick="closeConceptBar()" title="关闭说明">✕</button>
+      </div>
+
+      <div class="insight-grid">
+        <div class="insight-card ins-green">
+          <div class="ins-title"><span class="ins-icon">📊</span><span id="ov-ins1-title">销售健康度</span></div>
+          <ul class="ins-list" id="ov-ins1-list"></ul>
+        </div>
+        <div class="insight-card ins-blue">
+          <div class="ins-title"><span class="ins-icon">🛒</span><span id="ov-ins2-title">商品与品类</span></div>
+          <ul class="ins-list" id="ov-ins2-list"></ul>
+        </div>
+        <div class="insight-card ins-purple">
+          <div class="ins-title"><span class="ins-icon">👥</span><span id="ov-ins3-title">客群与流量</span></div>
+          <ul class="ins-list" id="ov-ins3-list"></ul>
+        </div>
+        <div class="insight-card ins-orange">
+          <div class="ins-title"><span class="ins-icon">⚠️</span><span id="ov-ins4-title">风险与建议</span></div>
+          <ul class="ins-list" id="ov-ins4-list"></ul>
+        </div>
+      </div>
+
+      <div class="chart-grid-2">
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title" id="ov-trend-title">本周营业额趋势</div>
+              <div class="chart-sub" id="ov-trend-sub">营业额 + 订单量双轴对比</div>
+            </div>
+          </div>
+          <div class="chart-wrap"><canvas id="overviewTrendChart" height="320"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">品类营业额占比</div>
+              <div class="chart-sub" id="ov-pie-sub">按销售额分布</div>
+            </div>
+          </div>
+          <div class="chart-wrap"><canvas id="overviewPieChart" height="320"></canvas></div>
+        </div>
+      </div>
+
+      <div class="chart-grid-2-eq">
+        <div class="chart-card">
+          <div class="chart-header">
+            <div class="chart-title" id="ov-hour-title">今日时段销售分布</div>
+          </div>
+          <div class="chart-wrap"><canvas id="overviewHourChart" height="240"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">热销商品 Top 5</div>
+            </div>
+            <a class="rank-more" onclick="goToProductPage()">查看完整排行 →</a>
+          </div>
+          <ul class="rank-list" id="overviewRankList"></ul>
+        </div>
+      </div>
+
+    </div>
+    </div>
+  </div>
+  <div id="modalRoot"></div>
+
+  <script>var CURRENT_PAGE='overview';</script>
+  <script src="../shared/sidebar.js"></script>
+  <script src="../shared/header.js"></script>
+  <script src="../shared/modals.js"></script>
+  <script src="../shared/layout.js" data-page="overview"></script>
+  <script>
+    initMultiPage(CURRENT_PAGE);
+    if (typeof initTicker === 'function') initTicker();
+    (function() { var el = document.getElementById('updateTime'); if (el) el.textContent = '更新 2026-07-01 23:05'; })();
+  </script>
+</body>
+</html>

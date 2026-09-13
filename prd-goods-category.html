@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>产品需求文档 — 商品分类管理</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; background:#F1F2F5; color:#1D2440; line-height:1.7; font-size:14px; }
+  .prd-wrap { max-width:860px; margin:0 auto; padding:32px 24px 80px; }
+
+  /* 封面 */
+  .prd-cover { background:#fff; border-radius:12px; padding:48px; margin-bottom:24px; border:1px solid #e8e8e8; text-align:center; }
+  .prd-cover h1 { font-size:28px; font-weight:700; color:#005CF5; margin-bottom:8px; }
+  .prd-cover .subtitle { font-size:14px; color:#999; margin-bottom:20px; }
+  .prd-cover .meta { display:flex; justify-content:center; gap:32px; font-size:13px; color:#666; flex-wrap:wrap; }
+  .prd-cover .meta span { background:#f5f7fa; padding:6px 16px; border-radius:20px; }
+
+  /* 章节 */
+  .section { background:#fff; border-radius:10px; padding:28px 32px; margin-bottom:16px; border:1px solid #eceef2; }
+  .section h2 { font-size:18px; font-weight:600; color:#1D2440; margin-bottom:16px; padding-bottom:10px; border-bottom:2px solid #005CF5; display:flex; align-items:center; gap:8px; }
+  .section h2 .num { display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:6px; background:#005CF5; color:#fff; font-size:13px; font-weight:600; flex-shrink:0; }
+  .section h3 { font-size:15px; font-weight:600; color:#333; margin:20px 0 10px; }
+  .section h4 { font-size:13px; font-weight:600; color:#555; margin:14px 0 6px; }
+  .section p { margin-bottom:10px; color:#444; }
+  .section ul, .section ol { margin:8px 0 14px 20px; color:#444; }
+  .section li { margin-bottom:6px; }
+
+  /* 表格 */
+  table { width:100%; border-collapse:collapse; margin:12px 0; font-size:13px; }
+  th { background:#f5f7fa; font-weight:600; text-align:left; padding:9px 14px; border:1px solid #e8e8e8; }
+  td { padding:8px 14px; border:1px solid #e8e8e8; color:#444; }
+  tr:nth-child(even) td { background:#fafbfc; }
+
+  /* 标签 */
+  .tag { display:inline-block; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:600; }
+  .tag-p0 { background:#fde8e8; color:#c62828; }
+  .tag-p1 { background:#fff3e0; color:#e65100; }
+  .tag-p2 { background:#e8f5e9; color:#1b5e20; }
+  .tag-story { background:#e3f2fd; color:#0d47a1; }
+
+  /* 用户故事卡片 */
+  .story-card { background:#f8faff; border-left:3px solid #005CF5; padding:12px 16px; margin:10px 0; border-radius:0 6px 6px 0; }
+  .story-card .actor { font-weight:600; color:#005CF5; font-size:13px; }
+  .story-card .want { color:#444; }
+  .story-card .benefit { color:#888; font-size:12px; margin-top:2px; }
+
+  /* 高亮 */
+  .highlight-box { background:#fef8e7; border:1px solid #f5e6b8; border-radius:6px; padding:14px 18px; margin:12px 0; font-size:13px; }
+
+  /* 指标卡片 */
+  .metric-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:12px 0; }
+  .metric-card { background:#f8faff; border:1px solid #e0e6f5; border-radius:8px; padding:16px; }
+  .metric-card .label { font-size:12px; color:#888; margin-bottom:4px; }
+  .metric-card .value { font-size:20px; font-weight:700; color:#005CF5; }
+  .metric-card .target { font-size:11px; color:#999; margin-top:2px; }
+  @media (max-width:640px) { .metric-row { grid-template-columns:1fr; } }
+
+  /* 版本记录 */
+  .version-table td:first-child { white-space:nowrap; font-weight:500; }
+
+  .status-badge { display:inline-block; padding:2px 10px; border-radius:10px; font-size:11px; font-weight:600; }
+  .status-done { background:#e8f5e9; color:#1b5e20; }
+  .status-wip { background:#fff3e0; color:#e65100; }
+</style>
+</head>
+<body>
+<div class="prd-wrap">
+
+<!-- ======== 封面 ======== -->
+<div class="prd-cover">
+  <h1>产品需求文档：商品分类管理</h1>
+  <div class="subtitle">Product Requirements Document — Goods Category Management</div>
+  <div class="meta">
+    <span>📅 版本 v1.2</span>
+    <span>📌 状态 <b class="status-badge status-wip">迭代中</b></span>
+    <span>👤 产品：产品通</span>
+    <span>📆 日期 2026-06-30</span>
+  </div>
+</div>
+
+<!-- ======== 1. 问题陈述 ======== -->
+<div class="section">
+  <h2><span class="num">1</span> 问题陈述</h2>
+
+  <h3>用户痛点</h3>
+  <p>生鲜零售门店的商品种类繁多（蔬菜、水果、肉禽蛋、水产、粮油调味等），收银员和店长在日常运营中面临以下问题：</p>
+  <ul>
+    <li><b>商品散乱，查找困难</b>：数十上百个 SKU 在没有分类组织的情况下，收银员需要滚动长列表逐一查找，高峰期严重影响结账速度。</li>
+    <li><b>分类体系僵化</b>：随着季节更替和经营策略调整，商品分类的优先级会变化。例如夏季水果销量提升时，水果分类应排在前面；冬季火锅食材增加，肉禽蛋分类需要优先展示。</li>
+    <li><b>分类无视觉标识</b>：纯文字分类缺乏颜色区分，在商品列表的左侧侧边栏中不够醒目，店员难以快速定位目标分类。</li>
+    <li><b>跨页面割裂</b>：在分类管理页面调整了分类后，切换到商品列表页面需要手动重新筛选，操作繁琐。</li>
+  </ul>
+
+  <h3>不解决的代价</h3>
+  <ul>
+    <li><b>收银效率下降</b>：每笔交易中查找商品平均多耗时 3-5 秒，高峰期累计损失可达十几分钟。</li>
+    <li><b>店员抵触情绪</b>：商品组织混乱导致操作负担加重，影响系统使用意愿。</li>
+    <li><b>运营灵活性受限</b>：无法快速调整分类顺序来响应季节性或促销策略变化。</li>
+  </ul>
+</div>
+
+<!-- ======== 2. 目标 ======== -->
+<div class="section">
+  <h2><span class="num">2</span> 目标 (Goals)</h2>
+
+  <table>
+    <tr><th>#</th><th>目标</th><th>类型</th><th>衡量方式</th></tr>
+    <tr>
+      <td>G1</td>
+      <td>店长可在 30 秒内完成一个分类的增/删/改操作</td>
+      <td>用户体验</td>
+      <td>操作耗时可用性测试</td>
+    </tr>
+    <tr>
+      <td>G2</td>
+      <td>分类排序调整后即时生效，无需刷新或手动同步</td>
+      <td>功能完整性</td>
+      <td>排序保存后商品列表侧边栏自动更新</td>
+    </tr>
+    <tr>
+      <td>G3</td>
+      <td>商品列表按分类筛选的点击次数 ≤ 2 次</td>
+      <td>操作效率</td>
+      <td>从打开商品列表到完成分类筛选的点击路径</td>
+    </tr>
+    <tr>
+      <td>G4</td>
+      <td>每个分类有唯一且稳定的颜色标识，排序不影响颜色</td>
+      <td>视觉识别</td>
+      <td>颜色与分类 ID 绑定，不随排序改变</td>
+    </tr>
+  </table>
+</div>
+
+<!-- ======== 3. 非目标 ======== -->
+<div class="section">
+  <h2><span class="num">3</span> 非目标 (Non-Goals)</h2>
+
+  <table>
+    <tr><th>#</th><th>不做的事项</th><th>原因</th></tr>
+    <tr>
+      <td>N1</td>
+      <td><b>多级分类</b>（如「生鲜 > 蔬菜 > 叶菜」）</td>
+      <td>用户规模有限，一级分类已满足当前需求；多级分类显著增加 UI 复杂度和数据模型变更成本</td>
+    </tr>
+    <tr>
+      <td>N2</td>
+      <td><b>分类的批量导入/导出</b></td>
+      <td>分类数量较少（通常 10 个以内），逐个维护即可；导入导出需求未经验证</td>
+    </tr>
+    <tr>
+      <td>N3</td>
+      <td><b>分类的生效/失效状态切换</b></td>
+      <td>删除已足够；"禁用"分类引入「有分类但不可用」的中间态，增加理解成本</td>
+    </tr>
+    <tr>
+      <td>N4</td>
+      <td><b>自定义分类颜色</b></td>
+      <td>系统自动分配调色板中的颜色，保持视觉一致性；自定义颜色的 ROI 不足以纳入 v1</td>
+    </tr>
+  </table>
+</div>
+
+<!-- ======== 4. 用户故事 ======== -->
+<div class="section">
+  <h2><span class="num">4</span> 用户故事 (User Stories)</h2>
+
+  <h3>4.1 企业管理员（可读写）</h3>
+
+  <div class="story-card">
+    <div class="actor">US1 — 作为企业管理员</div>
+    <div class="want">我希望能够创建新的商品分类（如「预制菜」「烘焙」），</div>
+    <div class="benefit">以便将新增品类纳入系统的分类体系，方便所有门店店员查找。</div>
+  </div>
+
+  <div class="story-card">
+    <div class="actor">US2 — 作为企业管理员</div>
+    <div class="want">我希望能够修改已有分类的名称，</div>
+    <div class="benefit">以便纠正录入错误或适配经营策略变更（如「酒水饮料」改为「酒水饮品」）。</div>
+  </div>
+
+  <div class="story-card">
+    <div class="actor">US3 — 作为企业管理员</div>
+    <div class="want">我希望能够删除不再需要的分类，</div>
+    <div class="benefit">以便保持分类列表的简洁。删除后该分类下的商品自动归入「未分类」而非丢失。</div>
+  </div>
+
+  <div class="story-card">
+    <div class="actor">US4 — 作为企业管理员</div>
+    <div class="want">我希望通过拖拽来调整分类的展示顺序，</div>
+    <div class="benefit">以便将高频使用的分类置顶，让所有门店店员更快找到常用商品。</div>
+  </div>
+
+  <h3>4.2 门店人员（仅查看）</h3>
+
+  <div class="story-card" style="border-left-color:#3EB27E;">
+    <div class="actor" style="color:#3EB27E;">US5 — 作为门店收银员</div>
+    <div class="want">我希望看到企业管理员设定好的分类体系（含顺序和颜色），</div>
+    <div class="benefit">以便在商品列表页面按分类快速筛选商品，提高收银效率。</div>
+  </div>
+
+  <div class="story-card" style="border-left-color:#3EB27E;">
+    <div class="actor" style="color:#3EB27E;">US6 — 作为门店店长</div>
+    <div class="want">在分类管理页面查看当前分类的全貌，以及每个分类下的商品数量，</div>
+    <div class="benefit">以便了解分类体系是否符合门店运营需求，向企业管理员反馈调整建议。</div>
+  </div>
+
+  <h3>4.3 共同诉求</h3>
+
+  <div class="story-card">
+    <div class="actor">US7 — 作为企业管理员 / 门店人员</div>
+    <div class="want">在分类管理页面点击某个分类卡片时，直接跳转到商品列表并自动筛选为该分类，</div>
+    <div class="benefit">以便快速查看该分类下有哪些商品，减少重复操作。</div>
+  </div>
+
+  <div class="story-card" style="border-left-color:#f5a623;">
+    <div class="actor" style="color:#f5a623;">⚠️ 边界用例 — 作为企业管理员</div>
+    <div class="want">当我删除一个有 N 件商品的分类时，系统明确提示我这些商品将归入「未分类」，</div>
+    <div class="benefit">以避免我误以为商品会被一并删除。</div>
+  </div>
+
+  <div class="story-card" style="border-left-color:#f5a623;">
+    <div class="actor" style="color:#f5a623;">⚠️ 边界用例 — 作为企业管理员</div>
+    <div class="want">当我在排序模式中取消操作时，分类顺序恢复到排序前的状态，</div>
+    <div class="benefit">以便我可以在试排之后放弃变更而无需担心数据出错。</div>
+  </div>
+
+  <div class="story-card" style="border-left-color:#f5a623;">
+    <div class="actor" style="color:#f5a623;">⚠️ 边界用例 — 作为门店人员</div>
+    <div class="want">当我以门店角色登录时，分类管理页面的编辑、删除、排序按钮均不可见，</div>
+    <div class="benefit">以避免我误操作修改企业级的分类体系。</div>
+  </div>
+</div>
+
+<!-- ======== 5. 需求明细 ======== -->
+<div class="section">
+  <h2><span class="num">5</span> 需求明细 (Requirements)</h2>
+
+  <h3>5.1 数据模型</h3>
+  <table>
+    <tr><th>字段</th><th>类型</th><th>说明</th></tr>
+    <tr><td><code>id</code></td><td>String</td><td>唯一标识，新增时用时间戳生成（<code>c + Date.now()</code>），系统保留 <code>_uncategorized</code></td></tr>
+    <tr><td><code>name</code></td><td>String</td><td>分类名称，最长 20 字，不可重复</td></tr>
+    <tr><td><code>hidden</code></td><td>Boolean</td><td>是否隐藏（仅「未分类」为 <code>true</code>）</td></tr>
+    <tr><td><code>sort</code></td><td>Number</td><td>排序值，越小越靠前；「未分类」固定 9999</td></tr>
+    <tr><td><code>color</code></td><td>String</td><td>颜色 hex 值，新增时从未使用的调色板颜色中自动分配</td></tr>
+  </table>
+
+  <h3>5.2 功能清单</h3>
+  <table>
+    <tr><th>功能</th><th>优先级</th><th>描述</th><th>验收标准</th></tr>
+    <tr>
+      <td>分类列表展示</td>
+      <td><span class="tag tag-p0">P0</span></td>
+      <td>卡片式网格布局，显示分类名、颜色圆点、商品数量、编辑/删除按钮</td>
+      <td>卡片按 sort 升序排列；每张卡片显示正确的颜色和商品数量；空状态显示引导提示</td>
+    </tr>
+    <tr>
+      <td>新增分类</td>
+      <td><span class="tag tag-p0">P0</span></td>
+      <td>弹窗输入分类名称，自动分配颜色和排序值</td>
+      <td>输入名称不为空且不重名；新分类排在列表末尾；颜色从调色板未使用项中选取</td>
+    </tr>
+    <tr>
+      <td>编辑分类</td>
+      <td><span class="tag tag-p0">P0</span></td>
+      <td>弹窗修改分类名称（颜色不可编辑）</td>
+      <td>新名称不为空且不与已有分类重名（排除自身）</td>
+    </tr>
+    <tr>
+      <td>删除分类</td>
+      <td><span class="tag tag-p0">P0</span></td>
+      <td>二次确认后删除分类，该分类下商品归入「未分类」</td>
+      <td>有商品时提示「N 件商品将归入未分类」；确认后分类消失，商品 categoryId 更新为 _uncategorized</td>
+    </tr>
+    <tr>
+      <td>拖拽排序</td>
+      <td><span class="tag tag-p1">P1</span></td>
+      <td>进入排序模式 → 拖拽卡片 → 保存/取消；排序时禁用编辑/删除操作</td>
+      <td>排序模式入口清晰（「排序」按钮）；拖拽有视觉反馈（高亮边框）；取消恢复快照；保存持久化 sort 值</td>
+    </tr>
+    <tr>
+      <td>分类颜色标识</td>
+      <td><span class="tag tag-p0">P0</span></td>
+      <td>每个分类有固定颜色圆点，颜色与分类 ID 绑定</td>
+      <td>颜色不随排序变化；新增分类自动取未使用颜色；商品列表侧边栏同步显示颜色</td>
+    </tr>
+    <tr>
+      <td>商品列表联动</td>
+      <td><span class="tag tag-p0">P0</span></td>
+      <td>点击分类卡片跳转商品列表并自动筛选；商品列表左侧侧边栏同步分类顺序和颜色</td>
+      <td>跳转后侧边栏高亮对应分类；表格只显示该分类商品；页面上方显示分类数量统计</td>
+    </tr>
+    <tr>
+      <td>排序模式状态管理</td>
+      <td><span class="tag tag-p1">P1</span></td>
+      <td>进入排序时快照当前 sort 值；保存应用变更；取消恢复快照</td>
+      <td>取消后 sort 值完全恢复到进入排序前的状态；排序模式中不出现编辑/删除按钮</td>
+    </tr>
+  </table>
+
+  <h3>5.4 角色权限控制</h3>
+
+  <p>系统已有用户角色体系，分为<b>企业</b>和<b>门店</b>两级。分类管理模块需接入该权限模型：</p>
+
+  <table>
+    <tr><th>操作</th><th>企业角色</th><th>门店角色</th><th>说明</th></tr>
+    <tr><td>查看分类列表</td><td style="color:#1b5e20">✅ 允许</td><td style="color:#1b5e20">✅ 允许</td><td>两角色均可查看分类卡片、商品数量</td></tr>
+    <tr><td>点击卡片跳转</td><td style="color:#1b5e20">✅ 允许</td><td style="color:#1b5e20">✅ 允许</td><td>两角色均可点击分类卡片跳转到商品列表并筛选</td></tr>
+    <tr><td>新增分类</td><td style="color:#1b5e20">✅ 允许</td><td style="color:#c62828">❌ 禁止</td><td>门店人员不可见「新增分类」按钮</td></tr>
+    <tr><td>编辑分类</td><td style="color:#1b5e20">✅ 允许</td><td style="color:#c62828">❌ 禁止</td><td>门店人员不可见卡片上的「编辑」操作</td></tr>
+    <tr><td>删除分类</td><td style="color:#1b5e20">✅ 允许</td><td style="color:#c62828">❌ 禁止</td><td>门店人员不可见卡片上的「删除」操作</td></tr>
+    <tr><td>排序分类</td><td style="color:#1b5e20">✅ 允许</td><td style="color:#c62828">❌ 禁止</td><td>门店人员不可见「排序」按钮</td></tr>
+  </table>
+
+  <h4>实现要点</h4>
+  <ul>
+    <li>通过全局 <code>CURRENT_USER_ROLE</code> 变量判断当前角色，值域为 <code>'enterprise'</code> | <code>'store'</code>。</li>
+    <li>页面渲染时根据角色决定按钮的可见性，而非在前端隐藏后仍可通过 DevTools 绕过。</li>
+    <li>后续接入后端 API 时，写操作接口需在服务端再次校验角色权限（前端隐藏仅 UX 层面，不可作为安全边界）。</li>
+    <li>分类数据为<b>企业级共享</b>：所有门店共享同一套分类体系，由企业管理员统一维护。</li>
+  </ul>
+
+  <h3>5.5 「未分类」特殊规则</h3>
+  <ul>
+    <li><b>不可编辑/删除</b>：「未分类」是系统内置分类，卡片显示「系统」标签，不可点击编辑或删除。</li>
+    <li><b>不可排序</b>：「未分类」始终排在列表末尾（sort=9999），不参与拖拽排序。</li>
+    <li><b>不在分类管理列表中出现</b>：分类管理页面只显示 <code>hidden=false</code> 的分类，「未分类」卡片以虚线样式单独渲染在网格最右侧。</li>
+    <li><b>商品兜底</b>：删除分类时，该分类下的所有商品 categoryId 自动改为 <code>_uncategorized</code>。</li>
+  </ul>
+</div>
+
+<!-- ======== 6. 成功指标 ======== -->
+<div class="section">
+  <h2><span class="num">6</span> 成功指标 (Success Metrics)</h2>
+
+  <h3>6.1 用户体验指标</h3>
+  <div class="metric-row">
+    <div class="metric-card">
+      <div class="label">新增分类操作耗时</div>
+      <div class="value">&lt; 30s</div>
+      <div class="target">目标：从点击「新增分类」到分类卡片出现</div>
+    </div>
+    <div class="metric-card">
+      <div class="label">排序操作耗时</div>
+      <div class="value">&lt; 20s</div>
+      <div class="target">目标：从进入排序到保存完成</div>
+    </div>
+    <div class="metric-card">
+      <div class="label">分类筛选点击次数</div>
+      <div class="value">≤ 2 次</div>
+      <div class="target">目标：打开商品列表 → 选择分类</div>
+    </div>
+    <div class="metric-card">
+      <div class="label">误删恢复率</div>
+      <div class="value">0 误删</div>
+      <div class="target">目标：通过二次确认 + 商品数量提示，杜绝误删</div>
+    </div>
+  </div>
+
+  <h3>6.2 业务指标</h3>
+  <ul>
+    <li><b>商品查找效率提升</b>：收银员通过分类侧边栏筛选商品的平均时间，预期相比无分类时缩短 50%。</li>
+    <li><b>分类维护频率</b>：店长每月分类增删改操作次数，用于衡量分类体系的灵活性是否满足业务变化。</li>
+  </ul>
+</div>
+
+<!-- ======== 7. 待确认问题 ======== -->
+<div class="section">
+  <h2><span class="num">7</span> 待确认问题 (Open Questions)</h2>
+
+  <table>
+    <tr><th>#</th><th>问题</th><th>责任人</th><th>是否阻塞</th><th>备注</th></tr>
+    <tr>
+      <td>Q1</td>
+      <td>分类数量上限是否需要限制？目前无上限</td>
+      <td>产品</td>
+      <td>否</td>
+      <td>当前场景分类数通常 ≤ 15，暂无限制必要；如未来达到 30+ 再评估性能</td>
+    </tr>
+    <tr>
+      <td>Q2</td>
+      <td>分类数据是否需要持久化存储（后端 API）？目前仅前端内存保存</td>
+      <td>工程</td>
+      <td>否</td>
+      <td>当前为 Demo/MVP 阶段，数据存内存；接入后端后需同步数据模型</td>
+    </tr>
+    <tr>
+      <td>Q3</td>
+      <td>多门店场景下，分类是全局共享还是按门店独立？</td>
+      <td>产品 + 业务</td>
+      <td>否</td>
+      <td><b>已确认：企业级共享</b>。所有门店使用同一套分类体系，由企业管理员统一维护。<br><b>决策理由：</b>系统存在跨门店的统计功能（如各分类商品的整体销量对比），若门店各自维护分类，将导致：(1) 同一品类在不同门店分类名不一致，汇总统计无法对齐；(2) 企业管理员无法从全局视角掌握品类结构。企业统一分类同时保证了<b>管理统一</b>（一套标准，一处维护）和<b>数据统一</b>（统计口径一致，跨店可比）。</td>
+    </tr>
+    <tr>
+      <td>Q4</td>
+      <td>是否需要分类的「使用统计」（如某个分类被筛选了多少次）？</td>
+      <td>产品</td>
+      <td>否</td>
+      <td>可作为 v2 的数据驱动优化手段</td>
+    </tr>
+  </table>
+</div>
+
+<!-- ======== 8. API 接口定义 ======== -->
+<div class="section">
+  <h2><span class="num">8</span> API 接口定义</h2>
+
+  <h3>8.1 接口概览</h3>
+  <table>
+    <tr><th>#</th><th>方法</th><th>路径</th><th>权限</th><th>说明</th></tr>
+    <tr>
+      <td>1</td><td><code class="tag tag-p0">GET</code></td>
+      <td><code>/api/v1/categories</code></td>
+      <td>企业 / 门店</td>
+      <td>查询分类列表</td>
+    </tr>
+    <tr>
+      <td>2</td><td><code class="tag tag-p0">GET</code></td>
+      <td><code>/api/v1/categories/{id}</code></td>
+      <td>企业 / 门店</td>
+      <td>查询单个分类详情</td>
+    </tr>
+    <tr>
+      <td>3</td><td><code class="tag tag-p0">POST</code></td>
+      <td><code>/api/v1/categories</code></td>
+      <td>企业</td>
+      <td>新增分类</td>
+    </tr>
+    <tr>
+      <td>4</td><td><code class="tag tag-p0">PUT</code></td>
+      <td><code>/api/v1/categories/{id}</code></td>
+      <td>企业</td>
+      <td>编辑分类名称</td>
+    </tr>
+    <tr>
+      <td>5</td><td><code class="tag tag-p0">DELETE</code></td>
+      <td><code>/api/v1/categories/{id}</code></td>
+      <td>企业</td>
+      <td>删除分类</td>
+    </tr>
+    <tr>
+      <td>6</td><td><code class="tag tag-p1">PUT</code></td>
+      <td><code>/api/v1/categories/sort</code></td>
+      <td>企业</td>
+      <td>批量更新排序</td>
+    </tr>
+    <tr>
+      <td>7</td><td><code class="tag tag-p1">GET</code></td>
+      <td><code>/api/v1/categories/{id}/products/count</code></td>
+      <td>企业 / 门店</td>
+      <td>查询分类下商品数量（用于删除前确认）</td>
+    </tr>
+  </table>
+
+  <h3>8.2 通用约定</h3>
+
+  <h4>8.2.1 基础路径</h4>
+  <p>所有接口前缀：<code>https://api.{domain}/api/v1</code></p>
+
+  <h4>8.2.2 认证方式</h4>
+  <p>所有请求须携带 JWT Token，放在 <code>Authorization: Bearer &lt;token&gt;</code> 请求头中。服务端从 Token 解析当前用户的企业 ID（<code>ent_id</code>）及角色（<code>role</code>：<code>"enterprise"</code> | <code>"store"</code>）。</p>
+
+  <h4>8.2.3 统一响应格式</h4>
+  <table>
+    <tr><th>字段</th><th>类型</th><th>说明</th></tr>
+    <tr><td><code>code</code></td><td>Integer</td><td>业务状态码，<code>0</code> 表示成功，非 0 表示失败</td></tr>
+    <tr><td><code>message</code></td><td>String</td><td>提示信息，成功时为 <code>"ok"</code></td></tr>
+    <tr><td><code>data</code></td><td>Object | Array | null</td><td>响应数据体</td></tr>
+    <tr><td><code>request_id</code></td><td>String</td><td>请求追踪 ID，用于排查问题</td></tr>
+  </table>
+
+  <h4>8.2.4 通用错误码</h4>
+  <table>
+    <tr><th>HTTP 状态码</th><th>code</th><th>含义</th></tr>
+    <tr><td>400</td><td>1001</td><td>参数校验失败</td></tr>
+    <tr><td>401</td><td>1002</td><td>未认证（Token 缺失或无效）</td></tr>
+    <tr><td>403</td><td>1003</td><td>无权限（门店角色调用写操作）</td></tr>
+    <tr><td>404</td><td>1004</td><td>资源不存在</td></tr>
+    <tr><td>409</td><td>1005</td><td>资源冲突（如分类名称重复）</td></tr>
+    <tr><td>500</td><td>1006</td><td>服务端内部错误</td></tr>
+  </table>
+
+  <h4>8.2.5 分页约定</h4>
+  <p>列表类接口支持 <code>page</code>（页码，从 1 开始，默认 1）和 <code>page_size</code>（每页条数，默认 50，最大 200）查询参数。响应中通过 <code>data.list</code> 返回数据，通过 <code>data.total</code> 返回总数。<br>
+  <b>注：</b>分类数量通常较少（≤ 30），当前阶段分类列表接口不分页，一次返回全部。</p>
+
+  <h3>8.3 接口详情</h3>
+
+  <!-- ===== 1. 查询分类列表 ===== -->
+  <h4>8.3.1 查询分类列表</h4>
+  <table>
+    <tr><td style="width:120px"><b>方法 & 路径</b></td><td><code class="tag tag-p0">GET</code> <code>/api/v1/categories</code></td></tr>
+    <tr><td><b>认证</b></td><td>✅ 企业 / 门店（取当前用户 <code>ent_id</code> 下的分类）</td></tr>
+    <tr><td><b>说明</b></td><td>返回当前企业所有分类，<b>按 <code>sort</code> 升序排列</b>。含「未分类」（<code>id="_uncategorized"</code>）作为最后一条。</td></tr>
+  </table>
+
+  <p><b>请求参数：</b>无</p>
+
+  <p><b>成功响应</b> <code>200 OK</code>：</p>
+  <pre style="background:#1e1e1e;color:#d4d4d4;border-radius:6px;padding:14px 18px;font-size:12px;overflow-x:auto;line-height:1.6;margin:8px 0;">{
+  "code": 0,
+  "message": "ok",
+  "data": [
+    {
+      "id": "c1",
+      "name": "蔬菜",
+      "color": "#005CF5",
+      "sort": 0,
+      "product_count": 42
+    },
+    {
+      "id": "c2",
+      "name": "水果",
+      "color": "#1B9500",
+      "sort": 1,
+      "product_count": 28
+    },
+    {
+      "id": "_uncategorized",
+      "name": "未分类",
+      "color": "#ccc",
+      "sort": 9999,
+      "product_count": 5
+    }
+  ],
+  "request_id": "req_a1b2c3d4e5f6"
+}</pre>
+
+  <!-- ===== 2. 查询单个分类 ===== -->
+  <h4>8.3.2 查询单个分类详情</h4>
+  <table>
+    <tr><td style="width:120px"><b>方法 & 路径</b></td><td><code class="tag tag-p0">GET</code> <code>/api/v1/categories/{id}</code></td></tr>
+    <tr><td><b>认证</b></td><td>✅ 企业 / 门店</td></tr>
+    <tr><td><b>说明</b></td><td>返回指定分类的详细信息，含商品数量。</td></tr>
+  </table>
+
+  <p><b>路径参数：</b></p>
+  <table>
+    <tr><th>参数</th><th>类型</th><th>必填</th><th>说明</th></tr>
+    <tr><td><code>id</code></td><td>String</td><td>是</td><td>分类 ID</td></tr>
+  </table>
+
+  <p><b>成功响应</b> <code>200 OK</code>：</p>
+  <pre style="background:#1e1e1e;color:#d4d4d4;border-radius:6px;padding:14px 18px;font-size:12px;overflow-x:auto;line-height:1.6;margin:8px 0;">{
+  "code": 0,
+  "message": "ok",
+  "data": {
+    "id": "c1",
+    "name": "蔬菜",
+    "color": "#005CF5",
+    "sort": 0,
+    "product_count": 42,
+    "created_at": "2026-06-15T10:30:00Z",
+    "updated_at": "2026-06-28T14:22:00Z"
+  },
+  "request_id": "req_a1b2c3d4e5f6"
+}</pre>
+
+  <p><b>错误响应</b> <code>404 Not Found</code>：</p>
+  <pre style="background:#1e1e1e;color:#d4d4d4;border-radius:6px;padding:14px 18px;font-size:12px;overflow-x:auto;line-height:1.6;margin:8px 0;">{
+  "code": 1004,
+  "message": "分类不存在",
+  "data": null,
+  "request_id": "req_a1b2c3d4e5f6"
+}</pre>
+
+  <!-- ===== 3. 新增分类 ===== -->
+  <h4>8.3.3 新增分类</h4>
+  <table>
+    <tr><td style="width:120px"><b>方法 & 路径</b></td><td><code class="tag tag-p0">POST</code> <code>/api/v1/categories</code></td></tr>
+    <tr><td><b>认证</b></td><td>✅ 企业（门店角色返回 403）</td></tr>
+    <tr><td><b>说明</b></td><td>创建新分类。服务端自动分配 <code>sort</code>（当前最大 sort + 1）、<code>color</code>（从未使用的调色板颜色中取第一个）、<code>id</code>。名称不可与已有分类重复。</td></tr>
+  </table>
+
+  <p><b>请求体</b> <code>application/json</code>：</p>
+  <pre style="background:#1e1e1e;color:#d4d4d4;border-radius:6px;padding:14px 18px;font-size:12px;overflow-x:auto;line-height:1.6;margin:8px 0;">{
+  "name": "烘焙"
+}</pre>
+
+  <p><b>请求参数说明：</b></p>
+  <table>
+    <tr><th>参数</th><th>类型</th><th>必填</th><th>校验规则</th></tr>
+    <tr><td><code>name</code></td><td>String</td><td>是</td><td>1~20 字符；不可与已有分类重名（含「未分类」）；不可为空或纯空格</td></tr>
+  </table>
+
+  <p><b>成功响应</b> <code>201 Created</code>：</p>
+  <pre style="background:#1e1e1e;color:#d4d4d4;border-radius:6px;padding:14px 18px;font-size:12px;overflow-x:auto;line-height:1.6;margin:8px 0;">{
+  "code": 0,
+  "message": "ok",
+  "data": {
+    "id": "c1719648000",
+    "name": "烘焙",
+    "color": "#E86D2C",
+    "sort": 6,
+    "product_count": 0,
+    "created_at": "2026-06-30T08:00:00Z",
+    "updated_at": "2026-06-30T08:00:00Z"
+  },
+  "request_id": "req_a1b2c3d4e5f6"
+}</pre>
+
+  <p><b>错误响应</b> — 名称重复 <code>409 Conflict</code>：</p>
+  <pre style="background:#1e1e1e;color:#d4d4d4;border-radius:6px;padding:14px 18px;font-size:12px;overflow-x:auto;line-height:1.6;margin:8px 0;">{
+  "code": 1005,
+  "message": "分类名称已存在",
+  "data": { "conflict_field": "name", "conflict_value": "烘焙" },
+  "request_id": "req_a1b2c3d4e5f6"
+}</pre>
+
+  <p><b>错误响应</b> — 无权限 <code>403 Forbidden</code>：</p>
+  <pre style="background:#1e1e1e;color:#d4d4d4;border-radius:6px;padding:14px 18px;font-size:12px;overflow-x:auto;line-height:1.6;margin:8px 0;">{
+  "code": 1003,
+  "message": "门店角色无权限执行此操作",
+  "data": null,
+  "request_id": "req_a1b2c3d4e5f6"
+}</pre>
+
+  <!-- ===== 4. 编辑分类 ===== -->
+  <h4>8.3.4 编辑分类名称</h4>
+  <table>
+    <tr><td style="width:120px"><b>方法 & 路径</b></td><td><code class="tag tag-p0">PUT</code> <code>/api/v1/categories/{id}</code></td></tr>
+    <tr><td><b>认证</b></td><td>✅ 企业（门店角色返回 403）</td></tr>
+    <tr><td><b>说明</b></td><td>更新分类名称。不允许修改 <code>color</code>、<code>sort</code>（sort 通过排序接口统一修改）。「未分类」不可编辑。</td></tr>
+  </table>
+
+  <p><b>路径参数：</b></p>
+  <table>
+    <tr><th>参数</th><th>类型</th><th>必填</th><th>说明</th></tr>
+    <tr><td><code>id</code></td><td>String</td><td>是</td><td>分类 ID</td></tr>
+  </table>
+
+  <p><b>请求体</b> <code>application/json</code>：</p>
+  <pre style="background:#1e1e1e;color:#d4d4d4;border-radius:6px;padding:14px 18px;font-size:12px;overflow-x:auto;line-height:1.6;margin:8px 0;">{
+  "name": "酒水饮品"
+}</pre>
+
+  <p><b>请求参数说明：</b></p>
+  <table>
+    <tr><th>参数</th><th>类型</th><th>必填</th><th>校验规则</th></tr>
+    <tr><td><code>name</code></td><td>String</td><td>是</td><td>1~20 字符；不可与已有分类重名（排除自身）；不可为空或纯空格</td></tr>
+  </table>
+
+  <p><b>成功响应</b> <code>200 OK</code>：</p>
+  <pre style="background:#1e1e1e;color:#d4d4d4;border-radius:6px;padding:14px 18px;font-size:12px;overflow-x:auto;line-height:1.6;margin:8px 0;">{
+  "code": 0,
+  "message": "ok",
+  "data": {
+    "id": "c3",
+    "name": "酒水饮品",
+    "color": "#7B47B7",
+    "sort": 2,
+    "product_count": 18,
+    "updated_at": "2026-06-30T08:05:00Z"
+  },
+  "request_id": "req_a1b2c3d4e5f6"
+}</pre>
+
+  <p><b>错误响应</b> — 试图编辑「未分类」<code>400 Bad Request</code>：</p>
+  <pre style="background:#1e1e1e;color:#d4d4d4;border-radius:6px;padding:14px 18px;font-size:12px;overflow-x:auto;line-height:1.6;margin:8px 0;">{
+  "code": 1001,
+  "message": "「未分类」为系统保留分类，不可编辑",
+  "data": null,
+  "request_id": "req_a1b2c3d4e5f6"
+}</pre>
+
+  <!-- ===== 5. 删除分类 ===== -->
+  <h4>8.3.5 删除分类</h4>
+  <table>
+    <tr><td style="width:120px"><b>方法 & 路径</b></td><td><code class="tag tag-p0">DELETE</code> <code>/api/v1/categories/{id}</code></td></tr>
+    <tr><td><b>认证</b></td><td>✅ 企业（门店角色返回 403）</td></tr>
+    <tr><td><b>说明</b></td><td>删除指定分类。该分类下所有商品的 <code>category_id</code> 自动改为 <code>"_uncategorized"</code>。<br>「未分类」不可删除。</td></tr>
+  </table>
+
+  <p><b>路径参数：</b></p>
+  <table>
+    <tr><th>参数</th><th>类型</th><th>必填</th><th>说明</th></tr>
+    <tr><td><code>id</code></td><td>String</td><td>是</td><td>分类 ID</td></tr>
+  </table>
+
+  <p><b>成功响应</b> <code>200 OK</code>：</p>
+  <pre style="background:#1e1e1e;color:#d4d4d4;border-radius:6px;padding:14px 18px;font-size:12px;overflow-x:auto;line-height:1.6;margin:8px 0;">{
+  "code": 0,
+  "message": "分类已删除",
+  "data": {
+    "deleted_id": "c4",
+    "reassigned_count": 12
+  },
+  "request_id": "req_a1b2c3d4e5f6"
+}</pre>
+
+  <p><b>响应字段说明：</b></p>
+  <table>
+    <tr><th>字段</th><th>类型</th><th>说明</th></tr>
+    <tr><td><code>deleted_id</code></td><td>String</td><td>被删除的分类 ID</td></tr>
+    <tr><td><code>reassigned_count</code></td><td>Integer</td><td>归入「未分类」的商品数量。前端可在删除前通过 8.3.7 接口预查询此数量以做二次确认</td></tr>
+  </table>
+
+  <!-- ===== 6. 批量排序 ===== -->
+  <h4>8.3.6 批量更新排序</h4>
+  <table>
+    <tr><td style="width:120px"><b>方法 & 路径</b></td><td><code class="tag tag-p1">PUT</code> <code>/api/v1/categories/sort</code></td></tr>
+    <tr><td><b>认证</b></td><td>✅ 企业（门店角色返回 403）</td></tr>
+    <tr><td><b>说明</b></td><td>一次性提交所有分类的排序值。「未分类」不参与排序，其 sort 固定为 9999。请求体中的 <code>items</code> 按期望顺序排列，服务端自动分配连续 sort 值（0, 1, 2, ...）。</td></tr>
+  </table>
+
+  <p><b>请求体</b> <code>application/json</code>：</p>
+  <pre style="background:#1e1e1e;color:#d4d4d4;border-radius:6px;padding:14px 18px;font-size:12px;overflow-x:auto;line-height:1.6;margin:8px 0;">{
+  "items": [
+    { "id": "c2", "sort": 0 },
+    { "id": "c1", "sort": 1 },
+    { "id": "c5", "sort": 2 },
+    { "id": "c3", "sort": 3 },
+    { "id": "c4", "sort": 4 }
+  ]
+}</pre>
+
+  <p><b>请求参数说明：</b></p>
+  <table>
+    <tr><th>参数</th><th>类型</th><th>必填</th><th>校验规则</th></tr>
+    <tr><td><code>items</code></td><td>Array</td><td>是</td><td>需包含当前企业所有非「未分类」的分类（不得遗漏）；每个元素含 <code>id</code> 和 <code>sort</code>；sort 值需连续且从 0 开始</td></tr>
+  </table>
+
+  <p><b>成功响应</b> <code>200 OK</code>：</p>
+  <pre style="background:#1e1e1e;color:#d4d4d4;border-radius:6px;padding:14px 18px;font-size:12px;overflow-x:auto;line-height:1.6;margin:8px 0;">{
+  "code": 0,
+  "message": "排序已更新",
+  "data": {
+    "updated_count": 5
+  },
+  "request_id": "req_a1b2c3d4e5f6"
+}</pre>
+
+  <p><b>错误响应</b> — 漏了分类 <code>400 Bad Request</code>：</p>
+  <pre style="background:#1e1e1e;color:#d4d4d4;border-radius:6px;padding:14px 18px;font-size:12px;overflow-x:auto;line-height:1.6;margin:8px 0;">{
+  "code": 1001,
+  "message": "排序列表不完整，缺少分类: c6",
+  "data": { "missing_ids": ["c6"] },
+  "request_id": "req_a1b2c3d4e5f6"
+}</pre>
+
+  <!-- ===== 7. 查询商品数量 ===== -->
+  <h4>8.3.7 查询分类下商品数量</h4>
+  <table>
+    <tr><td style="width:120px"><b>方法 & 路径</b></td><td><code class="tag tag-p1">GET</code> <code>/api/v1/categories/{id}/products/count</code></td></tr>
+    <tr><td><b>认证</b></td><td>✅ 企业 / 门店</td></tr>
+    <tr><td><b>说明</b></td><td>查询指定分类下的商品数量。主要用于删除分类前的二次确认弹窗（"此分类下有 N 件商品，将归入「未分类」，确认删除？"）。列表接口（8.3.1）已含 <code>product_count</code>，此接口用于按需单独查询。</td></tr>
+  </table>
+
+  <p><b>路径参数：</b></p>
+  <table>
+    <tr><th>参数</th><th>类型</th><th>必填</th><th>说明</th></tr>
+    <tr><td><code>id</code></td><td>String</td><td>是</td><td>分类 ID</td></tr>
+  </table>
+
+  <p><b>成功响应</b> <code>200 OK</code>：</p>
+  <pre style="background:#1e1e1e;color:#d4d4d4;border-radius:6px;padding:14px 18px;font-size:12px;overflow-x:auto;line-height:1.6;margin:8px 0;">{
+  "code": 0,
+  "message": "ok",
+  "data": {
+    "category_id": "c4",
+    "category_name": "调味品",
+    "product_count": 12
+  },
+  "request_id": "req_a1b2c3d4e5f6"
+}</pre>
+
+</div>
+
+<!-- ======== 9. 版本记录 ======== -->
+<div class="section">
+  <h2><span class="num">9</span> 版本记录</h2>
+
+  <table class="version-table">
+    <tr><th>版本</th><th>日期</th><th>变更内容</th><th>作者</th></tr>
+    <tr><td>v1.2</td><td>2026-06-30</td><td>新增第 8 章「API 接口定义」：7 个 RESTful 端点（分类 CRUD + 批量排序 + 商品数量）、通用约定（认证/错误码/响应格式/分页）、完整请求/响应 Schema 与示例</td><td>产品通</td></tr>
+    <tr><td>v1.1</td><td>2026-06-30</td><td>新增角色权限控制：企业角色可读写（CRUD+排序），门店角色仅查看；分类确认为企业级共享；更新用户故事按角色分组</td><td>产品通</td></tr>
+    <tr><td>v1.0</td><td>2026-06-30</td><td>初始版本，包含：分类 CRUD、拖拽排序、颜色标识、商品列表联动、排序模式状态管理</td><td>产品通</td></tr>
+  </table>
+</div>
+
+</div>
+</body>
+</html>

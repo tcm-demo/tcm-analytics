@@ -1,0 +1,1743 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page-node-id="Ct3plWNDk3qvFUnJQYe5T1">
+<head data-page-node-id="zTGTvlSxRV5Z50rGBtLA4K">
+  <meta charset="UTF-8" data-page-node-id="B5rF3oCu2CRzu7lGHPOs8Q">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" data-page-node-id="b1ZMl9FuekNI8Bl9aQvCvM">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" data-page-node-id="AzTTvWME1HFJLjphU59mOR">
+  <meta http-equiv="Pragma" content="no-cache" data-page-node-id="PvARQxZMSVBT3zV4o7GMb1">
+  <meta http-equiv="Expires" content="0" data-page-node-id="xOqvXOcIpZ4509iuD2sN7U">
+  <title>菜猫智店 · 动态调价</title>
+  <link rel="stylesheet" href="../shared/layout.css?v=2" data-page-node-id="1Pj5XbYgbfpueP36FQgNfj">
+  <link rel="stylesheet" href="../shared/vendor/flatpickr.min.css">
+  <script src="../shared/vendor/flatpickr.min.js"></script>
+  <script src="../shared/vendor/flatpickr-zh.js"></script>
+  <style>
+    /* ===== 动态调价页（简单版）专属样式 ===== */
+    .pr-goods-row { display:flex; align-items:center; gap:8px; padding:7px 12px; font-size:12px; color:#0b1019; cursor:pointer; border-radius:3px; }
+    .pr-goods-row:hover { background:#f5f7fa; }
+    .pr-goods-row input[type=checkbox] { accent-color:#005cf5; cursor:pointer; }
+    .pr-goods-row .name { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#0b1019; }
+    .pr-goods-row .code { color:#c0c4cc; font-size:12px; min-width:72px; text-align:right; }
+    .pr-goods-row .price { color:#005CF5; font-size:12px; font-weight:500; min-width:52px; text-align:right; }
+    .pr-goods-row .cat { background:#e6f0ff; color:#005cf5; font-size:11px; padding:2px 6px; border-radius:3px; min-width:48px; text-align:center; }
+    #prGoodsList { max-height:150px; overflow-y:auto; padding:4px 6px; }
+    #prCategoryList { max-height:150px; overflow-y:auto; padding:4px 6px; }
+    .pr-scope-empty { padding:24px; text-align:center; color:#c0c4cc; font-size:12px; }
+    .pr-hint { font-size:12px; color:#8a94a6; }
+    .pr-del-row { border:none; background:none; color:#fc4b52; font-size:14px; cursor:pointer; padding:2px 6px; border-radius:4px; }
+    .pr-del-row:hover { background:#fdecec; }
+    .pr-sec-label { font-size:13px; font-weight:600; color:#0b1019; margin:20px 0 12px; display:flex; align-items:center; gap:6px; }
+    .pr-sec-label .n { display:inline-flex; align-items:center; justify-content:center; width:16px; height:16px; border-radius:50%; background:#005cf5; color:#fff; font-size:11px; }
+    .pr-status { display:inline-flex; align-items:center; gap:4px; font-size:12px; }
+    .pr-status .dot { width:6px; height:6px; border-radius:50%; display:inline-block; }
+    .pr-status.on { color:#1a7f37; } .pr-status.on .dot { background:#2da44e; }
+    .pr-status.off { color:#8a94a6; } .pr-status.off .dot { background:#b6c2d4; }
+    .pr-status.pause { color:#f57316; } .pr-status.pause .dot { background:#f57316; }
+    .pr-status-btn { background:none; border:none; padding:0; margin:0; cursor:pointer; font:inherit; line-height:1; border-radius:4px; }
+    .pr-status-btn:hover { text-decoration:underline; }
+    .pr-status-btn:active { opacity:.7; }
+    .pr-preview { margin-top:12px; background:#f0f6ff; border:1px solid #cfe0ff; border-radius:4px; padding:8px 12px; font-size:12px; color:#1a56c4; line-height:1.7; }
+    /* 活动状态徽标 */
+    .pr-astatus { display:inline-block; padding:2px 9px; border-radius:11px; font-size:11px; font-weight:600; }
+    .pr-astatus.up { background:#eef4ff; color:#005cf5; }
+    .pr-astatus.ac { background:#e9f8ee; color:#1a7f37; }
+    .pr-astatus.ed { background:#f1f2f4; color:#8a94a6; }
+    /* 进行中/已结束锁定说明 */
+    .pr-lock-note { font-size:12px; color:#f57316; background:none; border:none; padding:0; line-height:1.6; margin:4px 0 8px; }
+    .pr-lock-note.ended { color:#8a94a6; background:none; border:none; padding:0; }
+    /* 进行中/已结束弹窗锁定区域置灰 */
+    .pr-locked { opacity:0.55; pointer-events:none; filter:grayscale(0.45); transition:opacity .2s; }
+    /* 修改记录 */
+    .pr-changelog { margin-top:8px; background:#fbfcfe; border:1px solid #e9eef7; border-radius:6px; padding:10px 12px; }
+    .pr-changelog .pr-cl-item { display:flex; gap:10px; padding:6px 0; border-bottom:1px dashed #eef1f5; font-size:12px; }
+    .pr-changelog .pr-cl-item:last-child { border-bottom:none; }
+    .pr-changelog .pr-cl-ts { color:#8a94a6; white-space:nowrap; flex:0 0 auto; }
+    .pr-changelog .pr-cl-desc { color:#0b1019; }
+    /* 活动周期：连选日期控件（flatpickr 双月范围选择器） */
+    .pr-daterange { display:inline-flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .pr-daterange .pr-date-trigger { position:relative; display:inline-flex; align-items:center; width:260px; height:32px; border:1px solid #d9dbde; border-radius:4px; background:#fff; padding:0 10px; box-sizing:border-box; }
+    .pr-daterange .pr-date-trigger input { flex:1; border:none; background:transparent; font-size:12px; color:#0b1019; outline:none; padding:0; cursor:pointer; }
+    .pr-daterange .pr-date-trigger .pr-date-icon { flex:0 0 auto; color:#8a94a6; margin-right:6px; }
+    .pr-daterange .pr-date-trigger .pr-date-clear { flex:0 0 auto; color:#8a94a6; cursor:pointer; font-size:12px; margin-left:6px; display:none; }
+    .pr-daterange .pr-date-trigger .pr-date-clear:hover { color:#005cf5; }
+    /* flatpickr 视觉微调，贴近 Element 风格 */
+    .flatpickr-calendar { border:1px solid #e4e7ed; box-shadow:0 4px 12px rgba(0,0,0,.08); border-radius:4px; font-size:12px; }
+    .flatpickr-months .flatpickr-month { height:40px; }
+    .flatpickr-current-month { padding-top:8px; font-size:13px; }
+    .flatpickr-current-month .flatpickr-monthDropdown-months { font-weight:600; }
+    .flatpickr-weekday { font-size:11px; color:#606266; }
+    .flatpickr-day { color:#0b1019; height:30px; line-height:30px; }
+    .flatpickr-day.today { border-color:#005cf5; color:#005cf5; }
+    .flatpickr-day.selected, .flatpickr-day.startRange, .flatpickr-day.endRange { background:#005cf5; border-color:#005cf5; color:#fff; }
+    .flatpickr-day.inRange { background:#e6f0ff; border-color:#e6f0ff; color:#0b1019; }
+    .flatpickr-day:hover { background:#f5f7fa; }
+
+    .pr-selected-row td { background:#e6f7ff !important; }
+    .pr-batch-bar { flex-shrink:0; padding:8px 16px; background:#fff; border-bottom:1px solid #f0f0f0; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .pr-batch-bar .ic-btn[disabled] { opacity:0.45; cursor:not-allowed; }
+    .pr-op-link { border:none; background:none; color:#005cf5; font-size:12px; cursor:pointer; padding:2px 6px; border-radius:3px; }
+    .pr-op-link:hover { background:#eef4ff; }
+    .pr-op-link.danger { color:#fc4b52; }
+    .pr-op-link.danger:hover { background:#fdecec; }
+    /* 编辑动态调价弹框：内容多 → 全页面弹框，透明遮罩 + 内缩 + 居中表单列 */
+    #prRuleModal.ps-overlay {
+      background: rgba(0,0,0,0.45);       /* 半透明遮罩，与项目统一 */
+      padding: 16px;                      /* 内缩，卡片不贴边 */
+    }
+    #prRuleModal .ps-dialog {
+      width: min(1080px, 94vw);
+      max-width: none;
+      height: auto;
+      max-height: calc(100vh - 96px);
+      margin: 0;
+      border-radius: 6px;
+      box-shadow: 0 10px 34px rgba(15, 23, 42, 0.18);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    /* 表单内容随弹窗宽度自然撑满 */
+    #prRuleModal .ps-dialog .pr-form {
+      margin: 0;
+      width: 100%;
+      box-sizing: border-box;
+    }
+  </style>
+</head>
+<body data-page-node-id="VCFX4ClKY4BeODIjjDgQbk">
+  <div class="toast" id="toast" data-page-node-id="Bweo1PzfAoTt4LtXlIklPG"></div>
+  <div id="sidebarRoot" data-page-node-id="gGayfWuS5ygJkiaBmqAHRI"></div>
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()" data-page-node-id="LMEy9cuAZ68qSsdMIbH6iJ"></div>
+  <div class="main" data-page-node-id="kh8z2j92nGYm4Xl70RL52a">
+    <div id="headerRoot" data-page-node-id="zR1sp2dxcSwFD2gVCHNw9j"></div>
+    <div class="content" data-page-node-id="hP9AHEPLywJq2sVdB2H4jj">
+    <!-- ========== PAGE: 动态调价 ========== -->
+    <div class="page page-fill" id="page-dynamic-pricing" data-page-node-id="1x6QnoDA5qcCRlo37GDzbZ">
+      <div id="prContent" style="display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden;background:#F1F2F5" data-page-node-id="0W96W52iYDlPhovCVuzJat">
+
+        <!-- 顶部标题栏 -->
+        <div id="prTabBar" style="flex-shrink:0;padding:0 16px;background:#fff;border-bottom:1px solid #dfe3ed;display:flex;align-items:center;gap:8px" data-page-node-id="erkmPfmvegGUOeOVqmo19c">
+          <span style="font-size:14px;font-weight:600;color:#0b1019" data-page-node-id="AcRpJjdwPoqC85ZkqyvN8j">动态调价</span>
+          <span style="flex:1" data-page-node-id="k8ZboeSlVJwUH1TFCsW0Sj"></span>
+          <button class="ps-op-btn" onclick="prRestoreDemo()" style="color:#8a94a6;border-color:#e4e7ec" data-page-node-id="8ZrSkGGBHn1TlRpVTqMYLV">恢复示例</button>
+        </div>
+
+        <!-- 筛选栏（仅活动视图显示） -->
+        <div id="prFilterBar" style="flex-shrink:0;padding:10px 16px;background:#fff;border-bottom:1px solid #dfe3ed;display:flex;align-items:center;gap:8px;flex-wrap:wrap" data-page-node-id="DrmujMtTQAuENNBp1M9zHq">
+          <select id="prFilterStore" onchange="prSetStore(this.value)" title="按门店筛选" style="height:32px;border:1px solid #d9dbde;border-radius:4px;font-size:12px;padding:0 8px;outline:none;background:#fff;max-width:180px" data-page-node-id="yYUnUsiKwc2F46qqCiUfrP">
+          </select>
+          <div class="gl-radio-group" id="prFilterStatusTabs" data-page-node-id="VsVJuVkSxPmBele8HCQ0uM">
+            <span class="gl-radio-btn active" data-val="all" onclick="prFilterStatusClick(this)" data-page-node-id="PnEMCxF2TLaXm6HdTDzeLH">全部</span>
+            <span class="gl-radio-btn" data-val="on" onclick="prFilterStatusClick(this)" data-page-node-id="270tZFiqF3inMtcpGUfMuB">启用</span>
+            <span class="gl-radio-btn" data-val="off" onclick="prFilterStatusClick(this)" data-page-node-id="2wbggG9VeXWAvgcDPTDPl7">禁用</span>
+          </div>
+          <span style="font-size:12px;color:#4a5568;margin-left:4px" data-page-node-id="ZDX96V6sXthBhCRUyABWbv">时间</span>
+          <div class="pr-daterange" data-page-node-id="GgVBBGmXQsmQOiXNFVFkXD">
+            <div class="pr-date-trigger" id="prFilterDateTrigger" data-page-node-id="GsC6F1EQC4MW6nwg1DCb9O">
+              <span class="pr-date-icon" data-page-node-id="hv4lqDwPKdTBLOszs7dj1m"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-page-node-id="Y9jxp4hrvRVzsbO7yjkiDv"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" data-page-node-id="GUXtSv7CrbsXOQrMKfCNEN"></rect><line x1="16" y1="2" x2="16" y2="6" data-page-node-id="Uaou1HXE7a60BSlgFuECLx"></line><line x1="8" y1="2" x2="8" y2="6" data-page-node-id="ZvAtlxMTQmT67VWx7VBlvE"></line><line x1="3" y1="10" x2="21" y2="10" data-page-node-id="KdSAGHHJAAwHuaAiztyP54"></line></svg></span>
+              <input type="text" id="prFilterDateRange" placeholder="开始日期 - 结束日期" readonly data-page-node-id="Dst3DTRwXdfcisSVDOtz1e">
+              <span class="pr-date-clear" id="prFilterDateClear" title="清空" data-page-node-id="rrA5nR3rO0Q5poAJzEBPqz">×</span>
+            </div>
+            <input type="hidden" id="prFilterFrom" data-page-node-id="Pjo3hfn2YBp3QPdVm8K8Nu">
+            <input type="hidden" id="prFilterTo" data-page-node-id="Lxao4SLazUAfntE11rM4hl">
+          </div>
+          <input type="text" id="prFilterKeyword" style="flex:0 1 200px;height:32px;padding:0 12px;border:1px solid #d9dbde;border-radius:4px;font-size:12px;outline:none;color:#0b1019" placeholder="活动名称 / 范围关键字" onkeydown="if(event.key==='Enter')prSearch()" onfocus="this.style.borderColor='#005cf5'" onblur="this.style.borderColor='#d9dbde'" data-page-node-id="cIqB8vWv7SYNhCF6aLQfOC">
+          <button class="ps-op-btn" onclick="prReset()" data-page-node-id="akulN5KsSjsSiykYz1JAKC">重置</button>
+          <button class="ps-op-btn ps-op-pri" onclick="prSearch()" data-page-node-id="VKwQZWe8mJLEujHIhARABB">查询</button>
+          <button class="hd-req-spec" style="margin-left:auto" onclick="window.open('../prd.html?doc='+encodeURIComponent('动态调价模块需求说明'))" title="查看动态调价模块需求说明" data-page-node-id="EK2MpDchksl6Xkna9seUrA">📄 需求说明</button>
+        </div>
+        <!-- 批量操作栏（参考商品列表） -->
+        <div id="prBatchBar" class="pr-batch-bar" data-page-node-id="AWCXWErjBImeA1xVxkBlg1">
+          <button class="ic-btn ic-btn-pri" onclick="prOpenRuleModal()" data-page-node-id="qYj5kbkzo5LICLIuBta3O9">＋ 新建活动</button>
+          <button class="ic-btn" id="prBatchEdit" onclick="prBatchEdit()" data-page-node-id="aWABiZdUOYIF55A38auBUl">编辑</button>
+          <button class="ic-btn" id="prBatchCopy" onclick="prBatchCopy()" data-page-node-id="qYuieaqInU68lC4qBaWC03">复制</button>
+          <button class="ic-btn" id="prBatchEnable" onclick="prBatchEnable()" data-page-node-id="75AjleNIcysZookLzu0oij">启用</button>
+          <button class="ic-btn" id="prBatchDisable" onclick="prBatchDisable()" data-page-node-id="KAXSPw6snO25wTzsBEHzCX">停用</button>
+          <button class="ic-btn" style="color:#fc4b52;border-color:#fc4b52" id="prBatchDelete" onclick="prBatchDelete()" data-page-node-id="oZPhpsdmjNWzv2nmPEoRpm">删除</button>
+        </div>
+
+        <!-- 活动表格卡片 -->
+        <div id="prRulesView" style="flex:1;min-height:0;margin:10px 8px 8px;padding:1px;background:linear-gradient(180deg,#e0e3e8,#f0f2f5);border-radius:4px;display:flex;flex-direction:column" data-page-node-id="0coWjBHkdYDKhBOy7yfgo7">
+          <div style="flex:1;min-height:0;background:#fff;border-radius:3px;overflow:hidden;display:flex;flex-direction:column" data-page-node-id="sCRgLADwXnorVRR0yIgPBl">
+            <div class="table-wrap" style="flex:1;overflow-y:auto;min-height:0" data-page-node-id="yP61U7K6lKTSxsXfWfLG87">
+              <table class="ps-table" data-page-node-id="DwbGOjsmp55JspExuMOnXb">
+                <thead data-page-node-id="ieTnADz8l4NHNkSZq2pnTR">
+                  <tr data-page-node-id="UMqGbhPls5PYqIGUCp8wFg">
+                    <th style="width:48px;text-align:center" data-page-node-id="saJsGwLoovuCDBbpY454ga"></th>
+                    <th style="width:150px" data-page-node-id="Qlt6rxLDeGASl8M6hVh1Kl">活动名称</th>
+                    <th style="width:130px" data-page-node-id="BXKYBUJFSJVYKAggwYdEIG">生效范围</th>
+                    <th style="width:200px" data-page-node-id="jJzH5ht4ESLb8eAx8Wd6ag">生效日期</th>
+                    <th style="width:160px" data-page-node-id="nFld9tARFNK3656DHghPMv">活动价</th>
+                    <th style="width:120px" data-page-node-id="uDDq6XhY1J5U7LoqBIPRv0">适用门店</th>
+                    <th style="width:80px" data-page-node-id="Z60SsyTGMm5aOU97ep6Yn6">状态</th>
+                    <th style="width:96px" data-page-node-id="dA7V3AcXvGOw0cqOOfPJzA">活动状态</th>
+                  </tr>
+                </thead>
+                <tbody id="prRulesBody" data-page-node-id="RfD5BB5q2yAFhDXP8doJyZ"></tbody>
+              </table>
+            </div>
+            <div style="flex-shrink:0;padding:8px 16px;border-top:1px solid #e9eef7;font-size:11px;color:#8a94a6;display:flex;align-items:center;gap:16px;flex-wrap:wrap" data-page-node-id="ifEQuHOF1v7bpfnF5yXHtP">
+              <span data-page-node-id="s5XRlI9EobvxK5auqI127P">同门店下活动周期不允许重叠（无优先级）· 活动价为<b data-page-node-id="G7F7pXzigs4Gtb7fVXlxOC">直接售价</b> · 会员价取 min(活动价, 会员价)</span>
+            </div>
+          </div>
+        </div>
+
+
+      </div>
+    </div>
+    </div>
+  </div>
+  <div id="modalRoot" data-page-node-id="asNYVcy8BoFnBGvjXLOKCX"></div>
+
+  <!-- ===== 活动编辑弹窗 ===== -->
+  <div class="ps-overlay" id="prRuleModal" style="display:none" onclick="if(event.target===this)prCloseRuleModal()" data-page-node-id="SNMa1OR7rwAo8Fw6eEQppi">
+    <div class="ps-dialog" data-page-node-id="2NtWZWJYNeysEYXAvV0BFu">
+      <div style="padding:16px 24px;border-bottom:1px solid #e9eef7;display:flex;align-items:center" data-page-node-id="BZSe3KlbztsuCnoqbFAO2y">
+        <span style="font-size:15px;font-weight:600;color:#0b1019" id="prRuleModalTitle" data-page-node-id="monI07IUsYG4Z3FUyFml2o">新建动态调价</span>
+        <span style="flex:1" data-page-node-id="A34jGAKkzxelytUxzbJX7Z"></span>
+        <button style="border:none;background:none;font-size:18px;color:#8a94a6;cursor:pointer" onclick="prCloseRuleModal()" data-page-node-id="JaHle8buuAp6n90WYr0UNU">×</button>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:0px 24px 28px" data-page-node-id="LbLdxzpk26KQxQDmAsSSNo"><div class="pr-form" data-page-node-id="vuVAxTT6zuzZRzyhU5lV1z">
+
+        <div class="pr-sec-label" data-page-node-id="Sizrue42keHHsggd05E676">基本信息</div>
+        <div id="prStoreSelectWrap" style="display:flex;align-items:center;gap:12px;margin-bottom:12px" data-page-node-id="RWFZodJV4HI7PbRpzEJeW4">
+          <div style="font-size:12px;color:#4a5568;white-space:nowrap;line-height:32px" data-page-node-id="Jb67SuAMFMr6FDLQiGr8Y2"><span style="color:#fc4b52" data-page-node-id="a5aCeMib3HyghoxDgiUIaT">*</span> 适用门店</div>
+          <select id="prStoreSelect" style="flex:1;max-width:460px;height:32px;padding:0 8px;border:1px solid #d9dbde;border-radius:4px;font-size:12px;outline:none;color:#0b1019;background:#fff" onfocus="this.style.borderColor='#005cf5'" onblur="this.style.borderColor='#d9dbde'" data-page-node-id="nsivEQUHUAImcFDwXHthhP">
+            <option value="" data-page-node-id="m1SH4j3CmL1SNeupuA64ZV">请选择适用门店</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center" data-page-node-id="kxdfJbnKQFSOOM7xt9cT1d">
+          <div style="display:flex;align-items:center;gap:12px" data-page-node-id="T3nsvIzWCD5E8uRgCI05HU">
+            <div style="font-size:12px;color:#4a5568;white-space:nowrap;line-height:32px" data-page-node-id="4bRHNFAUFvU5oQbJdJj1l5"><span style="color:#fc4b52" data-page-node-id="jrQFClNKm7EE5wTelBD1rA">*</span> 活动名称</div>
+            <input type="text" id="prName" style="width:460px;flex:none;height:32px;padding:0 12px;border:1px solid #d9dbde;border-radius:4px;font-size:12px;outline:none;color:#0b1019;box-sizing:border-box" placeholder="如：晚市清货优惠" onfocus="this.style.borderColor='#005cf5'" onblur="this.style.borderColor='#d9dbde'" data-page-node-id="jCX0DI1MC31IAACEFORRnx">
+          </div>
+          <div style="flex:1;min-width:200px" data-page-node-id="g5MjfM86qOCdGX1U6ISHRV">
+            <div style="display:flex;align-items:center;gap:12px" data-page-node-id="noMzRZz55K4leHvyUBFFHb">
+              <div style="font-size:12px;color:#4a5568;white-space:nowrap;line-height:32px" data-page-node-id="WgY8QlzGSEHkZq95niztwL">状态</div>
+              <label style="display:flex;align-items:center;gap:6px;height:32px;font-size:12px;color:#0b1019;cursor:pointer" data-page-node-id="9DOtWR3lfm7QOMAS8HxGG4"><input type="checkbox" id="prEnabled" checked style="accent-color:#005cf5" data-page-node-id="fjAgOPjk8jG38FFO5bYROw"> 启用</label>
+            </div>
+            <div id="prPauseNote" style="display:none;margin-top:4px;font-size:11px;color:#f57316;line-height:1.4" data-page-node-id="pOPid9htpdzrTE2DKa3cV1"></div>
+          </div>
+        </div>
+        <div id="prStatusLockNote" class="pr-lock-note" style="display:none" data-page-node-id="dyaeTJIVOqtNQ3eYeV1cGJ"></div>
+
+        <div class="pr-sec-label" data-page-node-id="3Zk4pUZFBkYbz4JUQKFpix">活动周期</div>
+        <div id="prFixedPeriodRow" class="pr-daterange" style="gap:12px" data-page-node-id="tijD685UTB0c3PU3vEhT50">
+          <div style="font-size:12px;color:#4a5568;white-space:nowrap;line-height:32px" data-page-node-id="Vb6WrrsUBF6RdYGZkahjiV">
+            <span style="color:#fc4b52" data-page-node-id="I8thzuwrmtglQcQzjXr2wz">*</span> 活动日期
+          </div>
+          <div class="pr-date-trigger" id="prDateTrigger" style="width:100%;max-width:460px" data-page-node-id="z8acOyhaLr4Bhgigk3aF15">
+            <span class="pr-date-icon" data-page-node-id="Jg9MBPjwT4xSGhKvksQG37"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-page-node-id="uBSWho7JnBnPIaTaMwzZOR"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" data-page-node-id="zVeLTgFED7AtUuH5TWhK58"></rect><line x1="16" y1="2" x2="16" y2="6" data-page-node-id="KGR3JgYYLw1qLMALcxxH7t"></line><line x1="8" y1="2" x2="8" y2="6" data-page-node-id="qLUJCUq9dfsjKqqw32HULy"></line><line x1="3" y1="10" x2="21" y2="10" data-page-node-id="QXv1OV1pDJAI09uodzDgYY"></line></svg></span>
+            <input type="text" id="prDateRange" placeholder="开始时间 - 结束时间（精确到分钟）" readonly data-page-node-id="dHrHGUVl3pbECb8jBjUjzr">
+            <span class="pr-date-clear" id="prDateClear" title="清空" data-page-node-id="1FD8NawSTGITSWIVEd24nt">×</span>
+          </div>
+          <input type="hidden" id="prValidFrom" data-page-node-id="WMTA10XY2U9bN3B5A6X3MN">
+          <input type="hidden" id="prValidTo" data-page-node-id="MmOHtVRgkkgQgAeXvy7q4v">
+          <span style="font-size:11px;color:#8a94a6" data-page-node-id="S47v1VPuCHXAIrmswayYp6">活动周期精确到分钟，开始后不可修改</span>
+        </div>
+
+        <div class="pr-sec-label" data-page-node-id="Y4DAWJCserrf8kb1VbIN4k">生效商品（选择分类即选中该分类下全部商品）</div>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;flex-wrap:wrap" data-page-node-id="x5zgbTVciwCVeaXczS6bIp">
+          <button class="ps-op-btn" id="prPickGoodsBtn" onclick="prOpenGoodsPicker()" data-page-node-id="LrDuioDiwQ9BY5D1jFx0WF">＋ 选择商品 / 分类</button>
+          <span id="prScopeCount" style="font-size:12px;color:#005CF5;font-weight:600" data-page-node-id="KIjly8So347rvZpWPSCZlH">已选 0 个商品</span>
+          <span style="font-size:11px;color:#f57316" id="prScopeTip" data-page-node-id="OGazVq4puDw8WsjxMIkaDj">同门店下活动周期不可重叠（时间维度硬约束）</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap" id="prUniRow" data-page-node-id="NYFN5P6MRwK75FE9c4asWx">
+          <span style="font-size:12px;color:#4a5568">统一设置折扣</span>
+          <input type="number" id="prUniDisc" step="0.1" min="1" max="9.9" placeholder="如 8.5" style="height:32px;width:90px;border:1px solid #d9dbde;border-radius:4px;font-size:12px;padding:0 8px;background:#fff;outline:none;color:#0b1019" onfocus="this.style.borderColor='#005cf5'" onblur="this.style.borderColor='#d9dbde'">
+          <span style="font-size:12px;color:#8a94a6">折</span>
+          <button class="ps-op-btn" onclick="prApplyUniDisc()">应用到全部</button>
+          <span style="font-size:11px;color:#8a94a6">应用后按各商品原价自动算出活动价，可在行内单独调整</span>
+        </div>
+        <div style="border:1px solid #e9eef7;border-radius:4px;overflow:hidden;background:#fff" id="prGoodsTableWrap" data-page-node-id="tRNb3ooNllwfxLolvZsc">
+          <table class="ps-table" style="table-layout:fixed;width:100%">
+            <thead><tr>
+              <th style="width:40px">#</th>
+              <th>商品</th>
+              <th style="width:130px">编码</th>
+              <th style="width:90px">分类</th>
+              <th style="width:90px">原价</th>
+              <th style="width:110px">折扣(折)</th>
+              <th style="width:120px">活动价(元)</th>
+              <th style="width:50px"></th>
+            </tr></thead>
+            <tbody id="prGoodsRows"></tbody>
+          </table>
+          <div id="prGoodsEmpty" style="padding:28px;text-align:center;color:#c0c4cc;font-size:12px">尚未选择商品，点击「选择商品 / 分类」添加</div>
+        </div>
+
+        <div id="prChangelogBox" data-page-node-id="Kt8IZcGvI1fYqIfWW9ljtN"></div>
+
+        <div class="pr-preview" id="prPreview" data-page-node-id="yrEjtx2ZJF0lggv8ByGe0A">预览：选择商品后将展示 原价 → 活动价</div>
+      </div></div>
+      <div style="flex-shrink:0;padding:12px 24px;border-top:1px solid #e9eef7;display:flex;justify-content:flex-end;gap:8px" data-page-node-id="rztriFXBG0H0f71drBmk6E">
+        <button class="ps-op-btn" onclick="prCloseRuleModal()" data-page-node-id="IDtfnpBGzRO12pdfwB8ZAR">取消</button>
+        <button class="ps-op-btn ps-op-pri" id="prSaveBtn" onclick="prSaveRule()" data-page-node-id="gBjteD4zJPkuFg5j8xk3wb">保存活动</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 商品/分类选择弹框 ===== -->
+  <div class="ps-overlay" id="prGoodsPickerModal" style="display:none;z-index:9600" onclick="if(event.target===this)prCloseGoodsPicker()">
+    <div class="ps-dialog" style="width:min(760px,94vw);max-height:82vh;display:flex;flex-direction:column">
+      <div style="padding:14px 20px;border-bottom:1px solid #e9eef7;display:flex;align-items:center">
+        <span style="font-size:15px;font-weight:600;color:#0b1019">选择商品 / 分类</span>
+        <span style="flex:1"></span>
+        <button style="border:none;background:none;font-size:18px;color:#8a94a6;cursor:pointer" onclick="prCloseGoodsPicker()">×</button>
+      </div>
+      <div style="padding:12px 20px 0">
+        <div class="gl-radio-group" id="prScopeTypeTabs">
+          <span class="gl-radio-btn active" data-val="category" onclick="prScopeTypeClick(this)">按分类</span>
+          <span class="gl-radio-btn" data-val="goods" onclick="prScopeTypeClick(this)">按单品</span>
+        </div>
+      </div>
+      <div style="flex:1;min-height:0;overflow-y:auto;padding:12px 20px 16px">
+        <div id="prScopeCategory" style="display:block;border:1px solid #e9eef7;border-radius:4px;background:#fafbfd;overflow:hidden">
+          <div style="padding:8px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #e9eef7;background:#fff">
+            <div style="position:relative;flex:0 1 260px">
+              <span style="position:absolute;left:9px;top:50%;transform:translateY(-50%);color:#bbb;font-size:12px">🔍</span>
+              <input type="text" id="prCategorySearch" placeholder="搜索分类名称" style="width:100%;height:32px;padding:0 10px 0 26px;border:1px solid #e8e8e8;border-radius:4px;font-size:12px;outline:none;box-sizing:border-box;color:#0b1019">
+            </div>
+            <span id="prCategoryTotal" style="font-size:12px;color:#909399">共 0 个分类</span>
+            <span style="flex:1"></span>
+            <span id="prCategoryCount" style="font-size:12px;color:#005CF5;font-weight:600">已选 0 项</span>
+          </div>
+          <div id="prCategoryList" style="max-height:300px;overflow-y:auto;padding:4px 6px"></div>
+        </div>
+        <div id="prScopeGoods" style="display:none;border:1px solid #e9eef7;border-radius:4px;background:#fafbfd;overflow:hidden">
+          <div style="padding:8px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #e9eef7;background:#fff">
+            <div style="position:relative;flex:0 1 260px">
+              <span style="position:absolute;left:9px;top:50%;transform:translateY(-50%);color:#bbb;font-size:12px">🔍</span>
+              <input type="text" id="prGoodsSearch" placeholder="搜索商品名称或编码" style="width:100%;height:32px;padding:0 10px 0 26px;border:1px solid #e8e8e8;border-radius:4px;font-size:12px;outline:none;box-sizing:border-box;color:#0b1019">
+            </div>
+            <span id="prGoodsTotal" style="font-size:12px;color:#909399">共 0 个商品</span>
+            <span style="flex:1"></span>
+            <span id="prGoodsCount" style="font-size:12px;color:#005CF5;font-weight:600">已选 0 项</span>
+          </div>
+          <div id="prGoodsList" style="max-height:300px;overflow-y:auto;padding:4px 6px"></div>
+        </div>
+      </div>
+      <div style="flex-shrink:0;padding:12px 20px;border-top:1px solid #e9eef7;display:flex;justify-content:flex-end;gap:8px">
+        <button class="ps-op-btn" onclick="prCloseGoodsPicker()">取消</button>
+        <button class="ps-op-btn ps-op-pri" onclick="prConfirmGoodsPicker()">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <script>var CURRENT_PAGE='dynamic-pricing';</script>
+  <script src="../shared/sidebar.js?v=2"></script>
+  <script src="../shared/header.js?v=2"></script>
+  <script src="../shared/build-info.js"></script>
+  <script src="../shared/modals.js?v=2"></script>
+  <script src="../shared/layout.js?v=2" data-page="dynamic-pricing"></script>
+  <script>
+  // ============================================================
+  // 动态调价（规划 · 刘）—— 页面逻辑（独立于 layout.js，便于迭代）
+  // ============================================================
+  (function(){
+    // ---------- Mock 数据 ----------
+    var PR_CATEGORIES = ['蔬菜', '水果', '肉类', '水产', '干货', '调味品'];
+    var PR_PRODUCTS = [
+      { name: '鲜猪肉（带皮前腿）', code: '6928484901001', spec: '称重/kg', memberPrice: 19.00, origPrice: 22.00, category: '肉类' },
+      { name: '鲜猪肉（带皮五花）', code: '6928484901002', spec: '称重/kg', memberPrice: 17.50, origPrice: 20.00, category: '肉类' },
+      { name: '鲜鸡蛋（散装）', code: '6928484901003', spec: '称重/kg', memberPrice: 10.50, origPrice: 12.00, category: '肉类' },
+      { name: '西红柿（精选）', code: '6928484901004', spec: '称重/kg', memberPrice: 5.50, origPrice: 6.50, category: '蔬菜' },
+      { name: '土豆（黄心）', code: '6928484901005', spec: '称重/kg', memberPrice: 3.50, origPrice: 4.00, category: '蔬菜' },
+      { name: '大白菜', code: '6928484901006', spec: '称重/kg', memberPrice: 2.30, origPrice: 2.80, category: '蔬菜' },
+      { name: '黄瓜（刺黄瓜）', code: '6928484901007', spec: '称重/kg', memberPrice: 4.80, origPrice: 5.50, category: '蔬菜' },
+      { name: '茄子（紫长茄）', code: '6928484901008', spec: '称重/kg', memberPrice: 3.80, origPrice: 4.50, category: '蔬菜' },
+      { name: '青椒（薄皮）', code: '6928484901009', spec: '称重/kg', memberPrice: 6.00, origPrice: 7.00, category: '蔬菜' },
+      { name: '豆腐（老豆腐）', code: '6928484901010', spec: '称重/kg', memberPrice: 2.80, origPrice: 3.50, category: '蔬菜' },
+      { name: '苹果（红富士）', code: '6928484901011', spec: '称重/kg', memberPrice: 8.50, origPrice: 9.90, category: '水果' },
+      { name: '香蕉（进口）', code: '6928484901012', spec: '称重/kg', memberPrice: 7.50, origPrice: 8.80, category: '水果' },
+      { name: '大米（东北珍珠米 5kg）', code: '6928484901013', spec: '5kg/袋', memberPrice: 26.00, origPrice: 29.90, category: '干货' },
+      { name: '金龙鱼调和油 5L', code: '6928484901014', spec: '5L/瓶', memberPrice: 72.00, origPrice: 79.90, category: '调味品' },
+      { name: '海天酱油（生抽 500ml）', code: '6928484901015', spec: '500ml/瓶', memberPrice: 7.20, origPrice: 8.50, category: '调味品' },
+      { name: '纯牛奶（蒙牛 250ml×12）', code: '6928484901016', spec: '250ml×12/箱', memberPrice: 45.00, origPrice: 49.90, category: '干货' },
+      { name: '方便面（康师傅红烧 5连包）', code: '6928484901017', spec: '5包/袋', memberPrice: 11.00, origPrice: 12.90, category: '干货' },
+      { name: '矿泉水（农夫山泉 550ml×24）', code: '6928484901018', spec: '550ml×24/箱', memberPrice: 30.00, origPrice: 35.00, category: '干货' },
+      { name: '食盐（中盐精制盐 400g）', code: '6928484901019', spec: '400g/袋', memberPrice: 1.60, origPrice: 2.00, category: '调味品' },
+      { name: '白砂糖（太古 400g）', code: '6928484901020', spec: '400g/袋', memberPrice: 6.50, origPrice: 7.50, category: '调味品' }
+    ];
+    // 种子辅助：按分类生成 items（统一折扣）；单品指定活动价
+    function prSeedItemsByCat(cat, discount) {
+      var items = [];
+      PR_PRODUCTS.forEach(function(p) {
+        if (p.category !== cat) return;
+        items.push({ name: p.name, discount: discount, promoPrice: +(p.origPrice * discount).toFixed(2) });
+      });
+      return items;
+    }
+    function prSeedItem(name, promoPrice) {
+      var p = null;
+      for (var i = 0; i < PR_PRODUCTS.length; i++) if (PR_PRODUCTS[i].name === name) p = PR_PRODUCTS[i];
+      var discount = p ? +(promoPrice / p.origPrice).toFixed(4) : 1;
+      return { name: name, discount: discount, promoPrice: promoPrice };
+    }
+    var PR_RULES = [
+      { id: 1, name: '蔬菜周清优惠', enabled: true, storeId: 'S2001',
+        scopeValues: (function() { return prSeedItemsByCat('蔬菜', 0.85).map(function(it) { return it.name; }); })(),
+        items: prSeedItemsByCat('蔬菜', 0.85),
+        validFrom: '2026-01-01 00:00', validTo: '2026-12-31 23:59' },
+      { id: 2, name: '水果优惠促销', enabled: true, storeId: 'S2002',
+        scopeValues: ['苹果（红富士）', '香蕉（进口）'],
+        items: [prSeedItem('苹果（红富士）', 8.5), prSeedItem('香蕉（进口）', 7.9)],
+        validFrom: '2026-01-01 00:00', validTo: '2026-12-31 23:59' },
+      { id: 3, name: '单品引流优惠', enabled: true, storeId: 'S2003',
+        scopeValues: ['鲜猪肉（带皮前腿）'],
+        items: [prSeedItem('鲜猪肉（带皮前腿）', 18.9)],
+        validFrom: '2026-10-01 00:00', validTo: '2026-10-07 23:59' },
+      { id: 4, name: '干货会员日优惠', enabled: true, storeId: 'S2004',
+        scopeValues: (function() { return prSeedItemsByCat('干货', 0.88).map(function(it) { return it.name; }); })(),
+        items: prSeedItemsByCat('干货', 0.88),
+        validFrom: '2026-11-01 00:00', validTo: '2026-11-30 23:59' },
+      { id: 5, name: '年货节特惠（已结束示例）', enabled: true, storeId: 'S2006',
+        scopeValues: (function() { return prSeedItemsByCat('调味品', 0.9).map(function(it) { return it.name; }); })(),
+        items: prSeedItemsByCat('调味品', 0.9),
+        validFrom: '2026-02-01 00:00', validTo: '2026-02-17 23:59' }
+    ];
+    // 代码内置默认数据（用于「恢复示例」）
+    var PR_RULES_DEFAULT = JSON.parse(JSON.stringify(PR_RULES));
+
+    // ---------- 本地缓存（localStorage） ----------
+    // 体验版数据结构（无节日 / 无时段 / 商品列表逐行优惠），升级 v7 避免旧结构脏数据
+    var PR_STORE_KEY = 'tcm_marketing_pr_v7';
+    function prLoadStore() {
+      try {
+        var raw = localStorage.getItem(PR_STORE_KEY);
+        if (raw) return JSON.parse(raw);
+      } catch (e) {}
+      return null;
+    }
+    function prSaveStore() {
+      try {
+        localStorage.setItem(PR_STORE_KEY, JSON.stringify({
+          rules: PR_RULES
+        }));
+      } catch (e) {}
+    }
+    (function prInitStore() {
+      var s = prLoadStore();
+      if (s) {
+        if (Array.isArray(s.rules)) PR_RULES = s.rules;
+      }
+      var sf = document.getElementById('prFilterStore'); if (sf) sf.innerHTML = prStoreOptions('');
+    })();
+
+    // ---------- 活动周期：flatpickr 双月范围选择器 ----------
+    var PR_DATE_PICKER = null;
+    (function prInitDateRange() {
+      var el = document.getElementById('prDateRange');
+      if (!el || typeof flatpickr === 'undefined') return;
+      PR_DATE_PICKER = flatpickr(el, {
+        mode: 'range',
+        showMonths: 2,
+        dateFormat: 'Y-m-d H:i',
+        enableTime: true,
+        time_24hr: true,
+        locale: 'zh',
+        allowInput: false,
+        clickOpens: true,
+        onChange: function(selectedDates, dateStr, instance) {
+          var fromEl = document.getElementById('prValidFrom');
+          var toEl = document.getElementById('prValidTo');
+          var clearEl = document.getElementById('prDateClear');
+          if (selectedDates.length >= 2) {
+            fromEl.value = instance.formatDate(selectedDates[0], 'Y-m-d H:i');
+            toEl.value = instance.formatDate(selectedDates[1], 'Y-m-d H:i');
+            if (clearEl) clearEl.style.display = 'inline';
+          } else if (selectedDates.length === 0) {
+            fromEl.value = '';
+            toEl.value = '';
+            if (clearEl) clearEl.style.display = 'none';
+          }
+          prUpdatePreview();
+        }
+      });
+      var trigger = document.getElementById('prDateTrigger');
+      if (trigger) trigger.addEventListener('click', function(e) {
+        if (e.target.id === 'prDateClear') return;
+        if (PR_DATE_PICKER) PR_DATE_PICKER.open();
+      });
+      var clearBtn = document.getElementById('prDateClear');
+      if (clearBtn) clearBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if (PR_DATE_PICKER) PR_DATE_PICKER.clear();
+        document.getElementById('prValidFrom').value = '';
+        document.getElementById('prValidTo').value = '';
+        clearBtn.style.display = 'none';
+        prUpdatePreview();
+      });
+    })();
+    window.prSyncDateRange = function() {
+      if (!PR_DATE_PICKER) return;
+      var from = document.getElementById('prValidFrom').value;
+      var to = document.getElementById('prValidTo').value;
+      var clearEl = document.getElementById('prDateClear');
+      if (from && to) {
+        PR_DATE_PICKER.setDate([from, to], false);
+        if (clearEl) clearEl.style.display = 'inline';
+      } else {
+        PR_DATE_PICKER.clear(false);
+        if (clearEl) clearEl.style.display = 'none';
+      }
+    };
+    window.prSyncFilterDateRange = function() {
+      if (!PR_FILTER_PICKER) return;
+      var from = document.getElementById('prFilterFrom').value;
+      var to = document.getElementById('prFilterTo').value;
+      var clearEl = document.getElementById('prFilterDateClear');
+      if (from && to) {
+        PR_FILTER_PICKER.setDate([from, to], false);
+        if (clearEl) clearEl.style.display = 'inline';
+      } else {
+        PR_FILTER_PICKER.clear(false);
+        if (clearEl) clearEl.style.display = 'none';
+      }
+    };
+
+    // ---------- 列表时间筛选：flatpickr 双月范围选择器 ----------
+    var PR_FILTER_PICKER = null;
+    (function prInitFilterDateRange() {
+      var el = document.getElementById('prFilterDateRange');
+      if (!el || typeof flatpickr === 'undefined') return;
+      PR_FILTER_PICKER = flatpickr(el, {
+        mode: 'range',
+        showMonths: 2,
+        dateFormat: 'Y-m-d',
+        locale: 'zh',
+        allowInput: false,
+        clickOpens: true,
+        onChange: function(selectedDates, dateStr, instance) {
+          var fromEl = document.getElementById('prFilterFrom');
+          var toEl = document.getElementById('prFilterTo');
+          var clearEl = document.getElementById('prFilterDateClear');
+          if (selectedDates.length >= 2) {
+            fromEl.value = instance.formatDate(selectedDates[0], 'Y-m-d');
+            toEl.value = instance.formatDate(selectedDates[1], 'Y-m-d');
+            if (clearEl) clearEl.style.display = 'inline';
+          } else if (selectedDates.length === 0) {
+            fromEl.value = '';
+            toEl.value = '';
+            if (clearEl) clearEl.style.display = 'none';
+          }
+        }
+      });
+      var trigger = document.getElementById('prFilterDateTrigger');
+      if (trigger) trigger.addEventListener('click', function(e) {
+        if (e.target.id === 'prFilterDateClear') return;
+        if (PR_FILTER_PICKER) PR_FILTER_PICKER.open();
+      });
+      var clearBtn = document.getElementById('prFilterDateClear');
+      if (clearBtn) clearBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if (PR_FILTER_PICKER) PR_FILTER_PICKER.clear();
+        document.getElementById('prFilterFrom').value = '';
+        document.getElementById('prFilterTo').value = '';
+        clearBtn.style.display = 'none';
+      });
+    })();
+
+    window.prRestoreDemo = function() {
+      if (!confirm('确认恢复为内置示例数据？本地新增/修改的活动将被覆盖。')) return;
+      PR_RULES = JSON.parse(JSON.stringify(PR_RULES_DEFAULT));
+      prSaveStore();
+      prRenderRules();
+      showToast('已恢复示例数据');
+    };
+
+    var PR_FILTER = { status: 'all', keyword: '', store: '', from: '', to: '' };
+    function prStoreOptions(selected) {
+      var opts = '<option value="">全部门店</option>';
+      if (typeof STORE_DATA !== 'undefined') {
+        STORE_DATA.forEach(function(st) {
+          opts += '<option value="' + st.shopId + '"' + (st.shopId === selected ? ' selected' : '') + '>' + (st.shopShortName || st.shopId) + '</option>';
+        });
+      }
+      return opts;
+    }
+    function prModalStoreOptions(selected) {
+      var opts = '';
+      if (typeof STORE_DATA !== 'undefined') {
+        STORE_DATA.forEach(function(st) {
+          opts += '<option value="' + st.shopId + '"' + (st.shopId === selected ? ' selected' : '') + '>' + (st.shopShortName || st.shopId) + '</option>';
+        });
+      }
+      return opts;
+    }
+    function prStoreName(id) {
+      if (!id) return '<span style="color:#c0c4cc">-</span>';
+      if (typeof STORE_DATA === 'undefined') return id;
+      var f = STORE_DATA.filter(function(st){ return st.shopId === id; })[0];
+      return f ? (f.shopShortName || id) : id;
+    }
+    window.prSetStore = function(v) {
+      PR_FILTER.store = v;
+      prRenderRules();
+    }
+    var PR_SORT = null; // 已移除优先级排序（保留变量占位避免历史引用报错）
+    var PR_SELECTED_IDS = new Set();   // 列表多选选中的活动 id 集合
+    var PR_EDITING_ID = null;   // null=新建
+    var PR_COPY_QUEUE = [];     // 复制活动草稿队列（内存，未落盘）；保存才真正新增
+
+    // ---------- 列表多选与批量操作 ----------
+    window.prSelectRow = function(id, checked) {
+      if (checked) {
+        PR_SELECTED_IDS.clear();            // 单选：勾选新行时清空其余已选
+        PR_SELECTED_IDS.add(id);
+      } else {
+        PR_SELECTED_IDS.delete(id);
+      }
+      // 同步所有行 checkbox 勾选态（其余自动取消勾选，确保始终仅一条）
+      document.querySelectorAll('#prRulesBody tr').forEach(function(row) {
+        var cb = row.querySelector('input[type=checkbox]');
+        if (cb) cb.checked = (+cb.value === id) && checked;
+      });
+      prUpdateSelectAllState();
+      prUpdateBatchBar();
+    };
+    function prUpdateSelectAllState() {
+      var allCb = document.getElementById('prSelectAll');
+      if (!allCb) return;
+      var rows = document.querySelectorAll('#prRulesBody tr');
+      var checkedCount = 0, total = 0;
+      rows.forEach(function(row) {
+        var cb = row.querySelector('input[type=checkbox]');
+        if (!cb) return;
+        total++;
+        if (cb.checked) checkedCount++;
+      });
+      allCb.checked = total > 0 && checkedCount === total;
+      allCb.indeterminate = checkedCount > 0 && checkedCount < total;
+    }
+    function prUpdateBatchBar() {
+      // 按钮始终可点击，未选中时点击会给出提示
+      ['prBatchEdit','prBatchCopy','prBatchEnable','prBatchDisable','prBatchDelete'].forEach(function(k){
+        var btn = document.getElementById(k);
+        if (btn) { btn.disabled = false; }
+      });
+    }
+    window.prBatchEdit = function() {
+      if (PR_SELECTED_IDS.size === 0) { showToast('请先选择要编辑的活动'); return; }
+      if (PR_SELECTED_IDS.size > 1) { showToast('一次只能编辑一条活动'); return; }
+      var id = Array.from(PR_SELECTED_IDS)[0];
+      prOpenRuleModal(id);
+    };
+    window.prBatchEnable = function() {
+      if (PR_SELECTED_IDS.size === 0) { showToast('请先选择要启用的活动'); return; }
+      if (PR_SELECTED_IDS.size > 1) { showToast('启用仅支持单条操作，请只勾选一条活动'); return; }
+      var names = [], skipped = 0, conflictNames = [], conflictDetail = '';
+      PR_RULES.forEach(function(r) {
+        if (!PR_SELECTED_IDS.has(r.id)) return;
+        if (r.enabled && !prPausing(r)) { skipped++; return; } // 已启用，跳过
+        var conflict = prCheckConflict(r);
+        if (conflict) { // 冲突项不启用，但与保存逻辑一致需明确告知原因
+          conflictNames.push(r.name);
+          if (!conflictDetail) conflictDetail = prFmtConflict(conflict, r);
+          return;
+        }
+        r.enabled = true; r.pauseBufferUntil = 0; names.push(r.name);
+      });
+      PR_SELECTED_IDS.clear();
+      prRenderRules(); prSaveStore(); prUpdateBatchBar();
+      var parts = [];
+      parts.push('已启用 ' + names.length + ' 条活动');
+      if (skipped) parts.push('跳过 ' + skipped + ' 条已启用');
+      if (conflictNames.length) {
+        parts.push(conflictNames.length + ' 条因冲突未启用（' + conflictNames.slice(0, 3).join('、') + (conflictNames.length > 3 ? ' 等' : '') + '）');
+        if (conflictDetail) parts.push(conflictDetail);
+      }
+      showToast(parts.join('；'));
+    };
+    window.prBatchDisable = function() {
+      if (PR_SELECTED_IDS.size === 0) { showToast('请先选择要停用的活动'); return; }
+      if (PR_SELECTED_IDS.size > 1) { showToast('停用仅支持单条操作，请只勾选一条活动'); return; }
+      var names = [], skipped = 0;
+      PR_RULES.forEach(function(r) {
+        if (!PR_SELECTED_IDS.has(r.id)) return;
+        if (r.enabled) { // 启用→停用：开新缓冲（与行内/保存一致）
+          r.enabled = false; r.pauseBufferUntil = Date.now() + PR_PAUSE_BUFFER_MS; names.push(r.name);
+        } else if (prPausing(r)) { // 已在缓冲中：保持原缓冲时钟（与保存一致，不重复起算）
+          names.push(r.name);
+        } else { skipped++; } // 已完全停用：跳过
+      });
+      PR_SELECTED_IDS.clear();
+      prRenderRules(); prSaveStore(); prUpdateBatchBar();
+      showToast('已停用 ' + names.length + ' 条活动' + (skipped ? ('，跳过 ' + skipped + ' 条已停用') : ''));
+    };
+    window.prBatchDelete = function() {
+      if (PR_SELECTED_IDS.size === 0) { showToast('请先选择要删除的活动'); return; }
+      if (PR_SELECTED_IDS.size > 1) { showToast('删除仅支持单条操作，请只勾选一条活动'); return; }
+      var ids = Array.from(PR_SELECTED_IDS);
+      var deletable = ids.filter(function(id) { var r = prFindRule(id); return r && prIsDeletable(r); });
+      var blocked = ids.filter(function(id) { return deletable.indexOf(id) < 0; });
+      if (deletable.length === 0) { showToast('所选活动均非「未开始」状态，不可删除（进行中 / 已结束活动不可删除）'); return; }
+      var msg = '确认删除选中的 ' + deletable.length + ' 条活动？删除后对应时段将恢复为基础价。';
+      if (blocked.length) msg += '（' + blocked.length + ' 条进行中 / 已结束已跳过）';
+      showConfirm(msg, function() {
+        deletable.forEach(function(id) {
+          for (var i = 0; i < PR_RULES.length; i++) {
+            if (PR_RULES[i].id === id) { PR_RULES.splice(i, 1); break; }
+          }
+        });
+        PR_SELECTED_IDS.clear();
+        prRenderRules(); prSaveStore(); prUpdateBatchBar();
+        showToast('已删除 ' + deletable.length + ' 条活动' + (blocked.length ? ('，跳过 ' + blocked.length + ' 条不可删除活动') : ''));
+      });
+      return;
+    };
+    window.prBatchCopy = function() {
+      if (PR_SELECTED_IDS.size === 0) { showToast('请先选择要复制的活动'); return; }
+      if (PR_SELECTED_IDS.size > 1) { showToast('复制仅支持单条操作，请只勾选一条活动'); return; }
+      var maxId = 0;
+      PR_RULES.forEach(function(r) { if (r.id > maxId) maxId = r.id; });
+      // 仅构建副本草稿（内存，不落盘）；保存时才真正新增
+      PR_COPY_QUEUE = [];
+      PR_SELECTED_IDS.forEach(function(id) {
+        var src = prFindRule(id);
+        if (!src) return;
+        maxId += 1;
+        PR_COPY_QUEUE.push({
+          id: maxId,
+          name: (src.name || '活动') + '（副本）',
+          enabled: false,            // 副本默认停用：活动周期已清空，需用户补填后才能启用
+          pauseBufferUntil: 0,
+          // 商品与优惠明细保留（非时间维度）
+          scopeValues: JSON.parse(JSON.stringify(src.scopeValues || [])),
+          items: JSON.parse(JSON.stringify(src.items || [])),
+          storeId: src.storeId,
+          validFrom: '',             // 清空时间维度
+          validTo: ''
+        });
+      });
+      PR_SELECTED_IDS.clear();
+      prUpdateBatchBar();
+      if (PR_COPY_QUEUE.length) prOpenRuleCopyModal(PR_COPY_QUEUE[0]);
+    };
+    window.prFilterStatusClick = function(el) {
+      document.querySelectorAll('#prFilterStatusTabs .gl-radio-btn').forEach(function(t) { t.classList.remove('active'); });
+      el.classList.add('active');
+      PR_FILTER.status = el.getAttribute('data-val');
+      PR_SELECTED_IDS.clear();
+      prRenderRules();
+      prUpdateBatchBar();
+    };
+
+    // ---------- 工具 ----------
+    function money(v) { return '¥' + Number(v).toFixed(2); }
+    function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    function showToast(msg) {
+      var t = document.getElementById('toast');
+      if (!t) return;
+      t.textContent = msg; t.classList.add('show');
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(function(){ t.classList.remove('show'); }, 2200);
+    }
+    function showConfirm(message, onYes) {
+      var old = document.getElementById('prConfirmOverlay');
+      if (old) old.remove();
+      var ov = document.createElement('div');
+      ov.id = 'prConfirmOverlay';
+      ov.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;z-index:9999';
+      ov.innerHTML = '<div style="background:#fff;border-radius:10px;width:min(380px,90vw);padding:22px 22px 16px;box-shadow:0 12px 40px rgba(0,0,0,.2)">' +
+        '<div style="font-size:14px;color:#0b1019;line-height:1.6;margin-bottom:18px">' + message + '</div>' +
+        '<div style="display:flex;justify-content:flex-end;gap:10px">' +
+        '<button id="prConfirmNo" style="height:34px;padding:0 18px;border:1px solid #d9dbde;background:#fff;border-radius:5px;font-size:13px;cursor:pointer;color:#4a5568">取消</button>' +
+        '<button id="prConfirmYes" style="height:34px;padding:0 18px;border:none;background:#005cf5;border-radius:5px;font-size:13px;cursor:pointer;color:#fff">确定</button>' +
+        '</div></div>';
+      document.body.appendChild(ov);
+      function close(){ if (ov.parentNode) ov.remove(); }
+      document.getElementById('prConfirmNo').onclick = close;
+      ov.onclick = function(e){ if (e.target === ov) close(); };
+      document.getElementById('prConfirmYes').onclick = function(){ close(); onYes(); };
+    }
+    function fmtDate(iso) { return iso ? iso.replace(/-/g, '.') : '—'; }
+
+    // 时间维度硬约束（无优先级）：同门店下活动周期不允许重叠 → 拦截（商品是否相同不再作为判定条件）。
+    function prCheckConflict(rule) {
+      var aF = rule.validFrom || '0000-01-01', aT = rule.validTo || '9999-12-31';
+      for (var i = 0; i < PR_RULES.length; i++) {
+        var o = PR_RULES[i];
+        if (o.id === rule.id) continue;
+        if ((o.storeId || '') !== (rule.storeId || '')) continue; // 不同门店互不影响
+        if (!prActive(o)) continue; // 仅「已完全停用（过缓冲）」的活动不拦新活动；停用缓冲期仍生效，需避让
+        var bF = o.validFrom || '0000-01-01', bT = o.validTo || '9999-12-31';
+        if (!prDateOverlap(aF, aT, bF, bT)) continue;
+        return { rule: o };
+      }
+      return null;
+    }
+    function prFmtConflict(conflict, currentRule) {
+      var o = conflict.rule;
+      return '同门店下活动周期不允许重叠：与活动「' + o.name + '」（' + fmtDate(o.validFrom) + ' ~ ' + fmtDate(o.validTo) + '）时间重叠，请调整活动周期';
+    }
+
+    // ---------- 摘要格式化 ----------
+    function fmtScope(rule) {
+      var n = (rule.scopeValues || []).length;
+      if (!n) return '—';
+      var first = rule.scopeValues[0];
+      return n === 1 ? first : first + ' 等 ' + n + ' 个商品';
+    }
+    // 折扣展示（0~1 小数 → 几折）
+    function fmtDisc(d) {
+      if (d == null) return '—';
+      var v = d * 10;
+      return (v % 1 === 0 ? v : v.toFixed(1)) + ' 折';
+    }
+    // 优惠摘要：全部同折扣 → 「8.5 折（统一）」；单商品 → 显示活动价；否则「单品设置 · N 项」
+    function fmtAction(rule) {
+      var items = rule.items || [];
+      if (!items.length) return '—';
+      var d0 = items[0].discount;
+      var sameDisc = items.every(function(it) { return it.discount != null && Math.abs(it.discount - d0) < 1e-9; });
+      if (items.length === 1) return '活动价 ' + money(items[0].promoPrice) + '（' + fmtDisc(d0) + '）';
+      if (sameDisc) return fmtDisc(d0) + '（统一）';
+      return '单品设置 · ' + items.length + ' 项';
+    }
+    function fmtValid(rule) {
+      if (!rule.validFrom && !rule.validTo) return '—';
+      return fmtDate(rule.validFrom) + ' ~ ' + fmtDate(rule.validTo);
+    }
+
+    // ---------- 停用带结算缓冲（活动停用后，缓冲期内已在结算/购物车的商品仍按原活动结算，不受影响） ----------
+    var PR_PAUSE_BUFFER_MS = 5 * 60 * 1000; // 停用缓冲期：5 分钟（仅逻辑生效，界面不展示缓冲状态）
+    function prFindRule(id) {
+      for (var i = 0; i < PR_RULES.length; i++) if (PR_RULES[i].id === id) return PR_RULES[i];
+      return null;
+    }
+    // 缓冲期内（停用后尚未到点的窗口）：活动仍算「生效」，以保护已在结算/购物车中的商品
+    function prPausing(r) {
+      return !!(r && r.pauseBufferUntil && Date.now() < r.pauseBufferUntil);
+    }
+    // 当前是否仍作为生效活动（启用中，或停用缓冲期内）：用于生效来源 / 冲突校验 / 删除守卫
+    function prActive(r) {
+      return !!(r && (r.enabled || prPausing(r)));
+    }
+    function prBufferRemaining(r) {
+      if (!r || !r.pauseBufferUntil) return 0;
+      return Math.max(0, r.pauseBufferUntil - Date.now());
+    }
+    function prFmtBuffer(ms) {
+      var s = Math.ceil(ms / 1000), m = Math.floor(s / 60), ss = s % 60;
+      return m + '分' + (ss < 10 ? '0' + ss : ss) + '秒';
+    }
+    function prStatusCell(r) {
+      // 列表「启用/停用」操作按钮：点击在 启用↔停用 间切换，与弹窗保存逻辑一致
+      // 停用后内部仍有结算缓冲保护期（已在结算/购物车的商品仍按原活动结算），仅逻辑生效、界面不展示缓冲状态
+      var cls = r.enabled ? 'on' : 'off';
+      var label = r.enabled ? '启用' : '停用';
+      return '<button type="button" class="pr-status-btn pr-status ' + cls + '" title="点击切换启用/停用" onclick="event.stopPropagation();prToggle(' + r.id + ')"><span class="dot"></span>' + label + '</button>';
+    }
+    // ---------- 活动状态（生命周期） ----------
+    function prTodayISO() {
+      var n = new Date();
+      var m = (n.getMonth() + 1 < 10 ? '0' : '') + (n.getMonth() + 1);
+      var d = (n.getDate() < 10 ? '0' : '') + n.getDate();
+      return n.getFullYear() + '-' + m + '-' + d;
+    }
+    // 当前时间（精确到分钟）：YYYY-MM-DD HH:mm（与活动周期存储格式一致，可直接字符串比较）
+    function prNowISO() {
+      var n = new Date();
+      function p(v) { return (v < 10 ? '0' : '') + v; }
+      return prTodayISO() + ' ' + p(n.getHours()) + ':' + p(n.getMinutes());
+    }
+    function prRuleActivityWindow(rule) {
+      if (rule.validFrom && rule.validTo) return { from: rule.validFrom, to: rule.validTo };
+      return null;
+    }
+    // 活动状态：未开始 / 进行中 / 已结束（基于活动周期与当前日期）
+    function prActivityStatus(rule) {
+      var w = prRuleActivityWindow(rule);
+      if (!w) return null;
+      var now = prNowISO();
+      if (now < w.from) return 'upcoming';
+      if (now > w.to) return 'ended';
+      return 'active';
+    }
+    function prRuleLockState(rule) {
+      var s = prActivityStatus(rule);
+      return (s === null) ? 'upcoming' : s; // 无周期（如副本）按未开始处理，可编辑
+    }
+    function prIsDeletable(rule) {
+      var s = prActivityStatus(rule);
+      return s !== 'active' && s !== 'ended'; // 仅未开始（及无周期）可删除
+    }
+    function prStatusLabel(s) {
+      return s === 'upcoming' ? '未开始' : (s === 'active' ? '进行中' : (s === 'ended' ? '已结束' : '—'));
+    }
+    function prDateOverlap(aF, aT, bF, bT) {
+      return aF <= bT && bF <= aT; // 两个区间任一整天重叠即命中
+    }
+    function prActivityStatusCell(r) {
+      var s = prActivityStatus(r);
+      if (s === 'upcoming') return '<span class="pr-astatus up">未开始</span>';
+      if (s === 'active') return '<span class="pr-astatus ac">进行中</span>';
+      if (s === 'ended') return '<span class="pr-astatus ed">已结束</span>';
+      return '<span class="pr-astatus ed">—</span>';
+    }
+    function prNowStr() {
+      var n = new Date();
+      function p(v) { return (v < 10 ? '0' : '') + v; }
+      return n.getFullYear() + '-' + p(n.getMonth() + 1) + '-' + p(n.getDate()) + ' ' + p(n.getHours()) + ':' + p(n.getMinutes());
+    }
+    // 活动开始后（进行中/已结束）：全字段只读，不允许修改任何内容；仅「未开始」可编辑（增减商品、调整折扣/活动价）
+    function prApplyStatusLock(status) {
+      var lockEdit = (status === 'active' || status === 'ended');
+      var ended = (status === 'ended');
+      var vf = document.getElementById('prValidFrom'), vt = document.getElementById('prValidTo');
+      if (vf) vf.disabled = lockEdit;
+      if (vt) vt.disabled = lockEdit;
+
+      // 锁定的区域统一加置灰 class
+      var lockTargets = ['prStoreSelectWrap', 'prFixedPeriodRow', 'prUniRow', 'prPickGoodsBtn'];
+      lockTargets.forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) el.classList.toggle('pr-locked', lockEdit);
+      });
+      var st = document.getElementById('prStoreSelect'); if (st) st.disabled = lockEdit;
+      var ud = document.getElementById('prUniDisc'); if (ud) ud.disabled = lockEdit;
+      var pk = document.getElementById('prPickGoodsBtn'); if (pk) pk.disabled = lockEdit;
+      // 商品行内的折扣 / 活动价输入与删除按钮：开始后全部锁定（仅查看）
+      document.querySelectorAll('#prGoodsRows input, #prGoodsRows button').forEach(function(el) { el.disabled = lockEdit; });
+
+      document.querySelectorAll('#prCategoryList input[type=checkbox], #prGoodsList input[type=checkbox]').forEach(function(cb) { cb.disabled = lockEdit; });
+      var nm = document.getElementById('prName'); if (nm) nm.disabled = lockEdit;
+      var en = document.getElementById('prEnabled'); if (en) en.disabled = lockEdit;
+      // 保存按钮：开始后不可修改 → 置灰
+      var saveBtn = document.getElementById('prSaveBtn'); if (saveBtn) saveBtn.disabled = lockEdit;
+      var note = document.getElementById('prStatusLockNote');
+      if (note) {
+        if (status === 'active') {
+          note.style.display = 'block'; note.className = 'pr-lock-note';
+          note.textContent = '该活动已开始（进行中）：不允许修改任何内容，仅可查看；如需停止请在列表操作「停用」。';
+        } else if (status === 'ended') {
+          note.style.display = 'block'; note.className = 'pr-lock-note ended';
+          note.textContent = '该活动已结束，不可修改。';
+        } else {
+          note.style.display = 'none'; note.textContent = '';
+        }
+      }
+    }
+    function prDescribeChanges(oldR, newR) {
+      var lines = [];
+      if (oldR.name !== newR.name) lines.push('名称：' + oldR.name + ' → ' + newR.name);
+      var oldS = oldR.scopeValues || [], newS = newR.scopeValues || [];
+      var added = newS.filter(function(x) { return oldS.indexOf(x) < 0; });
+      var removed = oldS.filter(function(x) { return newS.indexOf(x) < 0; });
+      if (added.length) lines.push('新增范围：' + added.join('、'));
+      if (removed.length) lines.push('移除范围：' + removed.join('、'));
+      if (oldR.validFrom !== newR.validFrom || oldR.validTo !== newR.validTo) lines.push('活动周期：' + (oldR.validFrom || '?') + '~' + (oldR.validTo || '?') + ' → ' + (newR.validFrom || '?') + '~' + (newR.validTo || '?'));
+      if (JSON.stringify(oldR.items || []) !== JSON.stringify(newR.items || [])) lines.push('活动明细变更：' + fmtAction(oldR) + ' → ' + fmtAction(newR));
+      if (!!oldR.enabled !== !!newR.enabled) lines.push(newR.enabled ? '已启用' : '已停用');
+      return lines;
+    }
+    function prRenderChangelog(r) {
+      var box = document.getElementById('prChangelogBox');
+      if (!box) return;
+      if (!r || !r.changelog || !r.changelog.length) { box.style.display = 'none'; box.innerHTML = ''; return; }
+      box.style.display = 'block';
+      box.innerHTML = '<div class="pr-sec-label"><span class="n">★</span> 修改记录</div>' +
+        '<div class="pr-changelog">' + r.changelog.map(function(e) {
+          return '<div class="pr-cl-item"><span class="pr-cl-ts">' + esc(e.ts) + '</span><span class="pr-cl-desc">' + esc(e.desc) + '</span></div>';
+        }).join('') + '</div>';
+    }
+    // ---------- 活动列表 ----------
+    function prRenderRules() {
+      var kw = PR_FILTER.keyword.trim();
+      var rows = PR_RULES.filter(function(r) {
+        if (PR_FILTER.status === 'on' && !r.enabled) return false;
+        if (PR_FILTER.status === 'off' && r.enabled) return false;
+        if (kw) {
+          var hay = (r.name + ' ' + fmtScope(r) + ' ' + fmtValid(r) + ' ' + fmtAction(r)).toLowerCase();
+          if (hay.indexOf(kw.toLowerCase()) < 0) return false;
+        }
+        if (PR_FILTER.store && r.storeId !== PR_FILTER.store) return false;
+        if (PR_FILTER.from && PR_FILTER.to) {
+          var aw = prRuleActivityWindow(r);
+          if (!aw || !prDateOverlap(PR_FILTER.from, PR_FILTER.to, aw.from, aw.to)) return false;
+        }
+        return true;
+      });
+      var body = document.getElementById('prRulesBody');
+      if (!rows.length) {
+        body.innerHTML = '<tr class="pr-empty-row"><td colspan="8" style="text-align:center;color:#8a94a6;height:120px;pointer-events:none;cursor:default;-webkit-user-select:none;user-select:none">暂无匹配的活动</td></tr>';
+        return;
+      }
+      body.innerHTML = rows.map(function(r) {
+        var sel = PR_SELECTED_IDS.has(r.id);
+        return '<tr class="' + (sel ? 'pr-selected-row' : '') + '" onclick="prSelectRow(' + r.id + ')">' +
+          '<td style="text-align:center" onclick="event.stopPropagation()"><input type="checkbox" value="' + r.id + '" ' + (sel ? 'checked' : '') + ' onchange="prSelectRow(' + r.id + ', this.checked)"></td>' +
+          '<td style="font-weight:600">' + esc(r.name) + '</td>' +
+          '<td>' + fmtScope(r) + '</td>' +
+          '<td style="font-size:11px;color:#4a5568;white-space:nowrap">' + fmtValid(r) + '</td>' +
+          '<td style="font-size:11px;color:#4a5568;line-height:1.7">' + fmtAction(r) + '</td>' +
+          '<td style="font-size:11px;color:#666">' + prStoreName(r.storeId) + '</td>' +
+          '<td>' + prStatusCell(r) + '</td>' +
+          '<td>' + prActivityStatusCell(r) + '</td>' +
+        '</tr>';
+      }).join('');
+      prUpdateBatchBar();
+      prUpdateSelectAllState();
+    };
+    window.prToggle = function(id) {
+      var r = null;
+      for (var i = 0; i < PR_RULES.length; i++) if (PR_RULES[i].id === id) { r = PR_RULES[i]; break; }
+      if (!r) return;
+      if (r.enabled) {
+        // 停用：进入缓冲期，缓冲内已在结算/购物车的商品仍按原活动结算（不受影响）
+        r.enabled = false;
+        r.pauseBufferUntil = Date.now() + PR_PAUSE_BUFFER_MS;
+        prRenderRules(); prSaveStore();
+        showToast('活动「' + r.name + '」已停用');
+      } else {
+        // 启用：立即生效，清掉缓冲；与保存逻辑一致需先校验冲突
+        var conflict = prCheckConflict(r);
+        if (conflict) { showToast(prFmtConflict(conflict, r)); return; }
+        r.enabled = true; r.pauseBufferUntil = 0;
+        prRenderRules(); prSaveStore();
+        showToast('活动「' + r.name + '」已启用');
+      }
+    };
+    window.prDelete = function(id) {
+      var r = null, i;
+      for (i = 0; i < PR_RULES.length; i++) if (PR_RULES[i].id === id) { r = PR_RULES[i]; break; }
+      if (!r) return;
+      if (!prIsDeletable(r)) { showToast('仅「未开始」的活动可删除（' + prStatusLabel(prActivityStatus(r)) + '活动不可删除）'); return; }
+      showConfirm('确认删除活动「' + r.name + '」？删除后该活动覆盖时段将恢复为基础价。', function() {
+        PR_RULES.splice(i, 1);
+        prRenderRules();
+        prSaveStore();
+        showToast('活动已删除');
+      });
+      return;
+    };
+    window.prSearch = function() {
+      var activeTab = document.querySelector('#prFilterStatusTabs .gl-radio-btn.active');
+      PR_FILTER.status = activeTab ? activeTab.getAttribute('data-val') : 'all';
+      PR_FILTER.keyword = document.getElementById('prFilterKeyword').value;
+      PR_FILTER.from = document.getElementById('prFilterFrom').value;
+      PR_FILTER.to = document.getElementById('prFilterTo').value;
+      PR_SELECTED_IDS.clear();
+      prRenderRules();
+      prUpdateBatchBar();
+    };
+    window.prReset = function() {
+      document.querySelectorAll('#prFilterStatusTabs .gl-radio-btn').forEach(function(t) { t.classList.remove('active'); });
+      var firstTab = document.querySelector('#prFilterStatusTabs .gl-radio-btn[data-val="all"]');
+      if (firstTab) firstTab.classList.add('active');
+      document.getElementById('prFilterKeyword').value = '';
+      var ff = document.getElementById('prFilterFrom'); if (ff) ff.value = '';
+      var ft = document.getElementById('prFilterTo'); if (ft) ft.value = '';
+      var fc = document.getElementById('prFilterDateClear'); if (fc) fc.style.display = 'none';
+      if (PR_FILTER_PICKER) PR_FILTER_PICKER.clear(false);
+      PR_FILTER = { status: 'all', keyword: '', store: '', from: '', to: '' };
+      var sf = document.getElementById('prFilterStore'); if (sf) sf.value = '';
+      PR_SELECTED_IDS.clear();
+      prRenderRules();
+      prUpdateBatchBar();
+    };
+
+    // ---------- 活动弹窗 ----------
+    window.prScopeTypeClick = function(el) {
+      el.parentElement.querySelectorAll('.gl-radio-btn').forEach(function(b) { b.classList.remove('active'); });
+      el.classList.add('active');
+      prScopeTypeChange();
+    };
+    window.prScopeTypeChange = function() {
+      var active = document.querySelector('#prScopeTypeTabs .gl-radio-btn.active');
+      var t = active ? active.getAttribute('data-val') : 'category';
+      document.getElementById('prScopeCategory').style.display = t === 'category' ? 'block' : 'none';
+      document.getElementById('prScopeGoods').style.display = t === 'goods' ? 'block' : 'none';
+      if (t === 'goods') { prFilterGoods(PR_GOODS_SEARCH); prUpdateGoodsCount(); }
+      if (t === 'category') { prFilterCategories(PR_CATEGORY_SEARCH); prUpdateCategoryCount(); }
+      prUpdatePreview();
+    };
+    var PR_GOODS_SEARCH = '';
+    var PR_CATEGORY_SEARCH = '';
+    window.prFilterGoods = function(kw) {
+      PR_GOODS_SEARCH = (kw || '').trim().toLowerCase();
+      var rows = document.querySelectorAll('#prGoodsList .pr-goods-row');
+      var visible = 0;
+      rows.forEach(function(row) {
+        var idx = +row.getAttribute('data-idx');
+        var p = PR_PRODUCTS[idx];
+        var hit = !PR_GOODS_SEARCH ||
+          p.name.toLowerCase().indexOf(PR_GOODS_SEARCH) >= 0 ||
+          p.code.toLowerCase().indexOf(PR_GOODS_SEARCH) >= 0;
+        row.style.display = hit ? 'flex' : 'none';
+        if (hit) visible++;
+      });
+      var listEl = document.getElementById('prGoodsList');
+      var empty = listEl.querySelector('.pr-scope-empty');
+      if (visible === 0 && PR_GOODS_SEARCH) {
+        if (!empty) { empty = document.createElement('div'); empty.className = 'pr-scope-empty'; listEl.appendChild(empty); }
+        empty.textContent = '未找到匹配商品';
+        empty.style.display = 'block';
+      } else if (empty) {
+        empty.style.display = 'none';
+      }
+      var totalEl = document.getElementById('prGoodsTotal');
+      if (totalEl) totalEl.textContent = '共 ' + visible + ' 个商品';
+      prUpdateGoodsCount();
+    };
+    window.prFilterCategories = function(kw) {
+      PR_CATEGORY_SEARCH = (kw || '').trim().toLowerCase();
+      var rows = document.querySelectorAll('#prCategoryList .pr-goods-row');
+      var visible = 0;
+      rows.forEach(function(row) {
+        var idx = +row.getAttribute('data-cat-idx');
+        var c = PR_CATEGORIES[idx];
+        var hit = !PR_CATEGORY_SEARCH || c.toLowerCase().indexOf(PR_CATEGORY_SEARCH) >= 0;
+        row.style.display = hit ? 'flex' : 'none';
+        if (hit) visible++;
+      });
+      var listEl = document.getElementById('prCategoryList');
+      var empty = listEl.querySelector('.pr-scope-empty');
+      if (visible === 0 && PR_CATEGORY_SEARCH) {
+        if (!empty) { empty = document.createElement('div'); empty.className = 'pr-scope-empty'; listEl.appendChild(empty); }
+        empty.textContent = '未找到匹配分类';
+        empty.style.display = 'block';
+      } else if (empty) {
+        empty.style.display = 'none';
+      }
+      var totalEl = document.getElementById('prCategoryTotal');
+      if (totalEl) totalEl.textContent = '共 ' + visible + ' 个分类';
+      prUpdateCategoryCount();
+    };
+    // 兼容中文输入法：composition 期间不搜索，上屏后再过滤（绑定一次，防重复监听）
+    function prBindScopeSearch() {
+      function bind(input, fn) {
+        if (!input || input._prBound) return;
+        input._prBound = true;
+        var composing = false;
+        input.addEventListener('compositionstart', function() { composing = true; });
+        input.addEventListener('compositionend', function(e) {
+          composing = false;
+          fn(e.target.value);
+        });
+        input.addEventListener('input', function(e) {
+          if (!composing) fn(e.target.value);
+        });
+      }
+      bind(document.getElementById('prGoodsSearch'), prFilterGoods);
+      bind(document.getElementById('prCategorySearch'), prFilterCategories);
+    }
+    function prUpdateGoodsCount() {
+      var cnt = document.querySelectorAll('#prScopeGoods input[type=checkbox]:checked').length;
+      var el = document.getElementById('prGoodsCount');
+      if (el) el.textContent = '已选 ' + cnt + ' 项';
+    }
+    function prUpdateCategoryCount() {
+      var cnt = document.querySelectorAll('#prCategoryList input[type=checkbox]:checked').length;
+      var el = document.getElementById('prCategoryCount');
+      if (el) el.textContent = '已选 ' + cnt + ' 项';
+    }
+    // ---------- 商品选择（弹框）与商品列表逐行优惠（草稿模型，避免重绘丢输入） ----------
+    var PR_SCOPE_DRAFT = [];   // 已选商品行：{ name, code, origPrice, discount, promoPrice }
+    var PR_PICK_SEL = [];      // 选择弹框中的临时集合（商品名数组）
+    function prProdByName(name) {
+      for (var i = 0; i < PR_PRODUCTS.length; i++) if (PR_PRODUCTS[i].name === name) return PR_PRODUCTS[i];
+      return null;
+    }
+    function prDraftNames() { return PR_SCOPE_DRAFT.map(function(it) { return it.name; }); }
+    function prUpdateScopeCount() {
+      var el = document.getElementById('prScopeCount');
+      if (el) el.textContent = '已选 ' + PR_SCOPE_DRAFT.length + ' 个商品';
+    }
+    // 从规则/副本草稿装载编辑草稿（保留优惠明细）
+    function prLoadDraftFromRule(r) {
+      PR_SCOPE_DRAFT = (r && r.items || []).map(function(it) {
+        var p = prProdByName(it.name);
+        return p ? { name: it.name, code: p.code, origPrice: +p.origPrice, discount: (it.discount != null ? it.discount : null), promoPrice: (it.promoPrice != null ? it.promoPrice : null) } : null;
+      }).filter(Boolean);
+      prRenderGoodsRows();
+      prUpdatePreview();
+    }
+    // 商品行表格（折扣 ↔ 活动价联动：改折扣算价格，改价格算折扣）
+    function prRenderGoodsRows() {
+      var tbody = document.getElementById('prGoodsRows');
+      var empty = document.getElementById('prGoodsEmpty');
+      if (!tbody) return;
+      if (!PR_SCOPE_DRAFT.length) {
+        tbody.innerHTML = '';
+        if (empty) empty.style.display = 'block';
+        prUpdateScopeCount();
+        return;
+      }
+      if (empty) empty.style.display = 'none';
+      tbody.innerHTML = PR_SCOPE_DRAFT.map(function(it, i) {
+        var _p = prProdByName(it.name);
+        return '<tr data-goods="' + esc(it.name) + '">' +
+          '<td style="text-align:center;color:#8a94a6">' + (i + 1) + '</td>' +
+          '<td style="font-weight:500">' + esc(it.name) + '</td>' +
+          '<td style="color:#8a94a6;font-size:11px">' + esc(it.code) + '</td>' +
+          '<td style="color:#8a94a6;font-size:11px">' + esc(_p ? _p.category : '—') + '</td>' +
+          '<td>' + money(it.origPrice) + '</td>' +
+          '<td><input type="number" class="pr-row-disc" step="0.1" min="1" max="9.9" value="' + (it.discount != null ? +(it.discount * 10).toFixed(1) : '') + '" onchange="prRowDiscChange(this,' + i + ')" style="height:28px;width:70px;border:1px solid #d9dbde;border-radius:4px;font-size:12px;padding:0 6px;background:#fff;outline:none;color:#0b1019"></td>' +
+          '<td><input type="number" class="pr-row-price" step="0.01" min="0" value="' + (it.promoPrice != null ? it.promoPrice : '') + '" onchange="prRowPriceChange(this,' + i + ')" style="height:28px;width:80px;border:1px solid #d9dbde;border-radius:4px;font-size:12px;padding:0 6px;background:#fff;outline:none;color:#0b1019"></td>' +
+          '<td><button class="pr-del-row" onclick="prRowDel(' + i + ')" title="移除">✕</button></td>' +
+        '</tr>';
+      }).join('');
+      prUpdateScopeCount();
+    }
+    window.prRowDiscChange = function(input, i) {
+      var it = PR_SCOPE_DRAFT[i];
+      if (!it) return;
+      var raw = input.value;
+      if (!raw || +raw <= 0 || +raw >= 10) {
+        input.value = it.discount != null ? +(it.discount * 10).toFixed(1) : '';
+        showToast('折扣需在 1~9.9 折之间'); return;
+      }
+      it.discount = +raw / 10;
+      it.promoPrice = +(it.origPrice * it.discount).toFixed(2);
+      var row = input.closest('tr');
+      var priceInput = row && row.querySelector('.pr-row-price');
+      if (priceInput) priceInput.value = it.promoPrice;
+      prUpdatePreview();
+    };
+    window.prRowPriceChange = function(input, i) {
+      var it = PR_SCOPE_DRAFT[i];
+      if (!it) return;
+      var raw = input.value, val = +raw;
+      if (!raw || val < 0.01) {
+        input.value = it.promoPrice != null ? it.promoPrice : '';
+        showToast('活动价不可小于 0.01 元'); return;
+      }
+      if (val >= it.origPrice) {
+        input.value = it.promoPrice != null ? it.promoPrice : '';
+        showToast('活动价需低于商品原价 ' + money(it.origPrice)); return;
+      }
+      it.promoPrice = +val.toFixed(2);
+      it.discount = +(it.promoPrice / it.origPrice).toFixed(4);
+      var row = input.closest('tr');
+      var discInput = row && row.querySelector('.pr-row-disc');
+      if (discInput) discInput.value = +(it.discount * 10).toFixed(1);
+      prUpdatePreview();
+    };
+    window.prRowDel = function(i) {
+      PR_SCOPE_DRAFT.splice(i, 1);
+      prRenderGoodsRows();
+      prUpdatePreview();
+    };
+    // 统一设置折扣 → 应用到全部行（按各商品原价算出活动价）
+    window.prApplyUniDisc = function() {
+      var raw = document.getElementById('prUniDisc').value;
+      if (!raw || +raw <= 0 || +raw >= 10) { showToast('折扣需在 1~9.9 折之间'); return; }
+      if (!PR_SCOPE_DRAFT.length) { showToast('请先选择商品'); return; }
+      var d = +raw / 10;
+      PR_SCOPE_DRAFT.forEach(function(it) {
+        it.discount = d;
+        it.promoPrice = +(it.origPrice * d).toFixed(2);
+      });
+      prRenderGoodsRows();
+      prUpdatePreview();
+      showToast('已统一应用 ' + (+raw).toFixed(1).replace(/\.0$/, '') + ' 折');
+    };
+    // ---------- 商品/分类选择弹框 ----------
+    window.prOpenGoodsPicker = function() {
+      PR_PICK_SEL = prDraftNames().slice();
+      prRenderPickerLists();
+      prScopeTypeChange();
+      document.getElementById('prGoodsPickerModal').style.display = 'flex';
+    };
+    window.prCloseGoodsPicker = function() {
+      document.getElementById('prGoodsPickerModal').style.display = 'none';
+    };
+    window.prConfirmGoodsPicker = function() {
+      var old = {};
+      PR_SCOPE_DRAFT.forEach(function(it) { old[it.name] = it; });
+      PR_SCOPE_DRAFT = PR_PICK_SEL.map(function(name) {
+        var p = prProdByName(name);
+        if (!p) return null;
+        return old[name] || { name: p.name, code: p.code, origPrice: +p.origPrice, discount: null, promoPrice: null };
+      }).filter(Boolean);
+      document.getElementById('prGoodsPickerModal').style.display = 'none';
+      prRenderGoodsRows();
+      prUpdatePreview();
+    };
+    // 弹框列表渲染：checkbox 状态与 PR_PICK_SEL 同步（分类勾选 = 该分类下全部商品均已选）
+    function prRenderPickerLists() {
+      var catCountMap = {};
+      PR_PRODUCTS.forEach(function(p) { catCountMap[p.category] = (catCountMap[p.category] || 0) + 1; });
+      document.getElementById('prCategoryList').innerHTML = PR_CATEGORIES.map(function(c, idx) {
+        var allSel = PR_PRODUCTS.filter(function(p) { return p.category === c; }).every(function(p) { return PR_PICK_SEL.indexOf(p.name) >= 0; }) && catCountMap[c] > 0;
+        return '<label class="pr-goods-row" data-cat-idx="' + idx + '">' +
+          '<input type="checkbox" data-cat="' + c + '"' + (allSel ? ' checked' : '') + ' onchange="prCategoryChanged(this)">' +
+          '<span class="name" title="' + esc(c) + '">' + esc(c) + '</span>' +
+          '<span style="margin-left:auto;color:#8a94a6;font-size:11px">' + (catCountMap[c] || 0) + ' 个商品</span>' +
+        '</label>';
+      }).join('');
+      document.getElementById('prGoodsList').innerHTML = PR_PRODUCTS.map(function(p, idx) {
+        return '<label class="pr-goods-row" data-idx="' + idx + '">' +
+          '<input type="checkbox" data-goods="' + esc(p.name) + '"' + (PR_PICK_SEL.indexOf(p.name) >= 0 ? ' checked' : '') + ' onchange="prGoodsChanged(this)">' +
+          '<span class="name" title="' + esc(p.name) + '">' + esc(p.name) + '</span>' +
+          '<span class="code">' + esc(p.code) + '</span>' +
+          '<span class="price">' + money(p.origPrice) + '</span>' +
+          '<span class="cat">' + esc(p.category) + '</span>' +
+        '</label>';
+      }).join('');
+      prFilterCategories(PR_CATEGORY_SEARCH);
+      prFilterGoods(PR_GOODS_SEARCH);
+      prBindScopeSearch();
+    }
+    window.prCategoryChanged = function(cb) {
+      var cat = cb.getAttribute('data-cat');
+      var prods = PR_PRODUCTS.filter(function(p) { return p.category === cat; });
+      prods.forEach(function(p) {
+        var at = PR_PICK_SEL.indexOf(p.name);
+        if (cb.checked && at < 0) PR_PICK_SEL.push(p.name);
+        if (!cb.checked && at >= 0) PR_PICK_SEL.splice(at, 1);
+      });
+      prRenderPickerLists();
+    };
+    window.prGoodsChanged = function(cb) {
+      var name = cb.getAttribute('data-goods');
+      var at = PR_PICK_SEL.indexOf(name);
+      if (cb.checked && at < 0) PR_PICK_SEL.push(name);
+      if (!cb.checked && at >= 0) PR_PICK_SEL.splice(at, 1);
+      // 同步分类勾选态（该分类全部选中 → 勾上）
+      var cat = prProdByName(name) ? prProdByName(name).category : null;
+      if (cat) {
+        var allSel = PR_PRODUCTS.filter(function(p) { return p.category === cat; }).every(function(p) { return PR_PICK_SEL.indexOf(p.name) >= 0; });
+        var catCb = document.querySelector('#prCategoryList input[data-cat="' + cat + '"]');
+        if (catCb) catCb.checked = allSel;
+      }
+      prUpdateGoodsCount();
+      prUpdateCategoryCount();
+    };
+
+    // 预览（取第一个已选商品展示 原价 → 活动价）
+    window.prUpdatePreview = function() {
+      var el = document.getElementById('prPreview');
+      if (!el) return;
+      var vf = document.getElementById('prValidFrom').value, vt = document.getElementById('prValidTo').value;
+      var periodLabel = '<div style="color:#8a5568;font-size:11px;margin-bottom:6px">生效日期：' + ((vf && vt) ? (fmtDate(vf) + ' ~ ' + fmtDate(vt)) : '（请填写活动周期）') + '</div>';
+      if (!PR_SCOPE_DRAFT.length) { el.innerHTML = periodLabel + '预览：选择商品后将展示 原价 → 活动价'; return; }
+      var it = PR_SCOPE_DRAFT[0];
+      var priceTxt = it.promoPrice != null ? money(it.promoPrice) + '（' + fmtDisc(it.discount) + '）' : '<span style="color:#f57316">未设置</span>';
+      var html = periodLabel;
+      html += '预览示例：<b>' + esc(it.name) + '</b>　原价 ' + money(it.origPrice) + ' → 活动价 <b>' + priceTxt + '</b>';
+      if (PR_SCOPE_DRAFT.length > 1) html += ' <span style="color:#8a94a6;font-size:11px">（共 ' + PR_SCOPE_DRAFT.length + ' 个商品，仅展示第一个）</span>';
+      el.innerHTML = html;
+    }
+
+    // 打开/保存/关闭 活动弹窗
+    window.prOpenRuleModal = function(id) {
+      var isNew = (id === undefined || id === null);
+      PR_EDITING_ID = isNew ? null : id;
+      document.getElementById('prRuleModalTitle').textContent = isNew ? '新建动态调价' : '编辑动态调价';
+      var r = null;
+      if (!isNew) for (var i = 0; i < PR_RULES.length; i++) if (PR_RULES[i].id === id) r = PR_RULES[i];
+
+      var storeSel = document.getElementById('prStoreSelect');
+      if (storeSel) storeSel.innerHTML = '<option value="">请选择适用门店</option>' + prModalStoreOptions(r ? r.storeId : '');
+      document.getElementById('prName').value = r ? r.name : '';
+      document.getElementById('prEnabled').checked = r ? r.enabled : true;
+      // 停用缓冲仅在逻辑层生效（保护结算中商品），界面不再展示缓冲提示
+      var fpn = document.getElementById('prPauseNote');
+      if (fpn) { fpn.style.display = 'none'; fpn.textContent = ''; }
+      document.getElementById('prValidFrom').value = r ? (r.validFrom || '') : '';
+      document.getElementById('prValidTo').value = r ? (r.validTo || '') : '';
+      prSyncDateRange();
+      prLoadDraftFromRule(r); // 新建 → 空草稿；编辑 → 装载商品与优惠明细
+      // 按活动状态施加编辑锁定 / 展示修改记录
+      prApplyStatusLock(r ? prRuleLockState(r) : 'upcoming'); // 新建按未开始（可编辑）
+      prRenderChangelog(r);
+      document.getElementById('prRuleModal').style.display = 'flex';
+    };
+    // 打开「复制活动」草稿弹窗：预填副本数据（时间已清空），以新建模式保存才真正新增
+    window.prOpenRuleCopyModal = function(draft) {
+      PR_EDITING_ID = null; // 新建模式 → 保存时 push 新增
+      document.getElementById('prRuleModalTitle').textContent = '新建动态调价（副本）';
+      var storeSel = document.getElementById('prStoreSelect');
+      if (storeSel) storeSel.innerHTML = '<option value="">请选择适用门店</option>' + prModalStoreOptions(draft.storeId || '');
+      document.getElementById('prName').value = draft.name || '';
+      document.getElementById('prEnabled').checked = draft.enabled;
+      var fpn = document.getElementById('prPauseNote');
+      if (fpn) { fpn.style.display = 'none'; fpn.textContent = ''; }
+      document.getElementById('prValidFrom').value = draft.validFrom || '';
+      document.getElementById('prValidTo').value = draft.validTo || '';
+      prSyncDateRange();
+      prLoadDraftFromRule(draft);
+      prApplyStatusLock('upcoming'); // 副本始终按未开始（可编辑）
+      prRenderChangelog(null);
+      document.getElementById('prRuleModal').style.display = 'flex';
+    };
+    window.prCloseRuleModal = function() {
+      // 直接取消：放弃任何未保存的副本草稿，不弹确认
+      PR_COPY_QUEUE = [];
+      document.getElementById('prRuleModal').style.display = 'none';
+      PR_EDITING_ID = null;
+      prRenderRules(); // 刷新列表（反映已保存的副本；无变化也安全）
+    };
+    window.prSaveRule = function() {
+      var name = document.getElementById('prName').value.trim();
+      if (!name) { showToast('请填写活动名称'); return; }
+      var storeId = document.getElementById('prStoreSelect').value;
+      if (!storeId) { showToast('请选择适用门店'); return; }
+      if (!PR_SCOPE_DRAFT.length) { showToast('请选择生效商品（至少一个）'); return; }
+      // 逐行校验优惠：活动价必填、≥0.01、< 原价（行内联动已保证折扣有效）
+      for (var ri = 0; ri < PR_SCOPE_DRAFT.length; ri++) {
+        var it = PR_SCOPE_DRAFT[ri];
+        if (it.promoPrice == null) { showToast('「' + it.name + '」未设置活动价（可统一设置折扣后应用）'); return; }
+        if (it.promoPrice < 0.01) { showToast('「' + it.name + '」活动价不可小于 0.01 元'); return; }
+        if (it.promoPrice >= it.origPrice) { showToast('「' + it.name + '」活动价需低于原价 ' + money(it.origPrice)); return; }
+      }
+      var vf = document.getElementById('prValidFrom').value, vt = document.getElementById('prValidTo').value;
+      if (!vf || !vt) { showToast('请填写活动周期（有效期起止）'); return; }
+      if (vf > vt) { showToast('活动周期起始不能晚于结束'); return; }
+      var rule = {
+        id: PR_EDITING_ID || (PR_RULES.length ? PR_RULES[PR_RULES.length - 1].id + 1 : 1),
+        name: name,
+        enabled: document.getElementById('prEnabled').checked,
+        storeId: storeId,
+        scopeValues: prDraftNames(),
+        items: PR_SCOPE_DRAFT.map(function(it) { return { name: it.name, discount: it.discount, promoPrice: it.promoPrice }; }),
+        validFrom: vf, validTo: vt
+      };
+      var conflict = prCheckConflict(rule);
+      if (conflict) { showToast(prFmtConflict(conflict, rule)); return; }
+      if (PR_EDITING_ID) {
+        for (var i = 0; i < PR_RULES.length; i++) if (PR_RULES[i].id === PR_EDITING_ID) {
+          var _old = PR_RULES[i];
+          // 活动开始后不允许修改任何内容：进行中 / 已结束一律拦截（仅「未开始」可编辑）
+          var _st = prActivityStatus(_old);
+          if (_st === 'ended') { showToast('已结束活动不可修改'); return; }
+          if (_st === 'active') { showToast('活动已开始，不允许修改任何内容'); return; }
+          // 对齐：编辑保存必须保留表单之外的旧字段（尤其是 storeId 适用门店），
+          // 否则保存后活动的适用门店/筛选归属被清空，与列表「启用」按钮改原对象的行为不一致
+          rule.id = _old.id;
+          rule.storeId = _old.storeId;
+          // 启用 → 立即生效并清缓冲；未勾选(停用) → 与行内「停用」一致进入结算缓冲
+          if (rule.enabled) {
+            rule.pauseBufferUntil = 0;
+          } else if (prPausing(_old)) {
+            rule.pauseBufferUntil = _old.pauseBufferUntil;          // 已在缓冲中：保留原缓冲时钟（不重复起算）
+          } else if (_old && _old.enabled) {
+            rule.pauseBufferUntil = Date.now() + PR_PAUSE_BUFFER_MS; // 由启用→停用：开新缓冲（保护结算中商品）
+          } else {
+            rule.pauseBufferUntil = _old ? (_old.pauseBufferUntil || 0) : 0; // 原本已完全停用：保持
+          }
+          // 写入修改记录（进行中改动必记录；未开始改动也记录）
+          var diff = prDescribeChanges(_old, rule);
+          if (diff.length) {
+            rule.changelog = (_old.changelog || []).slice();
+            rule.changelog.unshift({ ts: prNowStr(), desc: diff.join('；') });
+          } else {
+            rule.changelog = _old.changelog ? _old.changelog.slice() : undefined;
+          }
+          PR_RULES[i] = rule;
+        }
+        showToast('活动已更新');
+      } else {
+        // 新建/副本均从弹窗表单读取适用门店（基本信息中已必填）
+        rule.storeId = storeId;
+        rule.changelog = [{ ts: prNowStr(), desc: '创建活动' }];
+        PR_RULES.push(rule);
+        showToast('活动已保存');
+      }
+      // 复制草稿队列：保存后继续下一条，逐条确认；未保存不新增
+      if (PR_COPY_QUEUE.length) {
+        PR_COPY_QUEUE.shift();
+        if (PR_COPY_QUEUE.length) {
+          prSaveStore(); // 落盘当前已保存的副本
+          showToast('已保存，继续编辑下一条副本（剩余 ' + PR_COPY_QUEUE.length + ' 条）');
+          prOpenRuleCopyModal(PR_COPY_QUEUE[0]); // 重新加载下一条草稿，不关闭弹窗
+          return;
+        }
+        showToast('已保存全部副本');
+      }
+      prCloseRuleModal();
+      prRenderRules();
+      prSaveStore();
+    };
+
+    // 范围/优惠变化 → 预览（弹窗内联控件各自 onchange 触发 prUpdatePreview）
+    // 范围类型切换由 prScopeTypeClick 触发，prScopeTypeChange 内已调用 prUpdatePreview()
+
+    // 生成需求说明：基于当前页面配置，生成新的需求说明 web 页面（新标签页打开）
+    window.prGenerateReqSpec = function() {
+      function pad(n){ return (n < 10 ? '0' : '') + n; }
+      var d = new Date();
+      var ts = d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+
+      var rules = PR_RULES || [];
+      var rows = rules.map(function(r){
+        var scope = (r.scopeValues || []).length + ' 个商品（' + (r.scopeValues || []).slice(0, 3).join('、') + ((r.scopeValues || []).length > 3 ? '…' : '') + '）';
+        var period = fmtDate(r.validFrom) + ' ~ ' + fmtDate(r.validTo);
+        var plan = fmtAction(r);
+        return { name: r.name, enabled: !!r.enabled, scope: scope, period: period, plan: plan };
+      });
+
+      var ruleRowsHtml = rows.map(function(x){
+        return '<tr><td>' + esc(x.name) + '</td><td>' + (x.enabled ? '<span class="st on">启用</span>' : '<span class="st off">停用</span>') + '</td><td>' + esc(x.scope) + '</td><td>' + esc(x.period) + '</td><td>' + esc(x.plan) + '</td></tr>';
+      }).join('');
+      if (!ruleRowsHtml) ruleRowsHtml = '<tr><td colspan="5" class="muted">当前暂无已配置活动</td></tr>';
+
+      // ---- Markdown 文本 ----
+      var md = [];
+      md.push('# 动态调价 需求说明（简单版）');
+      md.push('> 生成时间：' + ts + '　|　数据来源：动态调价 页面当前实时配置');
+      md.push('');
+      md.push('## 一、模块概述');
+      md.push('动态调价是「营销管理」下的定价模块（体验版）。运营通过弹框选择商品 / 分类（分类自动展开为其旗下商品），选中的商品铺开为列表，在列表上逐行设置折扣或活动价（两者联动），也可统一设置折扣后应用到全部商品，到期自动结束。');
+      md.push('');
+      md.push('## 二、核心概念');
+      md.push('- **活动**：一条动态调价规则，由「生效商品 + 活动周期 + 逐商品优惠明细 + 状态」构成。');
+      md.push('- **生效商品**：通过弹框按分类 / 按单品选择；选择分类即选中该分类下全部商品，确认后铺开为商品列表。');
+      md.push('- **活动周期**：起止时间精确到分钟（YYYY-MM-DD HH:mm，必填），周期内生效。');
+      md.push('- **逐商品优惠**：每行可设置折扣或活动价（两者联动：改折扣自动算价、改价自动回算折扣）；支持统一设置折扣后应用到全部行。');
+      md.push('');
+      md.push('## 三、业务规则');
+      md.push('### 3.1 活动周期与冲突（无优先级）');
+      md.push('- 同门店下活动周期不允许重叠：时间维度硬约束（商品是否相同不作判定），命中即硬冲突，保存 / 启用拦截。');
+      md.push('- 例如：门店 S2001 已有 6.1~6.30 的活动，再建 6.15~7.15 的活动（无论商品是否相同）→ 冲突；不同门店互不影响。');
+      md.push('');
+      md.push('### 3.2 优惠规则');
+      md.push('- 折扣锚定各商品「原价」；活动价为直接售价，需低于该商品原价；会员价取 min(活动价, 会员价)。');
+      md.push('- 折扣 1~9.9 折（如 8.5 即 8.5 折）；活动价不可小于 0.01 元。');
+      md.push('');
+      md.push('### 3.3 生命周期与锁定');
+      md.push('- 活动状态：未开始 / 进行中 / 已结束（按活动周期与当前时间（精确到分钟）判定）。');
+      md.push('- 编辑锁定：活动开始后（进行中 / 已结束）不允许修改任何内容，弹窗全字段只读（含启用开关与保存按钮），保存逻辑同步硬拦截；仅「未开始」可编辑（增减商品、调整折扣 / 活动价），且仅未开始可删除。');
+      md.push('- 停用带 5 分钟结算缓冲：缓冲期内已在结算 / 购物车的商品仍按原活动结算。');
+      md.push('');
+      md.push('### 3.4 数据校验');
+      md.push('- 活动价 ≥ 0.01 且 < 范围内最高原价。');
+      md.push('- 活动周期起始 ≤ 结束（精确到分钟）；周期为必填。');
+      md.push('');
+      md.push('## 四、数据模型');
+      md.push('### 4.1 PriceRule（调价活动）');
+      md.push('| 字段 | 类型 | 说明 |');
+      md.push('| --- | --- | --- |');
+      md.push('| id | Long | 活动唯一 ID |');
+      md.push('| name | String | 活动名称 |');
+      md.push('| enabled | Boolean | 是否启用 |');
+      md.push('| storeId | String | 适用门店 |');
+      md.push('| scopeValues | String[] | 商品名数组（选择分类时已展开为其旗下商品）|');
+      md.push('| validFrom | DateTime | 活动周期起始（必填，YYYY-MM-DD HH:mm）|');
+      md.push('| validTo | DateTime | 活动周期结束（必填，YYYY-MM-DD HH:mm）|');
+      md.push('| items | Item[] | 逐商品优惠明细 |');
+      md.push('');
+      md.push('### 4.2 Item（逐商品优惠明细）');
+      md.push('| 字段 | 类型 | 说明 |');
+      md.push('| --- | --- | --- |');
+      md.push('| name | String | 商品名（对应 scopeValues 成员）|');
+      md.push('| discount | Number | 折扣（0~1 小数，如 0.85 = 8.5 折）|');
+      md.push('| promoPrice | Number | 活动价（直接售价，需低于商品原价；改折扣自动算出，改价自动回算折扣）|');
+      md.push('');
+      md.push('### 4.2 Product（商品 / 分类，下拉数据源）');
+      md.push('| 字段 | 类型 | 说明 |');
+      md.push('| --- | --- | --- |');
+      md.push('| name | String | 商品名 |');
+      md.push('| code | String(13) | 69 码 / EAN |');
+      md.push('| spec | String | 规格 |');
+      md.push('| memberPrice | Number | 会员价（基础价锚定）|');
+      md.push('| origPrice | Number | 原价 |');
+      md.push('| category | String | 所属分类 |');
+      md.push('');
+      md.push('## 五、API 接口定义');
+      md.push('> 以下为面向「动态调价」服务的前后端契约草案（RESTful，JSON）。');
+      md.push('');
+      md.push('### 5.1 调价活动');
+      md.push('| 方法 | 路径 | 说明 |');
+      md.push('| --- | --- | --- |');
+      md.push('| GET | /api/v1/price-rules | 活动列表（支持 status/keyword 筛选）|');
+      md.push('| POST | /api/v1/price-rules | 新建活动 |');
+      md.push('| PUT | /api/v1/price-rules/{id} | 编辑活动 |');
+      md.push('| DELETE | /api/v1/price-rules/{id} | 删除活动 |');
+      md.push('| POST | /api/v1/price-rules/batch | 批量启用 / 停用 / 删除 |');
+      md.push('| POST | /api/v1/price-rules/preview | 价格试算（商品 + 日期 → 生效价）|');
+      md.push('| GET | /api/v1/price-rules/conflicts | 冲突检测（同门店周期重叠）|');
+      md.push('');
+      md.push('### 5.2 商品');
+      md.push('| 方法 | 路径 | 说明 |');
+      md.push('| --- | --- | --- |');
+      md.push('| GET | /api/v1/products | 商品 / 分类下拉数据源 |');
+      md.push('');
+      md.push('### 5.3 示例：新建活动');
+      md.push('```json');
+      md.push('POST /api/v1/price-rules');
+      md.push('{');
+      md.push('  "name": "蔬菜周清优惠",');
+      md.push('  "storeId": "S2001",');
+      md.push('  "scopeValues": ["西红柿（精选）", "土豆（黄心）", "大白菜"],');
+      md.push('  "validFrom": "2026-01-01 00:00",');
+      md.push('  "validTo": "2026-12-31 23:59",');
+      md.push('  "items": [');
+      md.push('    { "name": "西红柿（精选）", "discount": 0.85, "promoPrice": 5.53 },');
+      md.push('    { "name": "土豆（黄心）", "discount": 0.85, "promoPrice": 3.4 },');
+      md.push('    { "name": "大白菜", "discount": 0.85, "promoPrice": 2.38 }');
+      md.push('  ]');
+      md.push('}');
+      md.push('```');
+      md.push('');
+      md.push('## 六、当前配置示例（共 ' + rows.length + ' 条）');
+      md.push('');
+      md.push('| 活动名称 | 状态 | 生效范围 | 生效周期 | 活动价 |');
+      md.push('| --- | --- | --- | --- | --- |');
+      rows.forEach(function(x){ md.push('| ' + x.name + ' | ' + (x.enabled ? '启用' : '停用') + ' | ' + x.scope + ' | ' + x.period + ' | ' + x.plan + ' |'); });
+      md.push('');
+      md.push('## 七、附录');
+      md.push('- 冲突判定：同门店下活动周期不允许重叠（时间维度硬约束），无优先级。');
+      md.push('- 数据来源：本说明「当前配置示例」实时读取自动态调价 页面当前内存数据。');
+      var mdText = md.join('\n');
+
+      // ---- 生成文档 ----
+      var CSS = '*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;color:#0b1019;background:#f5f7fa;line-height:1.7}'
+        + '.wrap{max-width:920px;margin:0 auto;padding:24px 20px 60px}'
+        + '.topbar{position:sticky;top:0;background:#fff;border-bottom:1px solid #e9eef7;padding:12px 20px;display:flex;align-items:center;gap:12px;z-index:10}'
+        + '.topbar h1{font-size:16px;margin:0;font-weight:700}.topbar .sub{font-size:12px;color:#8a94a6}.sp{flex:1}'
+        + '.btn{border:1px solid #d9dbde;background:#fff;border-radius:6px;padding:7px 14px;font-size:13px;cursor:pointer;color:#0b1019}'
+        + '.btn.pri{background:#005cf5;border-color:#005cf5;color:#fff}'
+        + '.card{background:#fff;border:1px solid #e9eef7;border-radius:10px;padding:18px 22px;margin:16px 0;box-shadow:0 1px 2px rgba(16,24,40,.04)}'
+        + '.card h2{font-size:15px;margin:0 0 12px;padding-left:10px;border-left:3px solid #005cf5}'
+        + '.card h3{font-size:13px;margin:16px 0 6px;color:#1f2a3d}'
+        + 'p{margin:8px 0;font-size:14px;color:#2b3445}'
+        + 'ul{margin:8px 0;padding-left:20px}li{font-size:14px;margin:4px 0;color:#2b3445}'
+        + 'table{width:100%;border-collapse:collapse;margin-top:8px;font-size:13px}'
+        + 'th,td{border:1px solid #e9eef7;padding:8px 10px;text-align:left;vertical-align:top}'
+        + 'th{background:#f7f9fc;font-weight:600;color:#1f2a3d}'
+        + '.muted{color:#8a94a6;text-align:center}'
+        + '.st{display:inline-block;padding:1px 8px;border-radius:10px;font-size:12px}.st.on{background:#e8f7ee;color:#1aa260}.st.off{background:#f1f3f6;color:#8a94a6}'
+        + '.foot{font-size:12px;color:#8a94a6;text-align:center;margin-top:20px}'
+        + 'code{background:#eef1f6;border-radius:4px;padding:1px 5px;font-size:12px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#1f2a3d}'
+        + '.codeblock{background:#0d1320;color:#dbe4f0;border-radius:8px;padding:12px 14px;margin-top:10px;font-size:12px;line-height:1.7;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:pre;overflow-x:auto}'
+        + '.apimethod{display:inline-block;font-size:11px;font-weight:700;padding:1px 7px;border-radius:4px;min-width:34px;text-align:center;margin-right:8px}'
+        + '.m-get{background:#e8f1ff;color:#005cf5}.m-post{background:#e9f8ee;color:#1aa260}.m-put{background:#fff4e5;color:#d9730d}.m-del{background:#fdecec;color:#e04646}';
+
+      var doc = '<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>动态调价 需求说明</title><style>' + CSS + '</style></head><body>'
+        + '<div class="topbar"><h1>动态调价 · 需求说明（简单版）</h1><span class="sub">营销管理 / 动态调价</span><span class="sp"></span><button class="btn pri" onclick="dl()">下载 HTML</button><button class="btn" onclick="cp()">复制 Markdown</button></div>'
+        + '<div class="wrap">'
+        + '<div class="card"><h2>一、模块概述</h2><p>动态调价是「营销管理」下的定价模块（体验版）。运营通过弹框选择商品 / 分类（分类自动展开为其旗下商品），选中的商品铺开为列表，在列表上逐行设置折扣或活动价（两者联动），也可统一设置折扣后应用到全部商品，到期自动结束。</p><p style="color:#8a94a6;font-size:12px;margin-bottom:0">生成时间：' + ts + '　·　数据来源：动态调价 页面当前实时配置</p></div>'
+        + '<div class="card"><h2>二、核心概念</h2><ul>'
+        + '<li><b>活动</b>：一条动态调价规则，由「生效商品 + 活动周期 + 逐商品优惠明细 + 状态」构成。</li>'
+        + '<li><b>生效商品</b>：通过弹框按分类 / 按单品选择；选择分类即选中该分类下全部商品，确认后铺开为商品列表。</li>'
+        + '<li><b>活动周期</b>：起止时间精确到分钟（YYYY-MM-DD HH:mm，必填），周期内生效。</li>'
+        + '<li><b>逐商品优惠</b>：每行可设置折扣或活动价（两者联动：改折扣自动算价、改价自动回算折扣）；支持统一设置折扣后应用到全部行。</li>'
+        + '</ul></div>'
+        + '<div class="card"><h2>三、业务规则</h2>'
+        + '<h3>3.1 活动周期与冲突（无优先级）</h3><ul><li>同门店下活动周期不允许重叠：时间维度硬约束（商品是否相同不作判定），命中即硬冲突，保存 / 启用拦截。</li><li>例如：门店 S2001 已有 6.1~6.30 的活动，再建 6.15~7.15 的活动（无论商品是否相同）→ 冲突；不同门店互不影响。</li></ul>'
+        + '<h3>3.2 优惠规则</h3><ul><li>折扣锚定各商品「原价」；活动价为直接售价，需低于该商品原价；会员价取 min(活动价, 会员价)。</li><li>折扣 1~9.9 折（如 8.5 即 8.5 折）；活动价不可小于 0.01 元。</li></ul>'
+        + '<h3>3.3 生命周期与锁定</h3><ul><li>活动状态：未开始 / 进行中 / 已结束（按活动周期与当前时间（精确到分钟）判定）。</li><li>编辑锁定：活动开始后（进行中 / 已结束）不允许修改任何内容，弹窗全字段只读（含启用开关与保存按钮），保存逻辑同步硬拦截；仅「未开始」可编辑（增减商品、调整折扣 / 活动价），且仅未开始可删除。</li><li>停用带 5 分钟结算缓冲：缓冲期内已在结算 / 购物车的商品仍按原活动结算。</li></ul>'
+        + '<h3>3.4 数据校验</h3><ul><li>活动价 ≥ 0.01 且 &lt; 范围内最高原价。</li><li>活动周期起始 ≤ 结束（精确到分钟）；周期为必填。</li></ul>'
+        + '</div>'
+        + '<div class="card"><h2>四、数据模型</h2>'
+        + '<h3>4.1 PriceRule（调价活动）</h3>'
+        + '<table><thead><tr><th>字段</th><th>类型</th><th>说明</th></tr></thead><tbody>'
+        + '<tr><td><code>id</code></td><td>Long</td><td>活动唯一 ID</td></tr>'
+        + '<tr><td><code>name</code></td><td>String</td><td>活动名称</td></tr>'
+        + '<tr><td><code>enabled</code></td><td>Boolean</td><td>是否启用</td></tr>'
+        + '<tr><td><code>storeId</code></td><td>String</td><td>适用门店</td></tr>'
+        + '<tr><td><code>scopeValues</code></td><td>String[]</td><td>商品名数组（选择分类时已展开为其旗下商品）</td></tr>'
+        + '<tr><td><code>validFrom</code></td><td>DateTime</td><td>活动周期起始（必填，YYYY-MM-DD HH:mm）</td></tr>'
+        + '<tr><td><code>validTo</code></td><td>DateTime</td><td>活动周期结束（必填，YYYY-MM-DD HH:mm）</td></tr>'
+        + '<tr><td><code>items</code></td><td>Item[]</td><td>逐商品优惠明细</td></tr>'
+        + '</tbody></table>'
+        + '<h3>4.2 Item（逐商品优惠明细）</h3>'
+        + '<table><thead><tr><th>字段</th><th>类型</th><th>说明</th></tr></thead><tbody>'
+        + '<tr><td><code>name</code></td><td>String</td><td>商品名（对应 scopeValues 成员）</td></tr>'
+        + '<tr><td><code>discount</code></td><td>Number</td><td>折扣（0~1 小数，如 0.85 = 8.5 折）</td></tr>'
+        + '<tr><td><code>promoPrice</code></td><td>Number</td><td>活动价（直接售价，需低于商品原价；改折扣自动算出，改价自动回算折扣）</td></tr>'
+        + '</tbody></table>'
+        + '<h3>4.3 Product（商品 / 分类，下拉数据源）</h3>'
+        + '<table><thead><tr><th>字段</th><th>类型</th><th>说明</th></tr></thead><tbody>'
+        + '<tr><td><code>name</code></td><td>String</td><td>商品名</td></tr>'
+        + '<tr><td><code>code</code></td><td>String(13)</td><td>69 码 / EAN</td></tr>'
+        + '<tr><td><code>spec</code></td><td>String</td><td>规格</td></tr>'
+        + '<tr><td><code>memberPrice</code></td><td>Number</td><td>会员价（基础价锚定）</td></tr>'
+        + '<tr><td><code>origPrice</code></td><td>Number</td><td>原价</td></tr>'
+        + '<tr><td><code>category</code></td><td>String</td><td>所属分类</td></tr>'
+        + '</tbody></table>'
+        + '</div>'
+        + '<div class="card"><h2>五、API 接口定义</h2>'
+        + '<p style="color:#8a94a6;font-size:12px;margin-top:0">以下为面向「动态调价」服务的前后端契约草案（RESTful，JSON）。</p>'
+        + '<h3>5.1 调价活动</h3>'
+        + '<table><thead><tr><th>方法</th><th>路径</th><th>说明</th></tr></thead><tbody>'
+        + '<tr><td><span class="apimethod m-get">GET</span></td><td><code>/api/v1/price-rules</code></td><td>活动列表（status/keyword 筛选）</td></tr>'
+        + '<tr><td><span class="apimethod m-post">POST</span></td><td><code>/api/v1/price-rules</code></td><td>新建活动</td></tr>'
+        + '<tr><td><span class="apimethod m-put">PUT</span></td><td><code>/api/v1/price-rules/{id}</code></td><td>编辑活动</td></tr>'
+        + '<tr><td><span class="apimethod m-del">DEL</span></td><td><code>/api/v1/price-rules/{id}</code></td><td>删除活动</td></tr>'
+        + '<tr><td><span class="apimethod m-post">POST</span></td><td><code>/api/v1/price-rules/batch</code></td><td>批量启用 / 停用 / 删除</td></tr>'
+        + '<tr><td><span class="apimethod m-post">POST</span></td><td><code>/api/v1/price-rules/preview</code></td><td>价格试算（商品 + 日期 → 生效价）</td></tr>'
+        + '<tr><td><span class="apimethod m-get">GET</span></td><td><code>/api/v1/price-rules/conflicts</code></td><td>冲突检测（同门店周期重叠）</td></tr>'
+        + '</tbody></table>'
+        + '<h3>5.2 商品</h3>'
+        + '<table><thead><tr><th>方法</th><th>路径</th><th>说明</th></tr></thead><tbody>'
+        + '<tr><td><span class="apimethod m-get">GET</span></td><td><code>/api/v1/products</code></td><td>商品 / 分类下拉数据源</td></tr>'
+        + '</tbody></table>'
+        + '<h3>5.3 示例：新建活动</h3>'
+        + '<div class="codeblock">POST /api/v1/price-rules\n{\n  "name": "蔬菜周清优惠",\n  "storeId": "S2001",\n  "scopeValues": ["西红柿（精选）", "土豆（黄心）", "大白菜"],\n  "validFrom": "2026-01-01",\n  "validTo": "2026-12-31",\n  "items": [\n    { "name": "西红柿（精选）", "discount": 0.85, "promoPrice": 5.53 },\n    { "name": "土豆（黄心）", "discount": 0.85, "promoPrice": 3.4 },\n    { "name": "大白菜", "discount": 0.85, "promoPrice": 2.38 }\n  ]\n}</div>'
+        + '</div>'
+        + '<div class="card"><h2>六、当前配置示例（共 ' + rows.length + ' 条）</h2>'
+        + '<table><thead><tr><th>活动名称</th><th>状态</th><th>生效范围</th><th>生效周期</th><th>活动价</th></tr></thead><tbody>' + ruleRowsHtml + '</tbody></table>'
+        + '</div>'
+        + '<div class="card"><h2>七、附录</h2><ul><li>冲突判定：同门店下活动周期不允许重叠（时间维度硬约束），无优先级。</li><li>数据来源：本说明「当前配置示例」实时读取自动态调价 页面当前内存数据。</li></ul></div>'
+        + '<div class="foot">本需求说明由「动态调价」页面一键生成 · ' + ts + '</div>'
+        + '</div>'
+        + '<script type="text/plain" id="mdData">' + mdText + '<\/script>'
+        + '<script>function dl(){var b=new Blob([document.documentElement.outerHTML],{type:"text/html;charset=utf-8"});var a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="动态调价-需求说明.html";a.click();}'
+        + 'function cp(){var t=document.getElementById("mdData").textContent;if(navigator.clipboard){navigator.clipboard.writeText(t).then(function(){alert("Markdown 已复制");},function(){fb(t);});}else{fb(t);}}'
+        + 'function fb(t){var ta=document.createElement("textarea");ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");alert("Markdown 已复制");}catch(e){alert("复制失败，请手动选择文本");}document.body.removeChild(ta);}<\/script>'
+        + '</body></html>';
+
+      var blob = new Blob([doc], { type: 'text/html;charset=utf-8' });
+      var url = URL.createObjectURL(blob);
+
+      var opened = false;
+
+      // 1) 优先用 <a target="_blank"> 触发,比 window.open 更不容易被浏览器弹窗拦截
+      try {
+        var a = document.createElement('a');
+        a.href = url;
+        a.target = '_blank';
+        a.rel = 'noopener';
+        a.style.cssText = 'position:fixed;opacity:0;pointer-events:none';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        opened = true;
+      } catch (e) {
+        opened = false;
+      }
+
+      // 2) 若锚点异常/仍被拦截,尝试 window.open;返回 null 说明被拦截
+      if (!opened) {
+        try {
+          var w = window.open(url, '_blank');
+          if (w) opened = true;
+        } catch (e) {
+          opened = false;
+        }
+      }
+
+      if (opened) {
+        showToast('需求说明已在新标签页打开（共 ' + rules.length + ' 条活动）');
+      } else {
+        // 3) 最终兜底:直接下载 HTML
+        try {
+          var dl = document.createElement('a');
+          dl.href = url;
+          dl.download = '动态调价-需求说明.html';
+          document.body.appendChild(dl);
+          dl.click();
+          document.body.removeChild(dl);
+          showToast('新标签页被拦截，已下载 HTML 文件（共 ' + rules.length + ' 条活动）');
+        } catch (e) {
+          showToast('打开失败，请重试或检查浏览器弹窗/下载设置');
+        }
+      }
+    };
+
+    // 初始化
+    prRenderPickerLists();
+    prRenderGoodsRows();
+    prRenderRules();
+  })();
+
+  // 触发多页框架初始化（传固定字符串，避免 layout.js currentScript 兼容问题）
+  if (typeof initMultiPage === 'function') initMultiPage('dynamic-pricing');
+  </script>
+</body>
+</html>

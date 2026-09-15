@@ -1,0 +1,8 @@
+{
+  "code": 0,
+  "message": "success",
+  "data": [
+    { "goodsCode": "6901234567012", "productionDate": "2026-06-03", "batchNo": "B20260603", "expirationDate": "2026-06-13", "shelfLifeType": 0, "shelfLife": 10 },
+    { "goodsCode": "6901234567012", "productionDate": "2026-06-10", "batchNo": "B20260610", "expirationDate": "2026-06-20", "shelfLifeType": 0, "shelfLife": 10 }
+  ]
+}

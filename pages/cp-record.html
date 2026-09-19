@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page-node-id="ww5ROcmlBe5W8Kz8Rs8QWX">
+<head data-page-node-id="ZpGVtYUGuLEckZjEzQJ0Bg">
+  <meta charset="UTF-8" data-page-node-id="oDLpWngBArDnBobU0FRJSw">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" data-page-node-id="j91USBHry56VGWYCkwcr6m">
+  <title>菜猫智店 · 优惠券记录</title>
+  <link rel="stylesheet" href="../shared/layout.css" data-page-node-id="meDBQreTFqFf1DqetAPhtH">
+</head>
+<body data-page-node-id="jyCFHpqj13sIqyNtT1SKBL">
+  <div class="toast" id="toast" data-page-node-id="n9lTyzCDyrCiNmONN76Nqa"></div>
+  <div id="sidebarRoot" data-page-node-id="vmpx3cKn0QpSswrbrCTATh"></div>
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()" data-page-node-id="1Gvoj3P2c0FY0bwrKyWrwb"></div>
+  <div class="main" data-page-node-id="p7YnDQM7nNyCwJFxH4ddls">
+    <div id="headerRoot" data-page-node-id="YqPOtnqQIwd4K6U5JTkNWX"></div>
+    <div class="content" data-page-node-id="Ea6oTC47ovDxesUsYICk9F">
+    <!-- ========== PAGE: 优惠券记录（对齐 Vue master coupon 域） ========== -->
+    <div class="page page-fill" id="page-cp-record" data-page-node-id="splSXXeGSv60l5wq0WHYGm">
+      <div id="cp-recordContent" style="display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden;background:#F1F2F5" data-page-node-id="nayzHEg4vpMOpfMdV5Wd0O"></div>
+    </div>
+    </div>
+  </div>
+  <div id="modalRoot" data-page-node-id="Gm5JieuQhlKkGIDJO1hZDL"></div>
+
+  <script>var CURRENT_PAGE='cp-record';</script>
+  <script src="../shared/sidebar.js"></script>
+  <script src="../shared/header.js"></script>
+  <script src="../shared/build-info.js"></script>
+  <script src="../shared/modals.js"></script>
+  <script src="../shared/layout.js" data-page="cp-record"></script>
+  <script src="../shared/ms-coupon.js"></script>
+  <script>
+    initMultiPage(CURRENT_PAGE);
+    if (typeof initCouponPage === 'function') initCouponPage(CURRENT_PAGE);
+  </script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>菜猫智店 · 达标统计</title>
+  <link rel="stylesheet" href="../shared/layout.css">
+</head>
+<body>
+  <div class="toast" id="toast"></div>
+  <div id="sidebarRoot"></div>
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+  <div class="main">
+    <div id="headerRoot"></div>
+    <div class="content">
+    <!-- ========== PAGE: 达标统计（平价菜二级页 · 中台） ==========
+         不进导航；仅由平价菜页「达标统计 · 查看更多」跨页进入。
+         页面内可切换时间范围（近两周 / 单个月份 / 多日自定义）并导出全部数据；
+         「← 返回平价菜」跳回平价菜页（navigateTo('parity-veg')）。 -->
+    <div class="page page-fill" id="page-parity-veg-table">
+      <div id="parityVegTableContent" style="display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden;background:#F1F2F5"></div>
+    </div>
+    </div>
+  </div>
+  <div id="modalRoot"></div>
+
+  <script>var CURRENT_PAGE='parity-veg-table';</script>
+  <script src="../shared/sidebar.js"></script>
+  <script src="../shared/header.js"></script>
+  <script src="../shared/build-info.js"></script>
+  <script src="../shared/modals.js"></script>
+  <script src="../shared/layout.js" data-page="parity-veg-table"></script>
+  <script src="../shared/ms-parity.js"></script>
+  <script>
+    initMultiPage(CURRENT_PAGE);
+  </script>
+</body>
+</html>
